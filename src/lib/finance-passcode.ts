@@ -6,4 +6,4 @@
  * plain constant is the safer place for it.
  */
 export const FINANCE_PASSCODE_HASH =
-  "$2b$10$iw/OG194Zea7pZlVno6Iuu5Psnf8Wh2Rlzys1Adx3.fSfptWXSlpK";
+  "$2b$10$7vPNRrhFk0LwLDsTfItVzOjN6DPmm2ucHwpnjU7.zt.aJ3lBPdsiS";
