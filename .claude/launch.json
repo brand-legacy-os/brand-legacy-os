@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brand-legacy-dev",
+      "runtimeExecutable": "C:\\Users\\dride\\Desktop\\Brand Legacy\\scripts\\dev-x64.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    },
+    {
+      "name": "brand-legacy-prod",
+      "runtimeExecutable": "C:\\Users\\dride\\Desktop\\Brand Legacy\\scripts\\start-x64.cmd",
+      "runtimeArgs": [],
+      "port": 3000
+    },
+    {
+      "name": "meu-assessor-dev",
+      "runtimeExecutable": "C:\\Users\\dride\\Desktop\\Meu Assessor\\scripts\\dev-x64.cmd",
+      "runtimeArgs": [],
+      "port": 3001
+    },
+    {
+      "name": "grupo-os-dev",
+      "runtimeExecutable": "C:\\Users\\dride\\Desktop\\Grupo OS\\scripts\\dev-x64.cmd",
+      "runtimeArgs": [],
+      "port": 3002
+    },
+    {
+      "name": "grupo-os-prod",
+      "runtimeExecutable": "C:\\Users\\dride\\Desktop\\Grupo OS\\scripts\\start-x64.cmd",
+      "runtimeArgs": [],
+      "port": 3002
+    }
+  ]
+}

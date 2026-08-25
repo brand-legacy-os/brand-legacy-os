@@ -1,0 +1,1187 @@
+[
+  {
+    "name": "MARKETING",
+    "metrics": [
+      {
+        "label": "Investimento em Captação CG",
+        "target": "R$ 55.000,00",
+        "realized": "R$ 9.585,49"
+      },
+      {
+        "label": "Investimento Captação evento",
+        "target": "R$ 20.000,00",
+        "realized": "R$ 6.389,92"
+      },
+      {
+        "label": "Investimento em Distribuição",
+        "target": "R$ 0,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Investimento Total em Tráfego",
+        "target": "R$ 75.000,00",
+        "realized": "R$ 15.975,41"
+      },
+      {
+        "label": "Custo por Lead Total",
+        "target": "R$ 88,33",
+        "realized": "R$ 143,92"
+      },
+      {
+        "label": "Leads no tráfego CG",
+        "target": "623",
+        "realized": "90"
+      },
+      {
+        "label": "Leads no tráfego IM",
+        "target": "226",
+        "realized": "21"
+      },
+      {
+        "label": "Leads no tráfego Incompletos",
+        "target": "500",
+        "realized": "57"
+      },
+      {
+        "label": "Leads orgânicos Totais",
+        "target": "250",
+        "realized": "0"
+      },
+      {
+        "label": "Total de Leads válidos",
+        "target": "1.099",
+        "realized": "111"
+      },
+      {
+        "label": "Percentual de MQL",
+        "target": "30,00%",
+        "realized": "53,15%"
+      },
+      {
+        "label": "MQL CG",
+        "target": "187",
+        "realized": "52"
+      },
+      {
+        "label": "MQL Evento",
+        "target": "68",
+        "realized": "7"
+      },
+      {
+        "label": "MQL Orgânico",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Total de MQL",
+        "target": "330",
+        "realized": "59"
+      },
+      {
+        "label": "Custo MQL CG",
+        "target": "R$ 294,43",
+        "realized": "R$ 184,34"
+      },
+      {
+        "label": "Custo MQL Evento",
+        "target": "R$ 294,43",
+        "realized": "R$ 912,85"
+      },
+      {
+        "label": "Custo por MQL Total",
+        "target": "R$ 227,46",
+        "realized": "R$ 270,77"
+      }
+    ]
+  },
+  {
+    "name": "COMERCIAL - Funil Consultoria Gratuita",
+    "metrics": [
+      {
+        "label": "Agendados funil",
+        "target": "170",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamento recuperação",
+        "target": "50",
+        "realized": "0"
+      },
+      {
+        "label": "Custo por Agendamento GERAL",
+        "target": "R$ 250,00",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Desqualificados",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "No-show",
+        "target": "12",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de no-show",
+        "target": "20,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Comparecimento",
+        "target": "65%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reunião realizadas",
+        "target": "48",
+        "realized": "0"
+      },
+      {
+        "label": "Custo por Reunião Realizada",
+        "target": "R$ 1.145,83",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reunião com Pitch",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Conversão",
+        "target": "15%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Perdido",
+        "target": "34",
+        "realized": "0"
+      },
+      {
+        "label": "Venda Club",
+        "target": "7",
+        "realized": "0"
+      },
+      {
+        "label": "Venda Tração",
+        "target": "4",
+        "realized": "0"
+      },
+      {
+        "label": "CAC",
+        "target": "R$ 7.857,14",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento",
+        "target": "R$ 420.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa",
+        "target": "R$ 400.000,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "COMERCIAL - Funil Imersão",
+    "metrics": [
+      {
+        "label": "Contatos recebidos",
+        "target": "38",
+        "realized": "0"
+      },
+      {
+        "label": "Desqualificados",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "Contatos realizados recuperação",
+        "target": "100",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas",
+        "target": "30",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de resposta",
+        "target": "79%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Agendamentos",
+        "target": "24",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de agendamento",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reunião realizadas",
+        "target": "19",
+        "realized": "0"
+      },
+      {
+        "label": "No-show",
+        "target": "5",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de no-show",
+        "target": null,
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Comparecimento",
+        "target": "95%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Conversão",
+        "target": "15%",
+        "realized": "#REF!"
+      },
+      {
+        "label": "Perdido",
+        "target": "12",
+        "realized": "#REF!"
+      },
+      {
+        "label": "Venda",
+        "target": "11",
+        "realized": "#REF!"
+      },
+      {
+        "label": "CAC",
+        "target": "R$ 1.818,18",
+        "realized": "#REF!"
+      },
+      {
+        "label": "Faturamento",
+        "target": "R$ 44.000,00",
+        "realized": "#REF!"
+      },
+      {
+        "label": "Caixa",
+        "target": "R$ 44.000,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "Inbound BL (Social Selling)",
+    "metrics": [
+      {
+        "label": "Leads",
+        "target": "250",
+        "realized": "0"
+      },
+      {
+        "label": "Follow SS",
+        "target": "750",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas SS",
+        "target": "50",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": null,
+        "realized": null
+      },
+      {
+        "label": "Taxa de Aproveitamento SS",
+        "target": "20%",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "Inbound Carol (Social Selling)",
+    "metrics": [
+      {
+        "label": "Leads",
+        "target": "250",
+        "realized": "0"
+      },
+      {
+        "label": "Follow SS",
+        "target": "750",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas SS",
+        "target": "50",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "No Show",
+        "target": null,
+        "realized": null
+      },
+      {
+        "label": "Taxa de Aproveitamento SS",
+        "target": "20%",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "Inbound Dom (Social Seling)",
+    "metrics": [
+      {
+        "label": "Leads",
+        "target": "150",
+        "realized": "0"
+      },
+      {
+        "label": "Follow SS",
+        "target": "450",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas SS",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": null,
+        "realized": null
+      },
+      {
+        "label": "Taxa de Aproveitamento SS",
+        "target": "30%",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "Outbound BL (Social Selling)",
+    "metrics": [
+      {
+        "label": "Outbound Frio",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Outbound Quente",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Frio",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Quente",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Quente",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Frio",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Sessão estratégica apresentada",
+        "target": "20",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Podcast agendados",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": "0",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento gerado",
+        "target": "R$ 500.000,00",
+        "realized": "0"
+      }
+    ]
+  },
+  {
+    "name": "Outbound Dom (Social Selling)",
+    "metrics": [
+      {
+        "label": "Outbound Frio",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Outbound Quente",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Frio",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Quente",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Quente",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Frio",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Sessão estratégica apresentada",
+        "target": "20",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Podcast agendados",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": "0",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento gerado",
+        "target": "R$ 500.000,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "Outbound Carol (Social Selling)",
+    "metrics": [
+      {
+        "label": "Outbound Frio",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Outbound Quente",
+        "target": "75",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Frio",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Quente",
+        "target": "225",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Quente",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Frio",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Sessão estratégica apresentada",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Podcast agendados",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": "0",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento gerado",
+        "target": "R$ 0,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "Outbound Nivaldo (SDR)",
+    "metrics": [
+      {
+        "label": "Outbound Frio",
+        "target": "250",
+        "realized": "0"
+      },
+      {
+        "label": "Outbound Quente",
+        "target": "250",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Frio",
+        "target": "750",
+        "realized": "0"
+      },
+      {
+        "label": "Follow Quente",
+        "target": "750",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Quente",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas  Frio",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados SS",
+        "target": "42",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados Podcast",
+        "target": "12",
+        "realized": "0"
+      },
+      {
+        "label": "No show",
+        "target": "0",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento gerado",
+        "target": "R$ 0,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "Recuperação (SDR)",
+    "metrics": [
+      {
+        "label": "Abordados Lost",
+        "target": "150",
+        "realized": "0"
+      },
+      {
+        "label": "Abordados No-show",
+        "target": "80",
+        "realized": "0"
+      },
+      {
+        "label": "Abordados base",
+        "target": "300",
+        "realized": "0"
+      },
+      {
+        "label": "Follow",
+        "target": "1.500",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas Lost",
+        "target": "30",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas No-show",
+        "target": "24",
+        "realized": "0"
+      },
+      {
+        "label": "Respostas base",
+        "target": "45",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Resposta Lost",
+        "target": "20,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de Resposta No-show",
+        "target": "30,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de Resposta Base",
+        "target": "15,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Agendamentos gerados Lost",
+        "target": "6",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados No-show",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados base",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamentos gerados Geral",
+        "target": "24",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Aproveitamento Lost",
+        "target": "20,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de Aproveitamento No-show",
+        "target": "33,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de Aproveitamento base",
+        "target": "22,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Taxa de Aproveitamento Geral",
+        "target": "24,00%",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "RENZO - CLOSER",
+    "metrics": [
+      {
+        "label": "Reuniões Agendadas CG",
+        "target": "30",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamento recuperação closer",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Reuniões Realizadas CG",
+        "target": "24",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show CG",
+        "target": "6",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Comparecimento CG",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch CG",
+        "target": "22%",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas CG",
+        "target": "3",
+        "realized": null
+      },
+      {
+        "label": "Taxa de conversão CG",
+        "target": "13,6%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento CG",
+        "target": "R$ 160.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa CG",
+        "target": "R$ 480,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio CG",
+        "target": "R$ 53.000,00",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões Agendadas EVENTO",
+        "target": "20",
+        "realized": "0"
+      },
+      {
+        "label": "Reuniões Realizadas EVENTO",
+        "target": "16",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show EVENTO",
+        "target": "4",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Comparecimento EVENTO",
+        "target": "80,00%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch EVENTO",
+        "target": "R$ 16,00",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas EVENTO",
+        "target": "R$ 10,00",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de conversão EVENTO",
+        "target": "62,5%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento EVENTO",
+        "target": "R$ 40.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa EVENTO",
+        "target": "R$ 12.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio EVENTO",
+        "target": "R$ 4.000,00",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "KARINA - CLOSER",
+    "metrics": [
+      {
+        "label": "Reuniões Agendadas CG",
+        "target": "20",
+        "realized": "0"
+      },
+      {
+        "label": "Agendamento recuperação closer",
+        "target": "15",
+        "realized": "0"
+      },
+      {
+        "label": "Reuniões Realizadas CG",
+        "target": "16",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show CG",
+        "target": "8,00",
+        "realized": "0,00"
+      },
+      {
+        "label": "Taxa de Comparecimento CG",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch CG",
+        "target": "30%",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas CG",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de conversão CG",
+        "target": "16,7%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento CG",
+        "target": "R$ 200.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa CG",
+        "target": "R$ 96.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio CG",
+        "target": "R$ 64.000,00",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões Agendadas EVENTO",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Reuniões Realizadas EVENTO",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show EVENTO",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Comparecimento EVENTO",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch EVENTO",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas EVENTO",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de conversão EVENTO",
+        "target": "25%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento EVENTO",
+        "target": "R$ 8.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa EVENTO",
+        "target": "R$ 8.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio EVENTO",
+        "target": "R$ 4.000,00",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reunião realizada PODCAST",
+        "target": null,
+        "realized": null
+      }
+    ]
+  },
+  {
+    "name": "LUCAS - CLOSER",
+    "metrics": [
+      {
+        "label": "Reuniões Agendadas CG",
+        "target": "20",
+        "realized": null
+      },
+      {
+        "label": "Agendamento recuperação closer",
+        "target": "15",
+        "realized": null
+      },
+      {
+        "label": "Reuniões Realizadas CG",
+        "target": "16",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show CG",
+        "target": "8,00",
+        "realized": "0,00"
+      },
+      {
+        "label": "Taxa de Comparecimento CG",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch CG",
+        "target": "30%",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas CG",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de conversão CG",
+        "target": "16,7%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento CG",
+        "target": "R$ 200.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa CG",
+        "target": "R$ 96.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio CG",
+        "target": "R$ 64.000,00",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões Agendadas EVENTO",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Reuniões Realizadas EVENTO",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "No-Show EVENTO",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de Comparecimento EVENTO",
+        "target": "80%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Reuniões com Pitch EVENTO",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas EVENTO",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de conversão EVENTO",
+        "target": "25%",
+        "realized": "#DIV/0!"
+      },
+      {
+        "label": "Faturamento EVENTO",
+        "target": "R$ 8.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa EVENTO",
+        "target": "R$ 8.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket médio EVENTO",
+        "target": "R$ 4.000,00",
+        "realized": "#DIV/0!"
+      }
+    ]
+  },
+  {
+    "name": "DOM",
+    "metrics": [
+      {
+        "label": "Reuniões Realizadas CG",
+        "target": "0",
+        "realized": null
+      },
+      {
+        "label": "Vendas CG",
+        "target": "0",
+        "realized": null
+      },
+      {
+        "label": "Taxa de conversão CG",
+        "target": "0,0%",
+        "realized": null
+      },
+      {
+        "label": "Faturamento CG",
+        "target": "R$ 0,00",
+        "realized": null
+      },
+      {
+        "label": "Caixa CG",
+        "target": "R$ 0,00",
+        "realized": null
+      },
+      {
+        "label": "Ticket médio CG",
+        "target": "R$ 0,00",
+        "realized": null
+      }
+    ]
+  },
+  {
+    "name": "SCALE - JULHO/26",
+    "metrics": [
+      {
+        "label": "Aplicações",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas Club",
+        "target": "8",
+        "realized": "0"
+      },
+      {
+        "label": "Vendas Tração",
+        "target": "2",
+        "realized": "0"
+      },
+      {
+        "label": "Faaturamento",
+        "target": "R$ 1.760.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Caixa Evento",
+        "target": "R$ 1.760.000,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "RENOVAÇÃO",
+    "metrics": [
+      {
+        "label": "Renovações possíveis",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Call de renovação agendadas",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Total de Renovações",
+        "target": "5",
+        "realized": "0"
+      },
+      {
+        "label": "Taxa de aproveitamento",
+        "target": "50%",
+        "realized": "0,00%"
+      },
+      {
+        "label": "Valor total das Renovações",
+        "target": "R$ 300.000,00",
+        "realized": "R$ 0,00"
+      }
+    ]
+  },
+  {
+    "name": "Resumo Geral",
+    "metrics": [
+      {
+        "label": "Total de Vendas tração",
+        "target": "4",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento Tração",
+        "target": "R$ 240.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Total de Vendas CLUB",
+        "target": "10",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento Club",
+        "target": "R$ 1.200.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Total de vendas EVENTO",
+        "target": "20",
+        "realized": "0"
+      },
+      {
+        "label": "Faturamento EVENTO",
+        "target": "R$ 70.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Faturamento Total Mês",
+        "target": "R$ 1.810.000,00",
+        "realized": "R$ 0,00"
+      },
+      {
+        "label": "Ticket Médio Mês",
+        "target": "R$ 51.714,29",
+        "realized": "R$ 0,00"
+      }
+    ]
+  }
+]

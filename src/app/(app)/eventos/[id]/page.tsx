@@ -1,0 +1,307 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { isAdmin, isLeaderOf } from "@/lib/permissions";
+import { hasFinanceRole, isFinanceUnlocked } from "@/lib/finance-auth";
+import { EVENT_STATUS_META, computeEventStats } from "@/lib/events";
+import {
+  formatCompactCurrency,
+  formatDate,
+  formatDateTime,
+  relativeTime,
+} from "@/lib/format";
+import { EventStatusSelect } from "@/components/events/event-status-select";
+import { AddBudgetLineForm } from "@/components/events/add-budget-line-form";
+import { AddSponsorForm } from "@/components/events/add-sponsor-form";
+import { SponsorCard } from "@/components/events/sponsor-card";
+import { AddAttendeeForm } from "@/components/events/add-attendee-form";
+import { AttendeeRow } from "@/components/events/attendee-row";
+import { EventNoteForm } from "@/components/events/event-note-form";
+import { EditEventForm } from "@/components/events/edit-event-form";
+import { BudgetLineCard } from "@/components/events/budget-line-card";
+import { EventNpsForm } from "@/components/events/event-nps-form";
+
+export default async function EventDetailPage({
+  params,
+}: PageProps<"/eventos/[id]">) {
+  const user = await requireUser();
+  const { id } = await params;
+
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: {
+      responsible: true,
+      budgetLines: { include: { payments: true }, orderBy: { createdAt: "asc" } },
+      sponsors: { include: { payments: true }, orderBy: { createdAt: "asc" } },
+      attendees: { orderBy: { name: "asc" } },
+      notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
+      cashMovements: { orderBy: { date: "asc" } },
+    },
+  });
+  if (!event) notFound();
+
+  const canManage = isAdmin(user) || isLeaderOf(user, "eventos");
+  const canSeeFinance = hasFinanceRole(user) && (await isFinanceUnlocked());
+  const stats = computeEventStats(event);
+
+  const participationRate =
+    stats.registeredCount && stats.presentCount !== null
+      ? Math.round((stats.presentCount / stats.registeredCount) * 100)
+      : null;
+
+  const budgetPct =
+    event.budgetPlanned && event.budgetPlanned > 0
+      ? Math.round((stats.budgetActual / event.budgetPlanned) * 100)
+      : null;
+
+  const sponsorPct =
+    event.sponsorshipGoal && event.sponsorshipGoal > 0
+      ? Math.round((stats.sponsorRevenuePlanned / event.sponsorshipGoal) * 100)
+      : null;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Link
+        href="/eventos"
+        className="w-fit text-[12.5px] font-medium text-ink-soft hover:text-brand-deep"
+      >
+        ← Eventos
+      </Link>
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-gold-tint px-2.5 py-0.5 text-[11px] font-medium text-gold-ink">
+              {event.type}
+            </span>
+            <span className="text-[12px] text-ink-faint">
+              {formatDate(event.startDate)}
+              {event.endDate.getTime() !== event.startDate.getTime()
+                ? ` – ${formatDate(event.endDate)}`
+                : ""}
+              {event.location ? ` · ${event.location}` : ""}
+            </span>
+          </div>
+          <h1 className="font-(family-name:--font-display) text-[26px] text-ink">
+            {event.name}
+          </h1>
+          {event.description && (
+            <p className="max-w-[62ch] text-[13.5px] text-ink-soft">
+              {event.description}
+            </p>
+          )}
+          <p className="text-[12px] text-ink-faint">
+            Responsável: {event.responsible.name}
+          </p>
+        </div>
+        {canManage ? (
+          <EventStatusSelect eventId={event.id} status={event.status} />
+        ) : (
+          <span className="rounded-full bg-surface-muted px-3 py-1 text-[12px] font-medium text-ink-soft">
+            {EVENT_STATUS_META[event.status].label}
+          </span>
+        )}
+      </div>
+
+      {canManage && (
+        <EditEventForm
+          eventId={event.id}
+          name={event.name}
+          type={event.type}
+          startDate={event.startDate.toISOString().slice(0, 10)}
+          endDate={event.endDate.toISOString().slice(0, 10)}
+          location={event.location ?? ""}
+          description={event.description ?? ""}
+          budgetPlanned={event.budgetPlanned ? String(event.budgetPlanned) : ""}
+        />
+      )}
+
+      {/* Dashboard do evento */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
+          <p className="text-[12px] text-ink-soft">Taxa de participação</p>
+          <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
+            {participationRate !== null ? `${participationRate}%` : "—"}
+          </p>
+          <p className="text-[11px] text-ink-faint">
+            {stats.presentCount ?? "—"} presentes / {stats.registeredCount ?? "—"}{" "}
+            inscritos
+          </p>
+        </div>
+        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
+          <p className="text-[12px] text-ink-soft">NPS do evento</p>
+          <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
+            {stats.npsAverage !== null ? Math.round(stats.npsAverage) : "—"}
+          </p>
+          <p className="text-[11px] text-ink-faint">
+            {stats.npsResponses ?? "—"} respostas
+          </p>
+          {canManage && (
+            <EventNpsForm
+              eventId={event.id}
+              npsAverage={event.npsAverage}
+              npsResponses={event.npsResponses}
+            />
+          )}
+        </div>
+        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
+          <p className="text-[12px] text-ink-soft">Budget planejado × real</p>
+          <p className="tnum font-(family-name:--font-display) text-[20px] text-ink">
+            {formatCompactCurrency(stats.budgetActual)}
+            {event.budgetPlanned
+              ? ` / ${formatCompactCurrency(event.budgetPlanned)}`
+              : ""}
+          </p>
+          <p
+            className={`text-[11px] ${budgetPct !== null && budgetPct > 100 ? "text-critical" : "text-ink-faint"}`}
+          >
+            {budgetPct !== null ? `${budgetPct}% do previsto` : "sem budget definido"}
+          </p>
+        </div>
+        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
+          <p className="text-[12px] text-ink-soft">Patrocínio planejado × real</p>
+          <p className="tnum font-(family-name:--font-display) text-[20px] text-ink">
+            {formatCompactCurrency(stats.sponsorRevenueRealized)}
+            {" / "}
+            {formatCompactCurrency(stats.sponsorRevenuePlanned)}
+          </p>
+          <p className="text-[11px] text-ink-faint">
+            {stats.sponsorCount ?? 0} patrocinador
+            {stats.sponsorCount === 1 ? "" : "es"}
+            {sponsorPct !== null ? ` · ${sponsorPct}% da meta` : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Orçamento */}
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">
+            Orçamento — previsto x realizado
+          </h2>
+          <div className="flex flex-col">
+            {event.budgetLines.map((b) => (
+              <BudgetLineCard key={b.id} line={b} canManage={canManage} />
+            ))}
+            {event.budgetLines.length === 0 && (
+              <p className="py-3 text-[12.5px] text-ink-faint">
+                Nenhum item de orçamento lançado ainda.
+              </p>
+            )}
+          </div>
+          {canManage && <AddBudgetLineForm eventId={event.id} />}
+        </section>
+
+        {/* Patrocínios */}
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">Patrocínios</h2>
+          <div className="flex flex-col gap-2.5">
+            {event.sponsors.map((s) => (
+              <SponsorCard key={s.id} sponsor={s} canManage={canManage} />
+            ))}
+            {event.sponsors.length === 0 && (
+              <p className="text-[12.5px] text-ink-faint">
+                Nenhum patrocinador cadastrado ainda.
+              </p>
+            )}
+          </div>
+          {canManage && <AddSponsorForm eventId={event.id} />}
+        </section>
+      </div>
+
+      {/* Movimentações de caixa vinculadas — cruzamento com o Financeiro */}
+      {canSeeFinance && event.cashMovements.length > 0 && (
+        <section className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[13px] font-medium text-ink-soft">
+              Movimentações de caixa deste evento
+            </h2>
+            <Link
+              href="/financeiro/caixa"
+              className="text-[12px] font-medium text-brand hover:underline"
+            >
+              Ver no Financeiro →
+            </Link>
+          </div>
+          <div className="flex flex-col">
+            {event.cashMovements.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between border-t border-border py-2 first:border-t-0"
+              >
+                <div className="flex flex-col">
+                  <span className="text-[12.5px] text-ink">{m.description}</span>
+                  <span className="text-[11px] text-ink-faint">{formatDate(m.date)}</span>
+                </div>
+                <span
+                  className={`tnum text-[12.5px] font-medium ${m.amount >= 0 ? "text-positive" : "text-critical"}`}
+                >
+                  {formatCompactCurrency(m.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Confirmados */}
+      <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[13px] font-medium text-ink-soft">
+            Confirmados ({event.attendees.length})
+          </h2>
+          {event.attendees.length === 0 && stats.registeredCount !== null && (
+            <span className="text-[11.5px] text-ink-faint">
+              Histórico: {stats.registeredCount} inscritos · {stats.presentCount ?? "—"}{" "}
+              presentes · {stats.mentoradosCount ?? "—"} mentorados ·{" "}
+              {stats.guestCount ?? "—"} convidados · {stats.noShowCount ?? "—"} no-show
+            </span>
+          )}
+        </div>
+        {event.attendees.length > 0 ? (
+          <div className="flex flex-col">
+            {event.attendees.map((a) => (
+              <AttendeeRow key={a.id} attendee={a} canManage={canManage} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-[12.5px] text-ink-faint">
+            A lista nominal de confirmados começa vazia — os números acima vêm do
+            histórico da planilha. Novos eventos usam esta lista diretamente.
+          </p>
+        )}
+        {canManage && <AddAttendeeForm eventId={event.id} />}
+      </section>
+
+      {/* Mural do evento */}
+      <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <h2 className="text-[13px] font-medium text-ink-soft">
+          Mural de avisos e observações
+        </h2>
+        <div className="flex flex-col gap-3">
+          {event.notes.map((n) => (
+            <div key={n.id} className="flex items-start gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-deep text-[10px] font-semibold text-gold-soft">
+                {n.author.avatarInitials}
+              </span>
+              <div className="flex flex-col">
+                <p className="text-[13px] leading-snug text-ink">
+                  <span className="font-medium">{n.author.name}</span>{" "}
+                  {n.content}
+                </p>
+                <span className="text-[11px] text-ink-faint">
+                  {relativeTime(n.createdAt)} · {formatDateTime(n.createdAt)}
+                </span>
+              </div>
+            </div>
+          ))}
+          {event.notes.length === 0 && (
+            <p className="text-[12.5px] text-ink-faint">Nenhum aviso ainda.</p>
+          )}
+        </div>
+        <EventNoteForm eventId={event.id} />
+      </section>
+    </div>
+  );
+}

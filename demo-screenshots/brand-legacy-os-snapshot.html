@@ -1,0 +1,360 @@
+<title>Brand Legacy OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #faf8f3;
+    --surface: #ffffff;
+    --surface-muted: #f2efe6;
+    --border: #e4dfd1;
+    --border-strong: #d3c9b3;
+    --ink: #17170f;
+    --ink-soft: #635c4d;
+    --ink-faint: #9c9484;
+    --brand-deep: #0a1a10;
+    --brand-deep-2: #1c3a25;
+    --gold: #c9a24b;
+    --gold-soft: #e3c374;
+    --gold-tint: #f6efdc;
+    --gold-ink: #7a5a1e;
+    --positive: #4c8f52;
+    --positive-bg: #eaf3ea;
+    --warning: #a1671a;
+    --warning-bg: #fbeee0;
+    --critical: #b14b3f;
+    --critical-bg: #faeae6;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Archivo", "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  .banner {
+    background: linear-gradient(160deg, var(--brand-deep) 0%, var(--brand-deep-2) 100%);
+    color: #f3efe1;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .banner strong { color: var(--gold-soft); }
+
+  header.hero {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 56px 32px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: var(--brand-deep);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-name {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 20px;
+  }
+  .brand-name .os {
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--gold-ink);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    padding: 2px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  nav.pill-nav {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    flex-wrap: wrap;
+  }
+  nav.pill-nav a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 7px 13px;
+    border-radius: 999px;
+  }
+  nav.pill-nav a:hover { background: var(--surface-muted); color: var(--ink); }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 0 32px 80px; display: flex; flex-direction: column; gap: 56px; }
+
+  section.module { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 24px; }
+  .module-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; font-weight: 600; color: var(--ink-faint); margin: 0 0 4px; }
+  h2 { font-family: var(--font-display); font-size: 26px; font-weight: 500; margin: 0; text-wrap: balance; }
+  .module-sub { color: var(--ink-soft); font-size: 13.5px; max-width: 64ch; margin: 6px 0 0; line-height: 1.55; }
+
+  .grid { display: grid; gap: 14px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card .label { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+  .card .value { font-family: var(--font-display); font-size: 26px; line-height: 1; }
+  .card .foot { font-size: 11.5px; color: var(--ink-faint); }
+  .bar-track { height: 6px; border-radius: 999px; background: var(--surface-muted); overflow: hidden; }
+  .bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--gold); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 600; width: fit-content; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+  .pill.positive { background: var(--positive-bg); color: var(--positive); }
+  .pill.warning { background: var(--warning-bg); color: var(--warning); }
+  .pill.critical { background: var(--critical-bg); color: var(--critical); }
+  .pill.gold { background: var(--gold-tint); color: var(--gold-ink); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.04em; color: var(--ink-faint); font-weight: 500; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; overflow-x: auto; }
+
+  .avatar { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+
+  .note {
+    background: var(--gold-tint);
+    border: 1px solid var(--gold);
+    border-radius: 16px;
+    padding: 18px 22px;
+    font-size: 13px;
+    color: var(--gold-ink);
+    line-height: 1.6;
+  }
+
+  footer { text-align: center; padding: 40px 32px 60px; color: var(--ink-faint); font-size: 12px; }
+</style>
+
+<div class="banner">📸 <strong>Snapshot da plataforma</strong> — dados reais do sistema, capturados agora para apresentação. Não é a sessão ao vivo.</div>
+
+<header class="hero">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="20" height="20" viewBox="0 0 40 40" fill="none">
+        <path d="M7 27 L20 13 L33 27" stroke="#e3c374" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/>
+        <path d="M7 33 L20 19 L33 33" stroke="#e3c374" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="brand-name">Brand Legacy <span class="os">OS</span></div>
+  </div>
+  <nav class="pill-nav">
+    <a href="#dashboard">Dashboard</a>
+    <a href="#cs">Customer Success</a>
+    <a href="#trafego">Tráfego</a>
+    <a href="#patrocinios">Patrocínios</a>
+    <a href="#social">Social</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="module" id="dashboard">
+    <div class="module-head">
+      <div>
+        <p class="eyebrow">Visão geral</p>
+        <h2>Dashboard — a operação inteira em um lugar</h2>
+        <p class="module-sub">Indicadores puxados ao vivo de cada área — sem planilha solta, sem dado desatualizado. Próxima imersão, performance por área, projetos e eventos, tudo na mesma tela.</p>
+      </div>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <span class="label">Vendas fechadas (mês)</span>
+        <span class="value tnum">—</span>
+        <span class="foot">Aguardando fechamento do mês corrente</span>
+      </div>
+      <div class="card">
+        <span class="label">Performance — Comercial</span>
+        <span class="value tnum">50%</span>
+        <div class="bar-track"><span class="bar-fill" style="width:50%"></span></div>
+        <span class="foot">Média de atingimento das metas do mês</span>
+      </div>
+      <div class="card">
+        <span class="label">Próxima imersão</span>
+        <span class="value">28 dias</span>
+        <span class="foot">Imersão Scale — Setembro 2026, 17/09</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="cs">
+    <div class="module-head">
+      <div>
+        <p class="eyebrow">Área</p>
+        <h2>Customer Success</h2>
+        <p class="module-sub">A base de mentorados é a fonte única de verdade — todo indicador abaixo é calculado ao vivo a partir dela, nunca preenchido manualmente.</p>
+      </div>
+    </div>
+    <div class="grid grid-4">
+      <div class="card">
+        <span class="label">Mentorados ativos</span>
+        <span class="value tnum">59</span>
+        <span class="foot">7 novos este mês</span>
+      </div>
+      <div class="card">
+        <span class="label">Churn mensal</span>
+        <span class="value tnum">0.0%</span>
+        <span class="pill positive">0 de 58 elegíveis</span>
+      </div>
+      <div class="card">
+        <span class="label">Churn anual · meta &lt;5%</span>
+        <span class="value tnum">12.0%</span>
+        <span class="pill warning">acima da meta</span>
+      </div>
+      <div class="card">
+        <span class="label">eNPS geral</span>
+        <span class="value tnum">—</span>
+        <span class="foot">Sem respostas registradas ainda</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="trafego">
+    <div class="module-head">
+      <div>
+        <p class="eyebrow">Área</p>
+        <h2>Tráfego &amp; Performance Comercial</h2>
+        <p class="module-sub">Aquisição, funis de conversão, social selling, SDR, closers e renovação — importado diretamente da planilha real de performance do time, meta × realizado do mês corrente.</p>
+      </div>
+    </div>
+    <div class="grid grid-4">
+      <div class="card">
+        <span class="label">Faturamento Total Mês (Resumo Geral)</span>
+        <span class="value tnum">R$ 1.099</span>
+        <div class="bar-track"><span class="bar-fill" style="width:100%"></span></div>
+        <span class="foot">Meta: R$ 1.810.000</span>
+      </div>
+      <div class="card">
+        <span class="label">Total de Leads válidos (MARKETING)</span>
+        <span class="value tnum">111</span>
+        <div class="bar-track"><span class="bar-fill" style="width:38%"></span></div>
+        <span class="foot">38% da meta</span>
+      </div>
+      <div class="card">
+        <span class="label">Total de MQL (MARKETING)</span>
+        <span class="value tnum">59</span>
+        <div class="bar-track"><span class="bar-fill" style="width:100%"></span></div>
+        <span class="foot">Meta batida</span>
+      </div>
+      <div class="card">
+        <span class="label">Ticket Médio Mês</span>
+        <span class="value tnum">R$ 0</span>
+        <span class="foot">Sem vendas fechadas ainda no período</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="module" id="patrocinios">
+    <div class="module-head">
+      <div>
+        <p class="eyebrow">Área</p>
+        <h2>Patrocínios</h2>
+        <p class="module-sub">Histórico real de patrocínios (abril/2025 – hoje), importado direto da planilha do time. Contratos com competência batendo o mês de um evento real ficam vinculados a ele automaticamente.</p>
+      </div>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <span class="label">Total contratado (histórico)</span>
+        <span class="value tnum">R$ 1 M</span>
+      </div>
+      <div class="card">
+        <span class="label">Total recebido</span>
+        <span class="value tnum" style="color:var(--positive)">R$ 807 mil</span>
+      </div>
+      <div class="card">
+        <span class="label">Em aberto (não pago)</span>
+        <span class="value tnum" style="color:var(--warning)">R$ 221,7 mil</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patrocinador</th><th>Contratos</th><th>Recebido</th></tr></thead>
+        <tbody>
+          <tr><td>7% Platinum</td><td>3</td><td class="tnum">R$ 120 mil</td></tr>
+          <tr><td>Solomon</td><td>2</td><td class="tnum">R$ 70 mil</td></tr>
+          <tr><td>Yampi</td><td>3</td><td class="tnum">R$ 90 mil</td></tr>
+          <tr><td>Salvador Associados</td><td>2</td><td class="tnum">R$ 40 mil</td></tr>
+          <tr><td>Wurk</td><td>2</td><td class="tnum">R$ 60 mil</td></tr>
+          <tr><td>Nex</td><td>2</td><td class="tnum">R$ 38,4 mil</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="module" id="social">
+    <div class="module-head">
+      <div>
+        <p class="eyebrow">Área</p>
+        <h2>Social</h2>
+        <p class="module-sub">Perfis geridos, indicadores planejados × realizados e time — espelhando a estrutura real do time de Social, agora com visualização por colaborador.</p>
+      </div>
+    </div>
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="avatar" style="background:var(--brand-deep); color:var(--gold-soft)">L</div>
+        <span class="label" style="margin-top:6px">Lara</span>
+        <span class="foot">Líder de Social</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:var(--gold); color:var(--brand-deep)">I</div>
+        <span class="label" style="margin-top:6px">Igor</span>
+        <span class="foot">Analista de Marketing</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:rgba(33,102,172,0.12); color:#2166AC">GS</div>
+        <span class="label" style="margin-top:6px">Gabriel Silva</span>
+        <span class="foot">Designer</span>
+      </div>
+      <div class="card">
+        <div class="avatar" style="background:rgba(176,71,58,0.12); color:#B0473A">GR</div>
+        <span class="label" style="margin-top:6px">Guilherme Rocha</span>
+        <span class="foot">Editor de Vídeo</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="note">
+    Isso é um retrato do estado atual do sistema — a plataforma completa é interativa: cada número aqui é editável, cada card tem histórico, comentário e responsável. Assim que a rede/deploy estiver liberado, o time acessa a versão viva com login individual.
+  </div>
+
+</main>
+
+<footer>Brand Legacy OS — uso interno restrito</footer>

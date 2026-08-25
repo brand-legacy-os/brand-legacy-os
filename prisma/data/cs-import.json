@@ -1,0 +1,2095 @@
+[
+  {
+    "name": "Amanda | Pethelp",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-05-12",
+    "renewalDate": "2027-05-12",
+    "status": "ativo",
+    "contractValue": 100000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 50000,
+    "renewalPlannedValueRaw": "R$ 50,000.00",
+    "notes": "Pessoa de contato: Amanda\nEmail: amandalmedeiros@hotmail.com\nTelefone: 81 99660-8700\nSegmento: Veterinário\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-05-12"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-05-15"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-05-28"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-06-04"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-06-05"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-06-18"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Anagrow",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-08-09",
+    "renewalDate": "2026-08-09",
+    "status": "ativo",
+    "contractValue": 99000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 49500,
+    "renewalPlannedValueRaw": "R$ 49,500.00",
+    "notes": "Pessoa de contato: João Gabriel\nEmail: drjoaogabrielfernandes@gmail.com\nTelefone: 11 98302-5128\nSegmento: Suplemento capilar\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): NÃO\nInformações de renovação: MARCAR REUNIÃO COM O DIH\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Insatisfeito\nNPS individual (planilha): 0\nPróxima ação / observação: \"Depois da última imersão vejo que o propósito do programa está desalinhado com questões que acredito. Então perdi a vontade de participar\"",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-09-09"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-12-19"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2025-10-08"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2025-10-22"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2025-12-22"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2025-02-12"
+      },
+      {
+        "label": "Mentoria 7",
+        "date": "2026-04-13"
+      },
+      {
+        "label": "Mentoria 8",
+        "date": "2026-07-15"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Aurha",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-08-09",
+    "renewalDate": "2026-08-09",
+    "status": "ativo",
+    "contractValue": 116400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 58200,
+    "renewalPlannedValueRaw": "R$ 58,200.00",
+    "notes": "Pessoa de contato: Matheus\nEmail: matheus@aurha.com.br\nTelefone: 31 982461539\nSegmento: Acessórios focados em espiritualidade e bem-estar\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: CS FAZER CONTATO PARA REUNIÃO DE ACOMPANHAMENTO\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-08-20"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-09-10"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2025-09-19"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2025-10-14"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2025-11-25"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-01-27"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Avozon",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-10-22",
+    "renewalDate": "2026-10-22",
+    "status": "ativo",
+    "contractValue": 107056,
+    "lastContactAt": "2026-05-27",
+    "nextContactAt": "2026-06-03",
+    "renewalPlannedValue": 53527.78,
+    "renewalPlannedValueRaw": "R$ 53,527.78",
+    "notes": "Pessoa de contato: Ana\nEmail: anavcolturato@gmail.com\nTelefone: 14 991464833\nSegmento: Cosméticos Naturais\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-10-28"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-11-12"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-03-16"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-04-09"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-04-10"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-07-30"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Blessy",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-01-09",
+    "renewalDate": "2027-01-09",
+    "status": "ativo",
+    "contractValue": 116800,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 58400,
+    "renewalPlannedValueRaw": "R$ 58,400.00",
+    "notes": "Pessoa de contato: Davi Luis / Felipe\nEmail: davi@useblessy.com.br\nTelefone: 24 993269059\nSegmento: Suplemento\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ⚠️ POUCO PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-01-09"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-02-03"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "BRANDNESS",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-25",
+    "renewalDate": "2027-03-25",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Carlos Shinzato\nEmail: gabriel.martins@brandness.com.br\nTelefone: 48 99101-8474\nSegmento: Guarda-chuva com 3 marcas nativas digitais\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ⚠️ POUCO PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-04-06"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-09"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-04-23"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Bruna Castro Amorim",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-01-05",
+    "renewalDate": "2027-01-05",
+    "status": "ativo",
+    "contractValue": 65000,
+    "lastContactAt": "2026-06-08",
+    "nextContactAt": "2026-06-15",
+    "renewalPlannedValue": 32500,
+    "renewalPlannedValueRaw": "R$ 32,500.00",
+    "notes": "Pessoa de contato: Bruna\nEmail: bruna.castroamorim@hotmail.com\nTelefone: 11 949636663\nSegmento: Moda Fitness\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-01-21"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-09"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-05-25"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Cotih",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-04-28",
+    "renewalDate": "2026-04-28",
+    "status": "ativo",
+    "contractValue": 80000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Conrado\nEmail: conrado@wed.biz\nTelefone: 17 991108272\nSegmento: Moda Feminina\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): SIM\nInformações de renovação: vitalicio / RENOVAÇÃO SEM CUSTOS (NEGOCIADO COM DOM)\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-05-15"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-07-23"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-03-18"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "CR Store",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-07-13",
+    "nextContactAt": "2026-07-20",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Caroline Rodrigues\nEmail: c_arolinerodrigues@hotmail.com\nTelefone: 19 99917-3604\nSegmento: Moda Feminina\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ⭕️ NÃO RESPONDE\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-04-15"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-23"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "De Nada",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Pessoa de contato: Pyong e Natalia\nEmail: natalia@denada.com.br\npyongleetv@gmail.com\nTelefone: 11 97601-0330\n11 95282-2411\nSegmento: Alimento e bem-estar\nCiclo do contrato: 12 MESES",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Dolcii",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-04-16",
+    "renewalDate": "2027-04-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-06-08",
+    "nextContactAt": "2026-06-15",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Douglas\nEmail: d.pazolini@yahoo.com.br\nTelefone: 47 999320010\nSegmento: Moda íntima feminina\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-05-15"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-05-29"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Doorman",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-04-28",
+    "renewalDate": "2026-04-28",
+    "status": "ativo",
+    "contractValue": 72000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 36000,
+    "renewalPlannedValueRaw": "R$ 36,000.00",
+    "notes": "Pessoa de contato: James\nTelefone: 11  933493829\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): SIM\nInformações de renovação: DOM FICOU DE FAZER CONTATO COM O JAMES PARA RENOVAÇÃO. James falou para CS que não tem interesse em renovar e não quis reunião\nStatus atual (engajamento): 🥇FINALIZADO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-06-03"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Dyusar",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-02-16",
+    "renewalDate": "2027-02-16",
+    "status": "ativo",
+    "contractValue": 126000,
+    "lastContactAt": "2026-07-13",
+    "nextContactAt": "2026-07-20",
+    "renewalPlannedValue": 63000,
+    "renewalPlannedValueRaw": "R$ 63,000.00",
+    "notes": "Pessoa de contato: Rosilene Moura\nEmail: dyusar@yahoo.com\nTelefone: 19 99663-7425\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): NÃO\nStatus atual (engajamento): ❌ SOLICITOU CANCELAMENTO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nÚltima mensalidade confirmada (planilha Jurídico): 2026-02.",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-03-19"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-03-27"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-04-09"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": "2026-03-01",
+    "statusOverride": "cancelado",
+    "source": "CLUB"
+  },
+  {
+    "name": "Fastpace",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-12-01",
+    "renewalDate": "2026-12-01",
+    "status": "ativo",
+    "contractValue": 110000,
+    "lastContactAt": "2026-06-23",
+    "nextContactAt": "2026-06-30",
+    "renewalPlannedValue": 55000,
+    "renewalPlannedValueRaw": "R$ 55,000.00",
+    "notes": "Pessoa de contato: Raquel Moraes\nEmail: raquelmoraes@hormail.com\nTelefone: 81 99925-0098\nSegmento: Moda fitness feminina\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): NÃO\nStatus atual (engajamento): ❌ SOLICITOU CANCELAMENTO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nÚltima mensalidade confirmada (planilha Jurídico): 2026-04.",
+    "meetings": [
+      {
+        "label": "Mentoria 3",
+        "date": "2026-04-24"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": "2026-05-01",
+    "statusOverride": "cancelado",
+    "source": "CLUB"
+  },
+  {
+    "name": "Glowden Cosméticos",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-02-01",
+    "renewalDate": "2027-02-01",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 30000,
+    "renewalPlannedValueRaw": "R$ 30,000.00",
+    "notes": "Pessoa de contato: Molise\nEmail: molisebernardo@outlook.com\nTelefone: 17 98100-3378\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: Tração fez upseel para club\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-02-12"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-02-12"
+      }
+    ],
+    "renewalRealized": {
+      "dueDate": "2026-07-04",
+      "realizedValue": 30000,
+      "notes": "Upsell de Tração para Club"
+    },
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Golf Soul",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": 130000,
+    "lastContactAt": "2026-07-13",
+    "nextContactAt": "2026-07-20",
+    "renewalPlannedValue": 65000,
+    "renewalPlannedValueRaw": "R$ 65,000.00",
+    "notes": "Pessoa de contato: Roberto Arello\nEmail: roberto@golfsoul.com.br\nTelefone: 11 99630-0770\nCiclo do contrato: 12 MESES",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-07-13"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-16"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-07-30"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-07-22"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Harmony Empório Natural",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 130000,
+    "lastContactAt": "2026-06-10",
+    "nextContactAt": "2026-06-17",
+    "renewalPlannedValue": 65000,
+    "renewalPlannedValueRaw": "R$ 65,000.00",
+    "notes": "Pessoa de contato: Diego / Douglas\nEmail: contato.diegoalmeida@icloud\nTelefone: 11 999436476\nSegmento: Moda Masculina\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-05-14"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-07-31"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-06-03"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-07-31"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Hiven Cosméticos",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-03-19",
+    "renewalDate": "2027-03-19",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-06-10",
+    "nextContactAt": "2026-06-17",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Luis Filipe\nEmail: hivencosmeticos@gmail.com\nTelefone: 12 991846402\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-05-07"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-05-20"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Ilumina Beautē",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-07-13",
+    "renewalDate": "2027-07-13",
+    "status": "ativo",
+    "contractValue": 159000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 79500,
+    "renewalPlannedValueRaw": "R$ 79,500.00",
+    "notes": "Pessoa de contato: Ana Carolina\nEmail: ana_verardi@hotmail.com\nTelefone: 54 99601-6583\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-07-13"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-30"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-07-30"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "BrasMédica Distribuidora \n(José Assad Maciel)",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Vinicius Assad\nEmail: viniciusassad@hotmail.com\nTelefone: 98 98432-7957\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ⭕️ NÃO RESPONDE\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-03-27"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-10"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "JU LEME",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-04-01",
+    "renewalDate": "2027-04-01",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-06-12",
+    "nextContactAt": "2026-06-19",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Pedro\nEmail: pedraum789@gmail.com\nTelefone: 11 963271260\nSegmento: Cosméticos (Maquiagem)\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ⚠️ POUCO PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-16"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-05-07"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Lagai",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-12-20",
+    "renewalDate": "2026-12-20",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-06-10",
+    "nextContactAt": "2026-06-20",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Fabiana\nEmail: fabianaxavier80@hotmail.com\nTelefone: 64 996271828\nSegmento: Cosméticos e Maquiagem\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-01-15"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-01-19"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-01-20"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-01-22"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-02-19"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-02-25"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Lakma",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-08-09",
+    "renewalDate": "2026-08-09",
+    "status": "ativo",
+    "contractValue": 116400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 58200,
+    "renewalPlannedValueRaw": "R$ 58,200.00",
+    "notes": "Pessoa de contato: Paula Tondato\nEmail: paula@lakma.com.br\nTelefone: 14 996804052\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: CS FAZER CONTATO PARA REUNIÃO DE ACOMPANHAMENTO\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-08-26"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-09-29"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2025-10-13"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2025-11-26"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2025-12-08"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-01-22"
+      },
+      {
+        "label": "Mentoria 7",
+        "date": "2026-01-23"
+      },
+      {
+        "label": "Mentoria 8",
+        "date": "2026-02-04"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "LIVVAN",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-04-01",
+    "renewalDate": "2027-04-01",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-07-13",
+    "nextContactAt": "2026-07-20",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Luiza Sell Souto Goulart\nEmail: adm@livvan.com.br\nTelefone: 47 99691-1117\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-04-06"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-09"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-23"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-05-13"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-07-23"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Luli Baby",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Tamiris\nEmail: tamiriscristina30@gmail.com\nSegmento: Cosméticos e Calçados Infanti\nCiclo do contrato: 12 MESES",
+    "meetings": [],
+    "renewalRealized": {
+      "dueDate": null,
+      "realizedValue": 44400,
+      "notes": "Upsell de Tração para Club"
+    },
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Marka Têxtil",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-02-25",
+    "renewalDate": "2027-02-25",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-06-08",
+    "nextContactAt": "2026-06-15",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Bruna\nEmail: brunaantonelli@markatextil.com.br\nTelefone: 11 975444564\nSegmento: Blackouts\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-03-19"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-29"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-05-21"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "MenoCare",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-06-10",
+    "renewalDate": "2027-06-10",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Luiz Henrique Nakoneczny\nEmail: luizhenriquen98@gmail.com\nTelefone: 45 99827-3295\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-06-17"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-27"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "MR Carvalho",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-06-13",
+    "renewalDate": "2027-06-13",
+    "status": "ativo",
+    "contractValue": 135000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 67500,
+    "renewalPlannedValueRaw": "R$ 67,500.00",
+    "notes": "Pessoa de contato: Gabriel Pedro\nEmail: Gabrielpeddro@gmail.com\nTelefone: 19 98312-0725\nSegmento: Aromatizador\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-06-15"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-06-19"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-07-10"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Nappô",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-02-15",
+    "renewalDate": "2027-02-15",
+    "status": "ativo",
+    "contractValue": 150000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 75000,
+    "renewalPlannedValueRaw": "R$ 75,000.00",
+    "notes": "Pessoa de contato: Bia Napolitano\nEmail: bia@bianapolitano.com.br\nTelefone: 11 98918-9438\nSegmento: Moda Pijama\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-01-29"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-03-05"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-02-12"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-02-23"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-03-10"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-03-26"
+      },
+      {
+        "label": "Mentoria 7",
+        "date": "2026-04-08"
+      },
+      {
+        "label": "Mentoria 8",
+        "date": "2026-05-14"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Ocean Drop",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-12",
+    "renewalDate": "2027-03-12",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Gustavo\nEmail: gustavo@oceandrop.com.br\nTelefone: 11 98225-8805\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-03-11"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-03-18"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-16"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-03-31"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-04-27"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-05-28"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Óleos Medity",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-07-02",
+    "renewalDate": "2027-07-02",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-07-13",
+    "nextContactAt": "2026-07-20",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Junior Parente\nEmail: Juniormistral22@gmail.com\nTelefone: 85 97400-6331\nSegmento: Óleos Essenciais\nCiclo do contrato: 12 MESES",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-07-02"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-16"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-07-30"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Organica",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-12-01",
+    "renewalDate": "2026-12-01",
+    "status": "ativo",
+    "contractValue": 116400,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 58200,
+    "renewalPlannedValueRaw": "R$ 58,200.00",
+    "notes": "Pessoa de contato: Octavio Galhardi\nEmail: felipe.lima@grupoorganica.com.br\nTelefone: 11 99327-0935\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nPróxima ação / observação: Fez mais duas mentorias em 31/07/2026 além das que já tinha direito",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-12-11"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-01-21"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-02-12"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2026-02-18"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-04-17"
+      },
+      {
+        "label": "Mentoria 6",
+        "date": "2026-04-26"
+      },
+      {
+        "label": "Mentoria 7",
+        "date": "2026-05-22"
+      },
+      {
+        "label": "Mentoria 8",
+        "date": "2026-06-25"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "SAMBA SKINCARE",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-05-25",
+    "nextContactAt": "2026-06-01",
+    "renewalPlannedValue": 77400,
+    "renewalPlannedValueRaw": "R$ 77,400.00",
+    "notes": "Pessoa de contato: Juliana\nEmail: juliana.aleluia@sambaskincare.com.br\nTelefone: 71 999255560\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-01"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-15"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Strongest",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-04-28",
+    "renewalDate": "2026-04-28",
+    "status": "ativo",
+    "contractValue": 34000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 17000,
+    "renewalPlannedValueRaw": "R$ 17,000.00",
+    "notes": "Pessoa de contato: Marcus Dutra\nEmail: marcusviniciusdutra1@gmail.com\nTelefone: 14 98118-8850\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): SIM\nInformações de renovação: Renovou\nVAI FICAR POR 6 MESES DE FORMA GRATUITA POR DIFICULDADES FINANCEIRA. APÓS 6 MESES SE TIVER TIDO RESULTADOS A GENTE FAZ PROPOSTA DE NEGOCIAÇÃO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Uvits Vitaminas",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-03-25",
+    "renewalDate": "2027-03-25",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-06-05",
+    "nextContactAt": "2026-06-12",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Sergio\nEmail: contato@uvits.com.br\nTelefone: 19 953215068\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nInformações de renovação: Pausou pgtos e mentoria por 3 meses\nStatus atual (engajamento): ❌ SOLICITOU CANCELAMENTO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nPróxima ação / observação: Pausou pgtos e mentoria por 3 meses",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-09"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-29"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Vitallini - Veller",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2025-06-26",
+    "renewalDate": "2026-06-26",
+    "status": "cancelado",
+    "contractValue": 94800,
+    "lastContactAt": "2026-06-12",
+    "nextContactAt": "2026-06-19",
+    "renewalPlannedValue": 47400,
+    "renewalPlannedValueRaw": "R$ 47,400.00",
+    "notes": "Pessoa de contato: Mateus\nEmail: vitallinisuplementos@gmail.com\nTelefone: 19 988397172\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nInformações de renovação: Pediu cancelamento\nStatus atual (engajamento): ❌ SOLICITOU CANCELAMENTO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nÚltima mensalidade confirmada (planilha Jurídico): 2026-03.",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-07-10"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-07-25"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2025-10-13"
+      },
+      {
+        "label": "Mentoria 4",
+        "date": "2025-11-27"
+      },
+      {
+        "label": "Mentoria 5",
+        "date": "2026-05-06"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": "2026-04-01",
+    "statusOverride": "cancelado",
+    "source": "CLUB"
+  },
+  {
+    "name": "Wahana",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-02-13",
+    "renewalDate": "2027-02-13",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Pessoa de contato: Pedro\nEmail: pedro@wahana.com.br\nTelefone: 51 9985-4012\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Zencial",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-04-28",
+    "renewalDate": "2026-04-28",
+    "status": "ativo",
+    "contractValue": 79000,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 39500,
+    "renewalPlannedValueRaw": "R$ 39,500.00",
+    "notes": "Pessoa de contato: Gabriel Lombardi\nEmail: lombardigt@gmail.com\nTelefone: 48 99900-5493\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: O Dom está conversando com ele PARA NEGOCIAR POR 20K, pois ele estava sem querer renovar por não ter aproveitado a mentoria.\nStatus atual (engajamento): ⭕️ NÃO RESPONDE\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "ZIVA",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 120000,
+    "lastContactAt": "2026-06-10",
+    "nextContactAt": "2026-06-17",
+    "renewalPlannedValue": 60000,
+    "renewalPlannedValueRaw": "R$ 60,000.00",
+    "notes": "Pessoa de contato: Fabio\nEmail: diretoria@sejaziva.com.br\nTelefone: 87 981521000\nSegmento: Cosméticos\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-04-08"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-04-28"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-05-21"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Natuhair",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-07-14",
+    "renewalDate": "2027-07-14",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": "2026-07-14",
+    "nextContactAt": "2026-07-21",
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Pessoa de contato: Igor Torres\nEmail: igorstorres@gmail.com\nTelefone: 21 99011-8063\nSegmento: Cosméticos\nCiclo do contrato: 12 meses",
+    "meetings": [
+      {
+        "label": "Reunião Kick-off",
+        "date": "2026-07-14"
+      },
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-23"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "ProHair",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-07-15",
+    "renewalDate": "2027-07-15",
+    "status": "ativo",
+    "contractValue": 139600,
+    "lastContactAt": "2026-07-15",
+    "nextContactAt": "2026-07-22",
+    "renewalPlannedValue": 69800,
+    "renewalPlannedValueRaw": "R$ 69,800.00",
+    "notes": "Pessoa de contato: Anamélia\nEmail: prohair.vp@gmail.com\nTelefone: 11 99554-6715\nSegmento: Cosméticos\nCiclo do contrato: 12 meses",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-24"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Pienna",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-07-16",
+    "renewalDate": "2027-07-16",
+    "status": "ativo",
+    "contractValue": 159000,
+    "lastContactAt": "2026-07-17",
+    "nextContactAt": null,
+    "renewalPlannedValue": 79500,
+    "renewalPlannedValueRaw": "R$ 79,500.00",
+    "notes": "Pessoa de contato: Marcelo\nEmail: marcelo.krein@live.com\nTelefone: 51 8169-1959\nSegmento: Semi Joias\nCiclo do contrato: 12 meses",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-07-24"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "ROI Suplementos",
+    "product": "Club",
+    "csKey": "alessandra",
+    "entryDate": "2026-07-16",
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Rafael Riciole\nEmail: contato@roioficial.com\nTelefone: 64 9266-5726\nSegmento: Suplemetos\nPróxima ação / observação: A principio, serão 3 reuniões somente. Após será necociado upsell",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Easyboost",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Luiz Paulo Gonçalves\nEmail: luiz@easyboost.com.br\nTelefone: 11 99579-1866",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "CLUB"
+  },
+  {
+    "name": "Nutriage Suplementos",
+    "product": "Tração",
+    "csKey": "alessandra",
+    "entryDate": "2025-09-09",
+    "renewalDate": "2026-03-08",
+    "status": "pausado",
+    "contractValue": 46600,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Moacir\nEmail: nutriagesuplementos@gmail.com\nTelefone: 33 99153‑8881‬\nSegmento: Suplementos\nCiclo do contrato: 6 MESES\nStatus atual (engajamento): ⭕️ NÃO RESPONDE",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "ACALANTA COSMETICOS LTDA",
+    "product": "Tração",
+    "csKey": "alessandra",
+    "entryDate": "2025-10-31",
+    "renewalDate": "2026-04-29",
+    "status": "ativo",
+    "contractValue": 38000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Email: paulo.sergio@lozinskyconsultoria.com.br\nSegmento: Cosméticos\nCiclo do contrato: 6 MESES",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "EVA NUTRASCIENCE LTDA",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2025-11-01",
+    "renewalDate": "2026-04-30",
+    "status": "ativo",
+    "contractValue": 39900,
+    "lastContactAt": "2026-06-22",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": "está em fase de renovação. Passei pro Dom, pois ela não me responde.",
+    "notes": "Pessoa de contato: Beth\nEmail: bethcaetanoimoveis@gmail.com\nTelefone: 54 98414-7720\nSegmento: Suplementos\nCiclo do contrato: 6 MESES\nStatus atual (engajamento): ⭕️ NÃO RESPONDE\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-10-27"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-11-13"
+      },
+      {
+        "label": "Mentoria 1",
+        "date": "2025-11-19"
+      },
+      {
+        "label": "Mentoria 2",
+        "date": "2026-02-11"
+      },
+      {
+        "label": "Mentoria 3",
+        "date": "2026-04-16"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "REJUV CLINICAL COMERCIO DE COSMETICOS LTDA",
+    "product": "Tração",
+    "csKey": "alessandra",
+    "entryDate": "2025-11-11",
+    "renewalDate": "2026-05-10",
+    "status": "ativo",
+    "contractValue": 41000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Email: franciele@rejuv.com.br\nSegmento: Cosméticos\nCiclo do contrato: 6 MESES\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-11-11"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-11-26"
+      },
+      {
+        "label": "Mentoria 1",
+        "date": "2026-01-15"
+      },
+      {
+        "label": "Mentoria 2",
+        "date": "2026-03-06"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "DEUSA SUPLEMENTOS",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2025-11-21",
+    "renewalDate": "2026-05-20",
+    "status": "ativo",
+    "contractValue": 44400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Email: contato@cabelodedeusa.com\nSegmento: Suplementos\nCiclo do contrato: 6 MESES\nNPS individual (planilha): 0\nÚltima mensalidade confirmada (planilha Jurídico): 2025-11.",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2025-12-02"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2025-12-19"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": "2025-12-01",
+    "statusOverride": "cancelado",
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "NUTREE COMERCIO",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2025-12-03",
+    "renewalDate": "2026-06-01",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Segmento: Produtos naturais\nCiclo do contrato: 6 MESES\nNPS individual (planilha): 0",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "BEEPFIT",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2026-04-02",
+    "renewalDate": "2026-09-29",
+    "status": "ativo",
+    "contractValue": 50000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Segmento: Moda fitness\nCiclo do contrato: 12 MESES\nNPS individual (planilha): 0",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "Houtree",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "ativo",
+    "contractValue": 52000,
+    "lastContactAt": "2026-06-23",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Maristela\nEmail: maristela@houtree.com.br\nTelefone: 1 (908) 536-4115\nSegmento: Cosméticos\nStatus atual (engajamento): ⚠️ POUCO PARTICIPATIVO\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-01-21"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-02-06"
+      },
+      {
+        "label": "Mentoria 1",
+        "date": "2026-02-23"
+      },
+      {
+        "label": "Mentoria 2",
+        "date": "2026-06-26"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "DIVN",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2026-06-01",
+    "renewalDate": "2027-06-01",
+    "status": "ativo",
+    "contractValue": 60000,
+    "lastContactAt": "2026-07-09",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Nathan\nEmail: divn@divn.com.br\nTelefone: 27 98173‑3601‬\nSegmento: Moda masculina\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO\nNPS individual (planilha): 0",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-06-11"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-06-26"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "Policlean",
+    "product": "Tração",
+    "csKey": "alessandra",
+    "entryDate": "2026-05-19",
+    "renewalDate": "2027-05-19",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Roger\nEmail: roger@policlean.com.br\nTelefone: 19 99644-7725\nSegmento: Produtos de limpeza\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2026-05-26"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-06-17"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "ALLOEZIL",
+    "product": "Tração",
+    "csKey": "camila",
+    "entryDate": "2026-06-23",
+    "renewalDate": "2027-06-23",
+    "status": "ativo",
+    "contractValue": 50000,
+    "lastContactAt": "2026-07-14",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Karine Auricchio\nEmail: karine.auricchio@gmail.com\nTelefone: 11 98558-4042\nSegmento: Suplementos\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): ✅ PARTICIPATIVO",
+    "meetings": [
+      {
+        "label": "Diagnóstico",
+        "date": "2027-07-10"
+      },
+      {
+        "label": "Plano de Ação",
+        "date": "2026-07-30"
+      }
+    ],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "TRAÇÃO"
+  },
+  {
+    "name": "Onocaps",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2025-04-28",
+    "renewalDate": "2026-04-28",
+    "status": "pausado",
+    "contractValue": 90500,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": "DOM PEDIU PARA REATIVAR (ENVIAR MENSAGEM CHAMANDO PRA REUNIÃO DA CS E KARINA)",
+    "notes": "Status atual (engajamento): EM FASE DE RENOVAÇÃO",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "Leaf",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-05-10",
+    "renewalDate": "2026-05-10",
+    "status": "cancelado",
+    "contractValue": 94400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Última mensalidade confirmada (planilha Jurídico): 2025-10.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2025-11-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "Perfect Skin",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-10-08",
+    "renewalDate": "2026-10-08",
+    "status": "em_risco",
+    "contractValue": 87300,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Email: apsa.araujo@hotmail.com\nCiclo do contrato: 12 MESES\nÚltima mensalidade confirmada (planilha Jurídico): 2025-11.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2025-12-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "Souly",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-10-29",
+    "renewalDate": "2026-10-29",
+    "status": "pausado",
+    "contractValue": 106000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": null,
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "Totanka",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-12-10",
+    "renewalDate": "2026-12-10",
+    "status": "cancelado",
+    "contractValue": 117000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Ciclo do contrato: 12 MESES\nÚltima mensalidade confirmada (planilha Jurídico): 2025-11.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2025-12-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "CR Store - Caroline Alves Rodrigues",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-06-08",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Caroline Alves Rodrigues\nEmail: c_arolinerodrigues@hotmail.com\nTelefone: 19 99917-3604\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): NÃO RESPONDE",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "José Marques de Jesus Assad Maciel Parente",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-16",
+    "renewalDate": "2027-03-16",
+    "status": "ativo",
+    "contractValue": 154800,
+    "lastContactAt": "2026-05-04",
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Vinicius Assad\nEmail: viniciusassad@hotmail.com\nTelefone: ‪98 98432‑7957‬\nCiclo do contrato: 12 MESES\nStatus atual (engajamento): NÃO RESPONDE\nÚltima mensalidade confirmada (planilha Jurídico): 2026-06.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2026-07-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "Mayui Fit",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-03-17",
+    "renewalDate": "2027-03-17",
+    "status": "cancelado",
+    "contractValue": 127000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Última mensalidade confirmada (planilha Jurídico): 2026-03.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2026-04-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "FRANCISLAINE",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2026-04-01",
+    "renewalDate": "2027-04-01",
+    "status": "cancelado",
+    "contractValue": 100000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Ciclo do contrato: 12 MESES\nÚltima mensalidade confirmada (planilha Jurídico): 2026-03.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": "2026-04-01",
+    "statusOverride": "cancelado",
+    "source": "PAINEL"
+  },
+  {
+    "name": "TNC & CO",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2026-04-09",
+    "renewalDate": "2027-04-09",
+    "status": "cancelado",
+    "contractValue": 139320,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": null,
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "Wellshot",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "pausado",
+    "contractValue": 30000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Gabriel\nEmail: baueb2015@gmail.com\nTelefone: 11 989140632\nCiclo do contrato: 12 MESES",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "Igummy",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": null,
+    "renewalDate": null,
+    "status": "pausado",
+    "contractValue": 94800,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": null,
+    "renewalPlannedValueRaw": null,
+    "notes": "Pessoa de contato: Diego\nEmail: dm.cabrall07@gmail.com\nTelefone: 11 973375105\nCiclo do contrato: 12 MESES",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "PAINEL"
+  },
+  {
+    "name": "Luminna Gest",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-05-10",
+    "renewalDate": "2026-05-10",
+    "status": "ativo",
+    "contractValue": 94800,
+    "lastContactAt": "2026-07-10",
+    "nextContactAt": "2026-07-17",
+    "renewalPlannedValue": 47400,
+    "renewalPlannedValueRaw": "R$ 47,400.00",
+    "notes": "Ciclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: ACIONAR O RAFAEL (ACIONAR O DOM PRA PEDIR O CONTATO)\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "Thelf",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2025-06-10",
+    "renewalDate": "2026-06-10",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Informações de renovação: O DOM NÃO SABE\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "LU FERNANDES",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-06-26",
+    "renewalDate": "2026-06-26",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Informações de renovação: FALAR COM A CAROL, POIS ERA UMA TROCA/PERMUTA\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "Agrega",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2025-08-09",
+    "renewalDate": "2026-08-09",
+    "status": "ativo",
+    "contractValue": 116400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 58200,
+    "renewalPlannedValueRaw": "R$ 58,200.00",
+    "notes": "Informações de renovação: DOM NÃO SABE. VERIFICAR COM A CAROL\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "GABRIELLA CHIL",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-08-09",
+    "renewalDate": "2026-08-09",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Informações de renovação: DOM NÃO SABE. VERIFICAR COM A CAROL\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "Majoris",
+    "product": "Club",
+    "csKey": "camila",
+    "entryDate": "2025-09-25",
+    "renewalDate": "2026-09-25",
+    "status": "ativo",
+    "contractValue": 116400,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 58200,
+    "renewalPlannedValueRaw": "R$ 58,200.00",
+    "notes": "Ciclo do contrato: 12 MESES\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "YGOR ANTONY",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2025-08-18",
+    "renewalDate": "2026-08-18",
+    "status": "ativo",
+    "contractValue": 90000,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 45000,
+    "renewalPlannedValueRaw": "R$ 45,000.00",
+    "notes": "Ciclo do contrato: 12 MESES\nPossibilidade de renovação (percepção CS): TALVEZ\nInformações de renovação: VERIFICAR TELEFONE E FAZER CONTATO. ACIONAR O DOM\nSatisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  },
+  {
+    "name": "KAIABI",
+    "product": "Club",
+    "csKey": "giordana",
+    "entryDate": "2026-04-28",
+    "renewalDate": "2027-04-28",
+    "status": "ativo",
+    "contractValue": null,
+    "lastContactAt": null,
+    "nextContactAt": null,
+    "renewalPlannedValue": 0,
+    "renewalPlannedValueRaw": "R$ 0.00",
+    "notes": "Satisfação (percepção CS): Sem dados\nNPS individual (planilha): 0\nHealth Score manual (planilha): Sem dados\nStatus: lista \"Aguardando Isa\" — onboarding/confirmação pendente.",
+    "meetings": [],
+    "renewalRealized": null,
+    "endDateOverride": null,
+    "statusOverride": null,
+    "source": "AGUARDANDO ISA"
+  }
+]
