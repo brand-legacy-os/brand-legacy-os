@@ -36,6 +36,15 @@ export function canViewCrossAreaProjects(user: SessionUser) {
   return isAdmin(user) || isLeaderOf(user, "operacoes");
 }
 
+/**
+ * Criar/atribuir tarefas no Workflow para qualquer área, não só a própria —
+ * mesmo grupo que tem visão cross-área de Projetos & Tarefas (líderes de
+ * Operações e admin), já que é quem cobra prazo de todas as áreas.
+ */
+export function canManageAnyAreaTask(user: SessionUser) {
+  return isAdmin(user) || isLeaderOf(user, "operacoes");
+}
+
 export function visibleAreaSlugs(user: SessionUser): "all" | string[] {
   if (isAdmin(user)) return "all";
   return user.memberships.map((m) => m.area.slug);

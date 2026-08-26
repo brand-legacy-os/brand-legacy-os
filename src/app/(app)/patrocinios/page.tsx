@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canViewArea, isAdmin } from "@/lib/permissions";
+import { canViewArea, isAdmin, isLeaderOf } from "@/lib/permissions";
 import { formatCompactCurrency, formatDate } from "@/lib/format";
 import { StatusPill, type Tone } from "@/components/ui/status-pill";
 
@@ -15,7 +15,7 @@ const STATUS_TONE: Record<string, Tone> = {
 
 export default async function PatrociniosPage() {
   const user = await requireUser();
-  if (!isAdmin(user) && !canViewArea(user, "eventos")) notFound();
+  if (!isAdmin(user) && !canViewArea(user, "eventos") && !isLeaderOf(user, "operacoes")) notFound();
 
   const sponsorships = await prisma.sponsorship.findMany({
     include: { event: true },

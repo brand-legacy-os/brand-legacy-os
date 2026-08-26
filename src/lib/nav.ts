@@ -1,5 +1,5 @@
 import type { SessionUser } from "./auth";
-import { isAdmin } from "./permissions";
+import { isAdmin, isLeaderOf } from "./permissions";
 import { hasFinanceRole } from "./finance-auth";
 
 export type NavItem = { label: string; href: string; badge?: number };
@@ -76,6 +76,13 @@ export function buildNav(
         }),
     },
   ];
+
+  // Líder de Operações acompanha patrocínios mesmo sem ser membro de Eventos
+  // (mesmo grupo que já tem visão cross-área de Workflow/Projetos).
+  const alreadyHasEventos = visibleAreas.some((a) => a.slug === "eventos");
+  if (!admin && !alreadyHasEventos && isLeaderOf(user, "operacoes")) {
+    groups[1].items.push({ label: "Patrocínios", href: "/patrocinios" });
+  }
 
   if (financeRole) {
     groups.push({

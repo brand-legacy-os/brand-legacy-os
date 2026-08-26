@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { canManageTask, canEditAreaKpis, canViewArea, isAdmin } from "@/lib/permissions";
+import { canManageTask, canEditAreaKpis, canViewArea, isAdmin, canManageAnyAreaTask } from "@/lib/permissions";
 import type { TaskStatus, TaskPriority } from "@prisma/client";
 
 export type ActionState = { error?: string; success?: boolean };
@@ -202,7 +202,7 @@ export async function reassignTaskAction(
   });
   if (!task) return { error: "Tarefa não encontrada." };
 
-  if (!isAdmin(user) && !canEditAreaKpis(user, task.area.slug)) {
+  if (!canEditAreaKpis(user, task.area.slug) && !canManageAnyAreaTask(user)) {
     return { error: "Apenas o líder da área pode reatribuir tarefas." };
   }
 
@@ -277,7 +277,7 @@ export async function createTaskAction(
   const area = await prisma.area.findUnique({ where: { id: areaId } });
   if (!area) return { error: "Área inválida." };
 
-  if (!isAdmin(user) && !canEditAreaKpis(user, area.slug)) {
+  if (!canEditAreaKpis(user, area.slug) && !canManageAnyAreaTask(user)) {
     return { error: "Apenas o líder da área pode criar tarefas." };
   }
 

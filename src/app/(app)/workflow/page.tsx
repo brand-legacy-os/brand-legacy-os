@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { visibleAreaSlugs, isAdmin, isLeaderOf } from "@/lib/permissions";
+import { visibleAreaSlugs, isAdmin, isLeaderOf, canManageAnyAreaTask } from "@/lib/permissions";
 import { formatDate, TASK_STATUS_META, TASK_PRIORITY_META } from "@/lib/format";
 import { StatusPill, taskStatusTone, priorityTone } from "@/components/ui/status-pill";
 import { WorkflowFilterBar } from "@/components/workflow/workflow-filter-bar";
@@ -62,7 +62,7 @@ export default async function WorkflowPage({
 
   const now = new Date();
 
-  const manageableAreaSlugs = isAdmin(user)
+  const manageableAreaSlugs = canManageAnyAreaTask(user)
     ? "all"
     : allAreasForFilter
         .filter((a) => isLeaderOf(user, a.slug))
