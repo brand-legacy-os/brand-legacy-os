@@ -14,7 +14,7 @@ import type {
   ContentPostStatus,
 } from "@prisma/client";
 
-export type ActionState = { error?: string; success?: boolean };
+export type ActionState = { error?: string; success?: boolean; postId?: string };
 
 async function requireSocialManager() {
   const user = await requireUser();
@@ -284,7 +284,7 @@ export async function createContentPostAction(
     return { error: "Preencha data, perfil, formato e tema." };
   }
 
-  await prisma.contentCalendarPost.create({
+  const post = await prisma.contentCalendarPost.create({
     data: {
       date: new Date(`${dateRaw}T12:00:00`),
       profileId,
@@ -297,7 +297,49 @@ export async function createContentPostAction(
   });
 
   revalidateSocial();
-  return { success: true };
+  return { success: true, postId: post.id };
+}
+
+// ---------------------------------------------------------------------------
+// Card do post (estilo Asana) — links de apoio
+// ---------------------------------------------------------------------------
+
+export async function createContentPostLinkAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const postId = String(formData.get("postId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const url = String(formData.get("url") ?? "").trim();
+
+  if (!postId) return { error: "Post não encontrado." };
+  if (!label || !url) return { error: "Preencha o nome e o link." };
+  if (!/^https:\/\//i.test(url)) {
+    return { error: "O link precisa começar com https://" };
+  }
+
+  await prisma.contentCalendarPostLink.create({ data: { postId, label, url } });
+
+  revalidateSocial();
+  return { success: true, postId };
+}
+
+export async function deleteContentPostLinkAction(formData: FormData) {
+  try {
+    await requireSocialManager();
+  } catch {
+    return;
+  }
+  const linkId = String(formData.get("linkId") ?? "");
+  if (!linkId) return;
+  await prisma.contentCalendarPostLink.delete({ where: { id: linkId } });
+  revalidateSocial();
 }
 
 export async function updateContentPostStatusAction(formData: FormData) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createContentPostAction, type ActionState } from "@/lib/actions/social";
 import { CONTENT_FORMAT_META, CONTENT_POST_STATUS_META } from "@/lib/social";
 
@@ -17,14 +18,18 @@ export function CreateContentPostForm({
     initialState
   );
   const ref = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (state.success) {
       ref.current?.reset();
       setOpen(false);
+      // Post submetido → abre direto o card estilo Asana pra já anexar
+      // links, tarefas e prazo.
+      if (state.postId) router.push(`/social/calendario?post=${state.postId}`);
     }
-  }, [state.success]);
+  }, [state.success, state.postId, router]);
 
   if (!open) {
     return (

@@ -316,15 +316,21 @@ model Task {
   customerId  String?
   /// Texto livre ("semanal", "mensal"...) ou null para tarefa avulsa.
   recurrence  String?
+  /// Post do calendário de Social que originou esta tarefa (card estilo
+  /// Asana) — opcional, só preenchido para tarefas abertas por lá.
+  contentPostId String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  area      Area                @relation(fields: [areaId], references: [id], onDelete: Cascade)
-  project   Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  assignee  User                @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  customer  Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  checklist TaskChecklistItem[]
-  comments  TaskComment[]
+  area        Area                 @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  project     Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  assignee    User                 @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  customer    Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  contentPost ContentCalendarPost? @relation(fields: [contentPostId], references: [id], onDelete: SetNull)
+  checklist   TaskChecklistItem[]
+  comments    TaskComment[]
+
+  @@index([contentPostId])
 }
 
 model TaskChecklistItem {
@@ -891,8 +897,26 @@ model ContentCalendarPost {
   createdById String
   createdAt   DateTime          @default(now())
 
-  profile   SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  createdBy User          @relation(fields: [createdById], references: [id])
+  profile   SocialProfile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdBy User                      @relation(fields: [createdById], references: [id])
+  links     ContentCalendarPostLink[]
+  /// Tarefas reais do Workflow (mesma Task de sempre) abertas a partir do
+  /// card estilo Asana do post — aparecem aqui E em Workflow, é a mesma linha.
+  tasks     Task[]
+}
+
+/// Um link de referência (briefing, drive, roteiro...) anexado ao card
+/// estilo Asana do post — não é o link publicado, é material de apoio.
+model ContentCalendarPostLink {
+  id        String   @id @default(cuid())
+  postId    String
+  label     String
+  url       String
+  createdAt DateTime @default(now())
+
+  post ContentCalendarPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
 }
 
 // ---------------------------------------------------------------------------

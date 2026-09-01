@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { canEditAreaKpis, canViewArea } from "@/lib/permissions";
 import { SocialTabs } from "@/components/social/social-tabs";
 import { CreateContentPostForm } from "@/components/social/create-content-post-form";
+import { ContentPostCard } from "@/components/social/content-post-card";
 import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
 import { updateContentPostStatusAction, deleteContentPostAction } from "@/lib/actions/social";
 import {
@@ -15,15 +16,19 @@ import {
 import { formatDate } from "@/lib/format";
 import { notFound } from "next/navigation";
 
-export default async function SocialCalendarioPage() {
+export default async function SocialCalendarioPage({
+  searchParams,
+}: PageProps<"/social/calendario">) {
   const user = await requireUser();
   if (!canViewArea(user, "social")) notFound();
   const canEdit = canEditAreaKpis(user, "social");
+  const sp = await searchParams;
+  const openPostId = (sp.post as string) || null;
 
   const [profiles, posts] = await Promise.all([
     prisma.socialProfile.findMany({ orderBy: { order: "asc" } }),
     prisma.contentCalendarPost.findMany({
-      include: { profile: true },
+      include: { profile: true, _count: { select: { links: true, tasks: true } } },
       orderBy: { date: "asc" },
       where: { date: { gte: new Date(new Date().setDate(new Date().getDate() - 7)) } },
     }),
@@ -76,7 +81,20 @@ export default async function SocialCalendarioPage() {
                   <td className="tnum px-4 py-3 text-ink-soft">{formatDate(post.date)}</td>
                   <td className="px-4 py-3 text-ink">{post.profile.name}</td>
                   <td className="px-4 py-3 text-ink-soft">{CONTENT_FORMAT_META[post.format].label}</td>
-                  <td className="px-4 py-3 text-ink">{post.theme}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/social/calendario?post=${post.id}`}
+                      className="flex items-center gap-2 text-ink hover:text-brand hover:underline"
+                    >
+                      {post.theme}
+                      {(post._count.links > 0 || post._count.tasks > 0) && (
+                        <span className="tnum flex shrink-0 items-center gap-1.5 text-[11px] text-ink-faint">
+                          {post._count.links > 0 && <span>🔗 {post._count.links}</span>}
+                          {post._count.tasks > 0 && <span>✓ {post._count.tasks}</span>}
+                        </span>
+                      )}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3">
                     {canEdit ? (
                       <AutoSubmitSelect
@@ -95,12 +113,20 @@ export default async function SocialCalendarioPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    {canEdit && (
-                      <form action={deleteContentPostAction}>
-                        <input type="hidden" name="postId" value={post.id} />
-                        <button className="text-[11.5px] text-critical hover:underline">Excluir</button>
-                      </form>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <Link
+                        href={`/social/calendario?post=${post.id}`}
+                        className="text-[11.5px] font-medium text-brand hover:underline"
+                      >
+                        Abrir card
+                      </Link>
+                      {canEdit && (
+                        <form action={deleteContentPostAction}>
+                          <input type="hidden" name="postId" value={post.id} />
+                          <button className="text-[11.5px] text-critical hover:underline">Excluir</button>
+                        </form>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -140,6 +166,8 @@ export default async function SocialCalendarioPage() {
           Jornal interno (ferramenta anterior — considerar migrar para o Jornal BL) →
         </Link>
       </section>
+
+      {openPostId && <ContentPostCard postId={openPostId} />}
     </>
   );
 }

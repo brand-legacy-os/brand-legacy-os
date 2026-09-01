@@ -13,6 +13,10 @@ function revalidateTaskViews(areaSlug: string, taskId?: string) {
   revalidatePath("/projetos");
   revalidatePath("/dashboard");
   revalidatePath("/workflow");
+  // Tarefas abertas a partir do card estilo Asana do calendário de Social
+  // precisam refletir aqui também — barato revalidar sempre, mesmo para
+  // tarefas sem origem no calendário.
+  revalidatePath("/social/calendario");
   if (taskId) revalidatePath(`/workflow/${taskId}`);
 }
 
@@ -288,6 +292,7 @@ export async function createTaskAction(
   const priority = (String(formData.get("priority") ?? "media") || "media") as TaskPriority;
   const product = String(formData.get("product") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
+  const contentPostId = String(formData.get("contentPostId") ?? "") || null;
 
   const task = await prisma.task.create({
     data: {
@@ -298,6 +303,7 @@ export async function createTaskAction(
       assigneeId,
       projectId,
       priority,
+      contentPostId,
       deadline: new Date(`${deadlineRaw}T18:00:00`),
       status: "no_ritmo",
     },
