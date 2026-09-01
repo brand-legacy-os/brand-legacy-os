@@ -81,7 +81,29 @@ export function parseReporteiText(rawText: string): ScrapedMetric[] {
   return metrics;
 }
 
+// Teto duro para o scrape inteiro (launch + navegação + espera) — sem isso,
+// um Chrome que trava para abrir (visto localmente neste Windows ARM64) deixa
+// a Server Action pendurada para sempre e o botão "Atualizar" nunca erra nem
+// resolve, travado em "Atualizando…" indefinidamente.
+const OVERALL_TIMEOUT_MS = 60000;
+
 export async function scrapeReporteiDashboard(url: string): Promise<ScrapedMetric[]> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("Tempo esgotado ao carregar o Reportei.")),
+      OVERALL_TIMEOUT_MS
+    );
+  });
+
+  try {
+    return await Promise.race([scrapeReporteiDashboardInner(url), timeout]);
+  } finally {
+    clearTimeout(timer!);
+  }
+}
+
+async function scrapeReporteiDashboardInner(url: string): Promise<ScrapedMetric[]> {
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
   const browser = await puppeteer.launch({
     headless: true,
