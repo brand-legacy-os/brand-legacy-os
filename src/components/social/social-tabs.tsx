@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/social", label: "Indicadores gerais" },
+  { href: "/social/dashboard", label: "Dashboard Reportei" },
   { href: "/social/colaboradores", label: "Por colaborador" },
   { href: "/social/calendario", label: "Calendário e metodologia" },
   { href: "/social/tarefas", label: "Tarefas" },

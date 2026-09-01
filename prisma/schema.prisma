@@ -805,6 +805,41 @@ model SocialProfile {
 
   person               User?                 @relation(fields: [personId], references: [id])
   contentCalendarPosts ContentCalendarPost[]
+  reporteiMetrics      SocialReporteiMetric[]
+  reporteiInsights     SocialReporteiInsight[]
+}
+
+/// Uma linha por card de métrica extraído do dashboard público do Reportei —
+/// esquema genérico de propósito, porque cada perfil pode ter um conjunto
+/// diferente de cards e o Reportei pode adicionar/remover cards a qualquer
+/// momento. "Atualizar" apaga e recria todas as linhas do perfil.
+model SocialReporteiMetric {
+  id            String   @id @default(cuid())
+  profileId     String
+  title         String
+  periodLabel   String?
+  value         String
+  deltaLabel    String?
+  previousLabel String?
+  fetchedAt     DateTime @default(now())
+
+  profile SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+/// Pontos de atenção calculados a partir do último pull de métricas —
+/// recalculado a cada "Atualizar", nunca preenchido manualmente.
+model SocialReporteiInsight {
+  id        String   @id @default(cuid())
+  profileId String
+  severity  String
+  message   String
+  fetchedAt DateTime @default(now())
+
+  profile SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
 }
 
 model PodcastEpisode {

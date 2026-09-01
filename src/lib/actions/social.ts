@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canEditAreaKpis } from "@/lib/permissions";
+import { scrapeReporteiDashboard } from "@/lib/reportei-scraper";
+import { generateReporteiInsights } from "@/lib/reportei-insights";
 import type {
   PodcastStatus,
   PodcastSource,
@@ -29,6 +31,7 @@ function revalidateSocial() {
   revalidatePath("/social/tarefas");
   revalidatePath("/social/crm");
   revalidatePath("/social/podcast");
+  revalidatePath("/social/dashboard");
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +64,57 @@ export async function updateSocialProfileAction(
 
   revalidateSocial();
   return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard Reportei
+// ---------------------------------------------------------------------------
+
+export type ReporteiRefreshState = { error?: string; success?: boolean; count?: number };
+
+export async function refreshSocialReporteiAction(
+  _prev: ReporteiRefreshState,
+  formData: FormData
+): Promise<ReporteiRefreshState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const profileId = String(formData.get("profileId") ?? "");
+  if (!profileId) return { error: "Perfil não encontrado." };
+
+  const profile = await prisma.socialProfile.findUnique({ where: { id: profileId } });
+  if (!profile || !profile.reporteiUrl) {
+    return { error: "Este perfil não tem link do Reportei vinculado." };
+  }
+
+  let metrics;
+  try {
+    metrics = await scrapeReporteiDashboard(profile.reporteiUrl);
+  } catch {
+    return { error: "Não foi possível carregar o Reportei agora. Tente novamente em instantes." };
+  }
+  if (metrics.length === 0) {
+    return { error: "O Reportei não retornou dados legíveis dessa vez. Tente novamente." };
+  }
+
+  const insights = generateReporteiInsights(metrics);
+
+  await prisma.$transaction([
+    prisma.socialReporteiMetric.deleteMany({ where: { profileId } }),
+    prisma.socialReporteiInsight.deleteMany({ where: { profileId } }),
+    prisma.socialReporteiMetric.createMany({
+      data: metrics.map((m) => ({ profileId, ...m })),
+    }),
+    prisma.socialReporteiInsight.createMany({
+      data: insights.map((i) => ({ profileId, ...i })),
+    }),
+  ]);
+
+  revalidateSocial();
+  return { success: true, count: metrics.length };
 }
 
 // ---------------------------------------------------------------------------
