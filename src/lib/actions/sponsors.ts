@@ -237,6 +237,80 @@ export async function updateSponsorAction(
 // Parcelas
 // ---------------------------------------------------------------------------
 
+export async function addSponsorInstallmentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSponsorManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const sponsorId = String(formData.get("sponsorId") ?? "");
+  const dueDateRaw = String(formData.get("dueDate") ?? "");
+  const amount = Number(String(formData.get("amount") ?? "0").replace(",", "."));
+
+  if (!sponsorId) return { error: "Patrocinador não encontrado." };
+  if (!dueDateRaw || !amount || amount <= 0) return { error: "Informe valor e vencimento da parcela." };
+
+  const lastNumber = await prisma.sponsorInstallment.count({ where: { sponsorId } });
+
+  await prisma.sponsorInstallment.create({
+    data: {
+      sponsorId,
+      number: lastNumber + 1,
+      amount,
+      dueDate: new Date(`${dueDateRaw}T12:00:00`),
+    },
+  });
+
+  revalidateSponsors(sponsorId);
+  return { success: true, sponsorId };
+}
+
+export async function updateSponsorInstallmentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSponsorManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const installmentId = String(formData.get("installmentId") ?? "");
+  const existing = await prisma.sponsorInstallment.findUnique({ where: { id: installmentId } });
+  if (!existing) return { error: "Parcela não encontrada." };
+
+  const dueDateRaw = String(formData.get("dueDate") ?? "");
+  const amount = Number(String(formData.get("amount") ?? "0").replace(",", "."));
+  if (!dueDateRaw || !amount || amount <= 0) return { error: "Informe valor e vencimento da parcela." };
+
+  await prisma.sponsorInstallment.update({
+    where: { id: installmentId },
+    data: { dueDate: new Date(`${dueDateRaw}T12:00:00`), amount },
+  });
+
+  revalidateSponsors(existing.sponsorId);
+  return { success: true, sponsorId: existing.sponsorId };
+}
+
+export async function deleteSponsorInstallmentAction(formData: FormData) {
+  try {
+    await requireSponsorManager();
+  } catch {
+    return;
+  }
+
+  const installmentId = String(formData.get("installmentId") ?? "");
+  const existing = await prisma.sponsorInstallment.findUnique({ where: { id: installmentId } });
+  if (!existing) return;
+
+  await prisma.sponsorInstallment.delete({ where: { id: installmentId } });
+  revalidateSponsors(existing.sponsorId);
+}
+
 export async function toggleSponsorInstallmentPaidAction(formData: FormData) {
   try {
     await requireSponsorManager();

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatCompactCurrency } from "@/lib/format";
 import { SPONSOR_TIER_META, SPONSOR_PAYMENT_METHOD_META } from "@/lib/sponsors";
+import { DonutChart } from "@/components/charts/donut-chart";
 
 type SponsorRow = {
   id: string;
@@ -27,6 +28,14 @@ export function EventSponsorsSection({ sponsors }: { sponsors: SponsorRow[] }) {
           Gerenciar em Patrocínios →
         </Link>
       </div>
+      {sponsors.length > 1 && (
+        <DonutChart
+          data={sponsors.map((s) => ({ label: s.name, value: s.totalValue }))}
+          formatValue={(v) => formatCompactCurrency(v)}
+          centerLabel="patrocinado"
+          ariaLabel="Representatividade de cada patrocinador no evento"
+        />
+      )}
       <div className="flex flex-col gap-2.5">
         {sponsors.map((s) => (
           <Link

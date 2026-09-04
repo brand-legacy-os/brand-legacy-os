@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/patrocinios", label: "Dashboard" },
   { href: "/patrocinios/base", label: "Base de patrocinadores" },
-  { href: "/patrocinios/historico", label: "Histórico importado" },
+  { href: "/patrocinios/tarefas", label: "Tarefas" },
 ];
 
 export function PatrociniosTabs() {

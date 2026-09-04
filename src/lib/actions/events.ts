@@ -452,6 +452,68 @@ export async function toggleBudgetLinePaymentAction(formData: FormData) {
   revalidatePath("/financeiro");
 }
 
+export async function updateBudgetLinePaymentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const paymentId = String(formData.get("paymentId") ?? "");
+  const payment = await prisma.eventBudgetLinePayment.findUnique({
+    where: { id: paymentId },
+    include: { budgetLine: { include: { event: true } } },
+  });
+  if (!payment) return { error: "Parcela não encontrada." };
+
+  const dueRaw = String(formData.get("dueDate") ?? "");
+  const amountRaw = String(formData.get("amount") ?? "0").replace(",", ".");
+  if (!dueRaw) return { error: "Informe a data da parcela." };
+
+  const dueDate = new Date(`${dueRaw}T12:00:00`);
+  const amount = Number(amountRaw) || 0;
+
+  await prisma.eventBudgetLinePayment.update({
+    where: { id: paymentId },
+    data: { dueDate, amount },
+  });
+
+  // Parcela já paga tem uma CashMovement espelhando ela — mantém em sincronia
+  // pra não deixar o Caixa mostrando um valor/data antigo depois do ajuste.
+  if (payment.cashMovementId) {
+    await prisma.cashMovement.update({
+      where: { id: payment.cashMovementId },
+      data: { date: dueDate, amount: -Math.abs(amount) },
+    });
+  }
+
+  revalidateEvent(payment.budgetLine.eventId);
+  revalidatePath("/financeiro/caixa");
+  revalidatePath("/financeiro");
+  return { success: true };
+}
+
+export async function deleteBudgetLinePaymentAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+
+  const paymentId = String(formData.get("paymentId") ?? "");
+  const payment = await prisma.eventBudgetLinePayment.findUnique({
+    where: { id: paymentId },
+    include: { budgetLine: true },
+  });
+  if (!payment) return;
+
+  if (payment.cashMovementId) {
+    await prisma.cashMovement.delete({ where: { id: payment.cashMovementId } }).catch(() => {});
+  }
+  await prisma.eventBudgetLinePayment.delete({ where: { id: paymentId } });
+
+  revalidateEvent(payment.budgetLine.eventId);
+  revalidatePath("/financeiro/caixa");
+  revalidatePath("/financeiro");
+}
+
 // ---------------------------------------------------------------------------
 // Confirmados
 // ---------------------------------------------------------------------------

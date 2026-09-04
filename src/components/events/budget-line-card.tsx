@@ -4,6 +4,8 @@ import { useActionState, useRef, useEffect, useState } from "react";
 import {
   toggleBudgetLinePaymentAction,
   addBudgetLinePaymentAction,
+  updateBudgetLinePaymentAction,
+  deleteBudgetLinePaymentAction,
   updateBudgetLineAction,
   deleteBudgetLineAction,
   type ActionState,
@@ -36,9 +38,55 @@ type Line = {
   payments: { id: string; dueDate: Date; amount: number; paid: boolean }[];
 };
 
+function toDateInputValue(d: Date) {
+  return new Date(d).toISOString().slice(0, 10);
+}
+
+function EditPaymentForm({
+  payment,
+  onDone,
+}: {
+  payment: { id: string; dueDate: Date; amount: number };
+  onDone: () => void;
+}) {
+  const [state, formAction, pending] = useActionState(updateBudgetLinePaymentAction, initialState);
+
+  useEffect(() => {
+    if (state.success) onDone();
+  }, [state.success, onDone]);
+
+  return (
+    <form action={formAction} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="paymentId" value={payment.id} />
+      <input
+        name="dueDate"
+        type="date"
+        required
+        defaultValue={toDateInputValue(payment.dueDate)}
+        className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+      />
+      <input
+        name="amount"
+        inputMode="decimal"
+        required
+        defaultValue={payment.amount}
+        className="h-8 w-28 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+      />
+      <button type="submit" disabled={pending} className="h-8 rounded-(--radius-s) bg-brand-deep px-3 text-[11.5px] font-medium text-gold-soft disabled:opacity-60">
+        {pending ? "Salvando…" : "Salvar"}
+      </button>
+      <button type="button" onClick={onDone} className="text-[11px] text-ink-faint hover:underline">
+        Cancelar
+      </button>
+      {state.error && <span className="w-full text-[11px] text-critical">{state.error}</span>}
+    </form>
+  );
+}
+
 export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boolean }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(
     addBudgetLinePaymentAction,
     initialState
@@ -130,25 +178,48 @@ export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boo
               pago {formatCompactCurrency(paidTotal)} / {formatCompactCurrency(scheduledTotal)}
             </span>
           </div>
-          {line.payments.map((p) => (
-            <form
-              key={p.id}
-              action={toggleBudgetLinePaymentAction}
-              className="flex items-center gap-2"
-            >
-              <input type="hidden" name="paymentId" value={p.id} />
-              <button
-                type="submit"
-                disabled={!canManage}
-                className={`h-4 w-4 shrink-0 rounded border ${p.paid ? "border-brand-deep bg-brand-deep" : "border-border-strong"}`}
-                aria-label={p.paid ? "Marcar como não pago" : "Marcar como pago"}
-              />
-              <span className="text-[12px] text-ink-soft">
-                {formatCompactCurrency(p.amount)} · {p.paid ? "pago" : "vence"}{" "}
-                {formatDate(p.dueDate)}
-              </span>
-            </form>
-          ))}
+          {line.payments.map((p) =>
+            editingPaymentId === p.id ? (
+              <EditPaymentForm key={p.id} payment={p} onDone={() => setEditingPaymentId(null)} />
+            ) : (
+              <div key={p.id} className="flex items-center gap-2">
+                <form action={toggleBudgetLinePaymentAction}>
+                  <input type="hidden" name="paymentId" value={p.id} />
+                  <button
+                    type="submit"
+                    disabled={!canManage}
+                    className={`h-4 w-4 shrink-0 rounded border ${p.paid ? "border-brand-deep bg-brand-deep" : "border-border-strong"}`}
+                    aria-label={p.paid ? "Marcar como não pago" : "Marcar como pago"}
+                  />
+                </form>
+                <span className="text-[12px] text-ink-soft">
+                  {formatCompactCurrency(p.amount)} · {p.paid ? "pago" : "vence"}{" "}
+                  {formatDate(p.dueDate)}
+                </span>
+                {canManage && (
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      onClick={() => setEditingPaymentId(p.id)}
+                      className="text-[10.5px] font-medium text-brand hover:underline"
+                    >
+                      editar
+                    </button>
+                    <form
+                      action={deleteBudgetLinePaymentAction}
+                      onSubmit={(e) => {
+                        if (!confirm("Excluir esta parcela?")) e.preventDefault();
+                      }}
+                    >
+                      <input type="hidden" name="paymentId" value={p.id} />
+                      <button type="submit" className="text-[10.5px] text-ink-faint hover:text-critical">
+                        excluir
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            )
+          )}
         </div>
       )}
 

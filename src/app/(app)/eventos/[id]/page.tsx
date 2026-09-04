@@ -63,7 +63,7 @@ export default async function EventDetailPage({
       : null;
 
   const sponsorshipGoal = sponsorshipGoalFor(event.budgetPlanned);
-  const sponsorPct = sponsorshipGoal > 0 ? Math.round((stats.sponsorRevenueRealized / sponsorshipGoal) * 100) : null;
+  const sponsorPct = sponsorshipGoal > 0 ? Math.round((stats.sponsorRevenuePlanned / sponsorshipGoal) * 100) : null;
 
   // Pizza de custo por categoria (só realizado).
   const costByCategory = new Map<string, number>();
@@ -205,7 +205,7 @@ export default async function EventDetailPage({
         <div className="rounded-(--radius-l) border border-border bg-surface p-5">
           <p className="text-[12px] text-ink-soft">Patrocínio realizado × meta</p>
           <p className="tnum font-(family-name:--font-display) text-[20px] text-ink">
-            {formatCompactCurrency(stats.sponsorRevenueRealized)}
+            {formatCompactCurrency(stats.sponsorRevenuePlanned)}
             {" / "}
             {formatCompactCurrency(sponsorshipGoal)}
           </p>

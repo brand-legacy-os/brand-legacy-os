@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { canViewSponsors, canManageSponsors } from "@/lib/permissions";
 import { resolvePeriod, type PeriodKey } from "@/lib/period";
 import { formatCompactCurrency, formatCurrency } from "@/lib/format";
-import { sponsorPaidValue } from "@/lib/sponsors";
+import { sponsorPaidValue, sponsorshipGoalFor } from "@/lib/sponsors";
 import { FilterBar } from "@/components/dashboard/filter-bar";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
@@ -25,9 +25,14 @@ export default async function PatrociniosPage({
   const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
   const year = Number(sp.ano as string) || new Date().getFullYear();
 
-  const [sponsors, events] = await Promise.all([
+  const [sponsors, events, imersoes] = await Promise.all([
     prisma.sponsor.findMany({ include: { installments: true } }),
     prisma.event.findMany({ orderBy: { startDate: "desc" }, select: { id: true, name: true } }),
+    prisma.event.findMany({
+      where: { type: "Imersão" },
+      orderBy: { startDate: "asc" },
+      select: { id: true, name: true, budgetPlanned: true, sponsors: { select: { totalValue: true } } },
+    }),
   ]);
 
   const inPeriod = sponsors.filter(
@@ -59,6 +64,12 @@ export default async function PatrociniosPage({
     .map((s) => ({ ...s, paid: sponsorPaidValue(s) }))
     .sort((a, b) => b.totalValue - a.totalValue)
     .slice(0, 8);
+
+  const imersaoChart = imersoes.map((e) => ({
+    name: e.name,
+    contratado: e.sponsors.reduce((s, sp) => s + sp.totalValue, 0),
+    meta: sponsorshipGoalFor(e.budgetPlanned),
+  }));
 
   return (
     <>
@@ -118,6 +129,22 @@ export default async function PatrociniosPage({
           ]}
           formatValue={formatCompactCurrency}
         />
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <h2 className="text-[13px] font-medium text-ink-soft">Patrocínio por imersão — contratado × meta</h2>
+        {imersaoChart.length > 0 ? (
+          <GroupedBarChart
+            categories={imersaoChart.map((e) => e.name)}
+            series={[
+              { label: "Contratado", values: imersaoChart.map((e) => e.contratado) },
+              { label: "Meta", values: imersaoChart.map((e) => e.meta) },
+            ]}
+            formatValue={formatCompactCurrency}
+          />
+        ) : (
+          <p className="text-[12.5px] text-ink-faint">Nenhuma Imersão cadastrada ainda.</p>
+        )}
       </section>
 
       <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
