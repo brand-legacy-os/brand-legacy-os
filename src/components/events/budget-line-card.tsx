@@ -5,6 +5,7 @@ import {
   toggleBudgetLinePaymentAction,
   addBudgetLinePaymentAction,
   updateBudgetLineAction,
+  deleteBudgetLineAction,
   type ActionState,
 } from "@/lib/actions/events";
 import { budgetLineStatusTone, BUDGET_LINE_STATUS_OPTIONS } from "@/lib/events";
@@ -77,9 +78,24 @@ export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boo
             {formatCompactCurrency(line.plannedValue ?? 0)}
           </span>
           {canManage && (
-            <button onClick={() => setEditing((v) => !v)} className="text-[11px] font-medium text-brand hover:underline">
-              {editing ? "fechar" : "editar"}
-            </button>
+            <>
+              <button onClick={() => setEditing((v) => !v)} className="text-[11px] font-medium text-brand hover:underline">
+                {editing ? "fechar" : "editar"}
+              </button>
+              <form
+                action={deleteBudgetLineAction}
+                onSubmit={(e) => {
+                  if (!confirm(`Excluir "${line.item}"? Isso também remove as parcelas e qualquer lançamento de caixa vinculado.`)) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="lineId" value={line.id} />
+                <button type="submit" className="text-[11px] text-ink-faint hover:text-critical">
+                  excluir
+                </button>
+              </form>
+            </>
           )}
         </div>
       </div>

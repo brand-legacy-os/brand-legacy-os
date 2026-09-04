@@ -361,6 +361,31 @@ export async function updateBudgetLineAction(
   return { success: true };
 }
 
+export async function deleteBudgetLineAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+
+  const lineId = String(formData.get("lineId") ?? "");
+  const line = await prisma.eventBudgetLine.findUnique({
+    where: { id: lineId },
+    include: { payments: true },
+  });
+  if (!line) return;
+
+  // Parcelas pagas geraram uma CashMovement no Caixa — apaga junto pra não
+  // deixar lançamento órfão lá quando o item de orçamento some.
+  const cashMovementIds = line.payments.map((p) => p.cashMovementId).filter((id): id is string => !!id);
+  if (cashMovementIds.length > 0) {
+    await prisma.cashMovement.deleteMany({ where: { id: { in: cashMovementIds } } });
+  }
+
+  await prisma.eventBudgetLine.delete({ where: { id: lineId } });
+
+  revalidateEvent(line.eventId);
+  revalidatePath("/financeiro/caixa");
+  revalidatePath("/financeiro");
+}
+
 export async function addBudgetLinePaymentAction(
   _prev: ActionState,
   formData: FormData
