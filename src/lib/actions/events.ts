@@ -533,6 +533,21 @@ export async function updateAttendeeAction(
   return { success: true };
 }
 
+export async function deleteAttendeeAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  if (!attendeeId) return;
+  const existing = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!existing) return;
+
+  await prisma.eventAttendee.delete({ where: { id: attendeeId } });
+
+  revalidateEvent(existing.eventId);
+  if (existing.customerId) revalidatePath(`/cs/mentorados/${existing.customerId}`);
+}
+
 export async function toggleAttendeeCheckedInAction(formData: FormData) {
   const user = await requireUser();
   if (!canManageEvents(user)) return;
@@ -699,6 +714,49 @@ export async function updateCommsItemStatusAction(formData: FormData) {
   if (!itemId || !status) return;
   const item = await prisma.eventCommsItem.update({ where: { id: itemId }, data: { status } });
   revalidateEvent(item.eventId);
+}
+
+export async function updateCommsItemAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const itemId = String(formData.get("itemId") ?? "");
+  const existing = await prisma.eventCommsItem.findUnique({ where: { id: itemId } });
+  if (!existing) return { error: "Comunicação não encontrada." };
+
+  const dateRaw = String(formData.get("date") ?? "");
+  const time = String(formData.get("time") ?? "").trim() || null;
+  const artLink = String(formData.get("artLink") ?? "").trim() || null;
+  const message = String(formData.get("message") ?? "").trim();
+  const objective = String(formData.get("objective") ?? "").trim() || null;
+
+  if (!dateRaw || !message) return { error: "Preencha data e mensagem." };
+
+  let artUrl = existing.artUrl;
+  const art = formData.get("art");
+  if (art instanceof File && art.size > 0) {
+    const v = validateUpload(art, UPLOAD_TYPES.image, "Envie uma imagem válida para a arte.");
+    if (v.error) return { error: v.error };
+    artUrl = await saveUpload(art, "eventos/comms");
+  }
+
+  await prisma.eventCommsItem.update({
+    where: { id: itemId },
+    data: {
+      date: new Date(`${dateRaw}T12:00:00`),
+      time,
+      artUrl,
+      artLink,
+      message,
+      objective,
+    },
+  });
+
+  revalidateEvent(existing.eventId);
+  return { success: true };
 }
 
 export async function deleteCommsItemAction(formData: FormData) {

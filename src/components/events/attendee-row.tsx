@@ -5,6 +5,7 @@ import {
   toggleAttendeeCheckedInAction,
   setAttendeeNpsAction,
   updateAttendeeAction,
+  deleteAttendeeAction,
   type ActionState,
 } from "@/lib/actions/events";
 import { ATTENDEE_CATEGORY_META } from "@/lib/events";
@@ -95,12 +96,27 @@ export function AttendeeRow({
           Presente
         </label>
         {canManage && (
-          <button
-            onClick={() => setEditing((v) => !v)}
-            className="text-[11.5px] font-medium text-brand hover:underline"
-          >
-            {editing ? "fechar" : "editar"}
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setEditing((v) => !v)}
+              className="text-[11.5px] font-medium text-brand hover:underline"
+            >
+              {editing ? "fechar" : "editar"}
+            </button>
+            <form
+              action={deleteAttendeeAction}
+              onSubmit={(e) => {
+                if (!confirm(`Remover "${attendee.name}" da lista de confirmados?`)) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <input type="hidden" name="attendeeId" value={attendee.id} />
+              <button type="submit" className="text-[11.5px] text-ink-faint hover:text-critical">
+                excluir
+              </button>
+            </form>
+          </div>
         )}
       </div>
 
