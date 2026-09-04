@@ -16,6 +16,7 @@ import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
 import { AddInteractionForm } from "@/components/cs/add-interaction-form";
 import { RenewalSection } from "@/components/cs/renewal-section";
 import { AddExperienceForm } from "@/components/cs/add-experience-form";
+import { LinkCustomerToEventForm } from "@/components/cs/link-customer-to-event-form";
 import { EditCustomerForm } from "@/components/cs/edit-customer-form";
 import { AddMeetingForm } from "@/components/cs/add-meeting-form";
 import { MeetingRow } from "@/components/cs/meeting-row";
@@ -46,9 +47,10 @@ export default async function CustomerDetailPage({
   if (!canViewCustomer(user, customer)) notFound();
   const canManage = canManageCustomer(user, customer);
 
-  const [csReps, allUsers] = await Promise.all([
+  const [csReps, allUsers, allEvents] = await Promise.all([
     prisma.membership.findMany({ where: { area: { slug: "cs" } }, include: { user: true } }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
+    prisma.event.findMany({ orderBy: { startDate: "desc" }, select: { id: true, name: true } }),
   ]);
 
   const now = new Date();
@@ -296,6 +298,14 @@ export default async function CustomerDetailPage({
             <p className="text-[12.5px] text-ink-faint">Nenhuma participação em evento registrada ainda.</p>
           )}
         </div>
+        {canManage && (
+          <LinkCustomerToEventForm
+            customerId={customer.id}
+            customerName={customer.name}
+            customerCompany={customer.company}
+            events={allEvents}
+          />
+        )}
       </section>
 
       {/* Tarefas */}
