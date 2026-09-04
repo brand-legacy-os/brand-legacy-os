@@ -4,37 +4,45 @@ import { useActionState, useRef, useEffect, useState } from "react";
 import {
   toggleBudgetLinePaymentAction,
   addBudgetLinePaymentAction,
+  updateBudgetLineAction,
   type ActionState,
 } from "@/lib/actions/events";
-import { budgetLineStatusTone } from "@/lib/events";
+import { budgetLineStatusTone, BUDGET_LINE_STATUS_OPTIONS } from "@/lib/events";
+import { EVENT_BUDGET_CATEGORY_META } from "@/lib/sponsors";
 import { StatusPill } from "@/components/ui/status-pill";
 import { formatCompactCurrency, formatDate } from "@/lib/format";
 
 const initialState: ActionState = {};
+const inputClass =
+  "h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12px] outline-none";
 
-export function BudgetLineCard({
-  line,
-  canManage,
-}: {
-  line: {
-    id: string;
-    category: string;
-    item: string;
-    description: string | null;
-    supplier: string | null;
-    paymentMethod: string | null;
-    status: string | null;
-    plannedValue: number;
-    actualValue: number | null;
-    payments: { id: string; dueDate: Date; amount: number; paid: boolean }[];
-  };
-  canManage: boolean;
-}) {
+type Line = {
+  id: string;
+  category: keyof typeof EVENT_BUDGET_CATEGORY_META;
+  item: string;
+  description: string | null;
+  supplier: string | null;
+  supplierCnpj: string | null;
+  supplierContact: string | null;
+  supplierPhone: string | null;
+  quantity: number | null;
+  unitValue: number | null;
+  nfUrl: string | null;
+  paymentMethod: string | null;
+  status: string | null;
+  plannedValue: number | null;
+  actualValue: number | null;
+  payments: { id: string; dueDate: Date; amount: number; paid: boolean }[];
+};
+
+export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boolean }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(
     addBudgetLinePaymentAction,
     initialState
   );
+  const [editState, editFormAction, editPending] = useActionState(updateBudgetLineAction, initialState);
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -44,8 +52,13 @@ export function BudgetLineCard({
     }
   }, [state.success]);
 
+  useEffect(() => {
+    if (editState.success) setEditing(false);
+  }, [editState.success]);
+
   const paidTotal = line.payments.filter((p) => p.paid).reduce((s, p) => s + p.amount, 0);
   const scheduledTotal = line.payments.reduce((s, p) => s + p.amount, 0);
+  const categoryLabel = EVENT_BUDGET_CATEGORY_META[line.category]?.label ?? line.category;
 
   return (
     <div className="flex flex-col gap-2 border-t border-border py-2.5 first:border-t-0">
@@ -53,19 +66,41 @@ export function BudgetLineCard({
         <div className="flex flex-col">
           <span className="text-[12.5px] font-medium text-ink">{line.item}</span>
           <span className="text-[11px] text-ink-faint">
-            {line.category}
+            {categoryLabel}
             {line.supplier ? ` · ${line.supplier}` : ""}
             {line.paymentMethod ? ` · ${line.paymentMethod}` : ""}
           </span>
         </div>
-        <span className="tnum whitespace-nowrap text-[12.5px] text-ink-soft">
-          {formatCompactCurrency(line.actualValue ?? 0)} /{" "}
-          {formatCompactCurrency(line.plannedValue)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="tnum whitespace-nowrap text-[12.5px] text-ink-soft">
+            {formatCompactCurrency(line.actualValue ?? 0)} /{" "}
+            {formatCompactCurrency(line.plannedValue ?? 0)}
+          </span>
+          {canManage && (
+            <button onClick={() => setEditing((v) => !v)} className="text-[11px] font-medium text-brand hover:underline">
+              {editing ? "fechar" : "editar"}
+            </button>
+          )}
+        </div>
       </div>
 
       {line.description && (
         <p className="text-[11.5px] text-ink-soft">{line.description}</p>
+      )}
+      {(line.supplierCnpj || line.supplierContact || line.supplierPhone) && (
+        <p className="text-[11px] text-ink-faint">
+          {[line.supplierCnpj, line.supplierContact, line.supplierPhone].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      {(line.quantity || line.unitValue) && (
+        <p className="text-[11px] text-ink-faint">
+          {line.quantity ?? "—"} un./dias × {formatCompactCurrency(line.unitValue ?? 0)}
+        </p>
+      )}
+      {line.nfUrl && (
+        <a href={line.nfUrl} target="_blank" rel="noopener noreferrer" className="w-fit text-[11.5px] text-brand hover:underline">
+          Ver NF →
+        </a>
       )}
       {line.status && (
         <StatusPill label={line.status} tone={budgetLineStatusTone(line.status)} />
@@ -146,6 +181,53 @@ export function BudgetLineCard({
             </button>
           )}
         </>
+      )}
+
+      {editing && (
+        <form action={editFormAction} className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+          <input type="hidden" name="lineId" value={line.id} />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <select name="category" required defaultValue={line.category} className={inputClass}>
+              {Object.entries(EVENT_BUDGET_CATEGORY_META).map(([key, meta]) => (
+                <option key={key} value={key}>
+                  {meta.label}
+                </option>
+              ))}
+            </select>
+            <input name="item" required defaultValue={line.item} className={`${inputClass} sm:col-span-2`} />
+            <input name="supplier" defaultValue={line.supplier ?? ""} placeholder="Fornecedor" className={inputClass} />
+            <input name="supplierCnpj" defaultValue={line.supplierCnpj ?? ""} placeholder="CNPJ" className={inputClass} />
+            <input name="supplierContact" defaultValue={line.supplierContact ?? ""} placeholder="Contato" className={inputClass} />
+            <input name="supplierPhone" defaultValue={line.supplierPhone ?? ""} placeholder="Telefone" className={inputClass} />
+            <input name="quantity" defaultValue={line.quantity ?? ""} inputMode="decimal" placeholder="Unidades/dias" className={inputClass} />
+            <input name="unitValue" defaultValue={line.unitValue ?? ""} inputMode="decimal" placeholder="Valor unidade" className={inputClass} />
+            <input name="plannedValue" defaultValue={line.plannedValue ?? ""} inputMode="decimal" placeholder="Previsto" className={inputClass} />
+            <input name="actualValue" defaultValue={line.actualValue ?? ""} inputMode="decimal" placeholder="Valor total" className={inputClass} />
+            <input name="paymentMethod" defaultValue={line.paymentMethod ?? ""} placeholder="Forma de pagamento" className={inputClass} />
+            <select name="status" defaultValue={line.status ?? ""} className={inputClass}>
+              <option value="">Status…</option>
+              {BUDGET_LINE_STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-ink-soft">Substituir NF</span>
+            <input name="nf" type="file" accept="image/*,application/pdf" className="text-[12px]" />
+          </label>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="submit"
+              disabled={editPending}
+              className="h-8 rounded-(--radius-s) bg-brand-deep px-3.5 text-[12px] font-medium text-gold-soft disabled:opacity-60"
+            >
+              {editPending ? "Salvando…" : "Salvar"}
+            </button>
+            {editState.error && <span className="text-[11px] text-critical">{editState.error}</span>}
+          </div>
+        </form>
       )}
     </div>
   );

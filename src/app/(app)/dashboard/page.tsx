@@ -182,7 +182,7 @@ export default async function DashboardPage({
   // Eventos: refletido ao vivo a partir do módulo /eventos, sem exigir
   // preenchimento duplicado de nenhum indicador manual.
   const allEvents = await prisma.event.findMany({
-    include: { attendees: true, sponsors: { include: { payments: true } }, budgetLines: true },
+    include: { attendees: true, sponsors: { include: { installments: true } }, budgetLines: true },
   });
   const nextEvent = allEvents
     .filter((e) => e.status !== "realizado" && e.status !== "cancelado")
@@ -205,9 +205,9 @@ export default async function DashboardPage({
     0
   );
 
-  // Patrocínios: target fixo por tipo de evento (110k imersão/summit, 45k
-  // demais); realizado = histórico real de patrocínios (planilha) vinculado
-  // ao evento, com fallback para o EventSponsor manual quando não há
+  // Patrocínios: meta sempre 50% acima do budget planejado do evento;
+  // realizado = histórico real de patrocínios (planilha) vinculado ao
+  // evento, com fallback para o Sponsor (Patrocínios) quando não há
   // vínculo automático.
   const allSponsorships = await prisma.sponsorship.findMany({ where: { eventId: { not: null } } });
   const sponsorshipByEvent = allEvents.map((e) => {
@@ -217,7 +217,7 @@ export default async function DashboardPage({
     return {
       id: e.id,
       name: e.name,
-      target: sponsorTarget(e.type),
+      target: sponsorTarget(e.budgetPlanned),
       realized: realHistory.length > 0 ? realizedFromHistory : stats.sponsorRevenueRealized,
       contracted: stats.sponsorRevenuePlanned,
     };

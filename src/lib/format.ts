@@ -32,6 +32,10 @@ export function formatKpiValue(kpi: Pick<Kpi, "type" | "unit">, value: number) {
   }
 }
 
+export function formatCurrency(value: number) {
+  return currencyFmt.format(value);
+}
+
 export function formatCompactCurrency(value: number) {
   if (Math.abs(value) >= 1_000_000) {
     return `R$ ${decimalFmt.format(value / 1_000_000)} M`;

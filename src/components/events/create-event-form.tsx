@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState, useEffect } from "react";
 import { createEventAction, type ActionState } from "@/lib/actions/events";
 import { EVENT_TYPES } from "@/lib/events";
+import { EVENT_BUDGET_CATEGORY_META } from "@/lib/sponsors";
 
 const initialState: ActionState = {};
 
@@ -80,10 +81,48 @@ export function CreateEventForm() {
         <input
           name="budgetPlanned"
           inputMode="decimal"
-          placeholder="Budget previsto (opcional)"
+          placeholder="Budget previsto total (opcional)"
           className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
         />
       </div>
+
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
+        <span className="text-[11px] font-medium text-ink-soft">Local do evento</span>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <input
+            name="venueAddress"
+            placeholder="Endereço"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
+          />
+          <input
+            name="venueCost"
+            inputMode="decimal"
+            placeholder="Valor do local"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
+        <span className="text-[11px] font-medium text-ink-soft">
+          Orçamento previsto por categoria (opcional — pode completar depois)
+        </span>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {Object.entries(EVENT_BUDGET_CATEGORY_META).map(([key, meta]) => (
+            <div key={key} className="flex items-center gap-2">
+              <input type="hidden" name="plannedCategory" value={key} />
+              <span className="w-32 shrink-0 text-[12px] text-ink-soft">{meta.label}</span>
+              <input
+                name="plannedValue"
+                inputMode="decimal"
+                placeholder="R$"
+                className="h-8 flex-1 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[12.5px] outline-none focus:border-brand-deep-2"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
         <button
           type="submit"

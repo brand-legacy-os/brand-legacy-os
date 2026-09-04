@@ -15,6 +15,12 @@ export function EditEventForm({
   location,
   description,
   budgetPlanned,
+  venueAddress,
+  venueCost,
+  venueNotes,
+  enpsDay1Url,
+  enpsDay2Url,
+  enpsDay3Url,
 }: {
   eventId: string;
   name: string;
@@ -24,6 +30,12 @@ export function EditEventForm({
   location: string;
   description: string;
   budgetPlanned: string;
+  venueAddress?: string;
+  venueCost?: string;
+  venueNotes?: string;
+  enpsDay1Url?: string;
+  enpsDay2Url?: string;
+  enpsDay3Url?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
@@ -109,6 +121,57 @@ export function EditEventForm({
         rows={2}
         className="rounded-(--radius-s) border border-border bg-canvas px-3 py-2 text-[13px] outline-none focus:border-brand-deep-2"
       />
+
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
+        <span className="text-[11px] font-medium text-ink-soft">Local do evento</span>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <input
+            name="venueAddress"
+            defaultValue={venueAddress}
+            placeholder="Endereço"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
+          />
+          <input
+            name="venueCost"
+            inputMode="decimal"
+            defaultValue={venueCost}
+            placeholder="Valor do local"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
+          />
+        </div>
+        <textarea
+          name="venueNotes"
+          defaultValue={venueNotes}
+          placeholder="Observações do local (opcional)"
+          rows={2}
+          className="rounded-(--radius-s) border border-border bg-canvas px-3 py-2 text-[13px] outline-none focus:border-brand-deep-2"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-border pt-3">
+        <span className="text-[11px] font-medium text-ink-soft">Links de eNPS diário (3 dias)</span>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <input
+            name="enpsDay1Url"
+            defaultValue={enpsDay1Url}
+            placeholder="Dia 1 — link"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[12.5px] outline-none focus:border-brand-deep-2"
+          />
+          <input
+            name="enpsDay2Url"
+            defaultValue={enpsDay2Url}
+            placeholder="Dia 2 — link"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[12.5px] outline-none focus:border-brand-deep-2"
+          />
+          <input
+            name="enpsDay3Url"
+            defaultValue={enpsDay3Url}
+            placeholder="Dia 3 — link"
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[12.5px] outline-none focus:border-brand-deep-2"
+          />
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
         <button
           type="submit"

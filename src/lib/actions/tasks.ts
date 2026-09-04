@@ -293,6 +293,7 @@ export async function createTaskAction(
   const product = String(formData.get("product") ?? "").trim() || null;
   const description = String(formData.get("description") ?? "").trim() || null;
   const contentPostId = String(formData.get("contentPostId") ?? "") || null;
+  const sponsorId = String(formData.get("sponsorId") ?? "") || null;
 
   const task = await prisma.task.create({
     data: {
@@ -304,6 +305,7 @@ export async function createTaskAction(
       projectId,
       priority,
       contentPostId,
+      sponsorId,
       deadline: new Date(`${deadlineRaw}T18:00:00`),
       status: "no_ritmo",
     },
@@ -321,6 +323,7 @@ export async function createTaskAction(
   }
 
   revalidateTaskViews(area.slug);
+  if (sponsorId) revalidatePath(`/patrocinios/${sponsorId}`);
 
   return { success: true };
 }

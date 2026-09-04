@@ -6,6 +6,9 @@ import { EVENT_STATUS_META, computeEventStats } from "@/lib/events";
 import { formatCompactCurrency, formatDate } from "@/lib/format";
 import { CreateEventForm } from "@/components/events/create-event-form";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
+import { TrendChart } from "@/components/finance/trend-chart";
 
 export default async function EventosPage() {
   const user = await requireUser();
@@ -14,7 +17,7 @@ export default async function EventosPage() {
   const events = await prisma.event.findMany({
     include: {
       attendees: true,
-      sponsors: { include: { payments: true } },
+      sponsors: { include: { installments: true } },
       budgetLines: true,
     },
     orderBy: { startDate: "asc" },
@@ -28,6 +31,13 @@ export default async function EventosPage() {
     (s, e) => s + computeEventStats(e).budgetActual,
     0
   );
+  const totalSponsorRealized = events.reduce(
+    (s, e) => s + computeEventStats(e).sponsorRevenueRealized,
+    0
+  );
+
+  const budgetedEvents = events.filter((e) => e.budgetPlanned);
+  const enpsEvents = events.filter((e) => computeEventStats(e).npsAverage !== null);
 
   return (
     <>
@@ -59,26 +69,42 @@ export default async function EventosPage() {
         {canManage && <CreateEventForm />}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Budget previsto (total)</p>
-          <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
-            {formatCompactCurrency(totalBudgetPlanned)}
-          </p>
-        </div>
-        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Gasto real (total)</p>
-          <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
-            {formatCompactCurrency(totalBudgetActual)}
-          </p>
-        </div>
-        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Eventos no ano</p>
-          <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
-            {events.length}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Budget previsto (total)" value={formatCompactCurrency(totalBudgetPlanned)} />
+        <StatTile label="Gasto real (total)" value={formatCompactCurrency(totalBudgetActual)} />
+        <StatTile label="Patrocínio recebido (total)" value={formatCompactCurrency(totalSponsorRealized)} />
+        <StatTile label="Eventos cadastrados" value={String(events.length)} />
       </div>
+
+      {(budgetedEvents.length > 0 || enpsEvents.length > 0) && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {budgetedEvents.length > 0 && (
+            <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+              <h2 className="text-[13px] font-medium text-ink-soft">Previsto x realizado por evento</h2>
+              <GroupedBarChart
+                categories={budgetedEvents.map((e) => e.name)}
+                series={[
+                  { label: "Previsto", values: budgetedEvents.map((e) => e.budgetPlanned ?? 0) },
+                  { label: "Realizado", values: budgetedEvents.map((e) => computeEventStats(e).budgetActual) },
+                ]}
+                formatValue={formatCompactCurrency}
+              />
+            </section>
+          )}
+          {enpsEvents.length > 0 && (
+            <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+              <h2 className="text-[13px] font-medium text-ink-soft">Histórico de eNPS</h2>
+              <TrendChart
+                points={enpsEvents.map((e) => ({
+                  label: e.name.length > 14 ? `${e.name.slice(0, 14)}…` : e.name,
+                  value: Math.round(computeEventStats(e).npsAverage ?? 0),
+                }))}
+                formatValue={(v) => String(Math.round(v))}
+              />
+            </section>
+          )}
+        </div>
+      )}
 
       {/* Budget e eNPS não são séries mensais — são propriedades de cada
           evento, então em vez de um filtro por período, aqui é uma
@@ -168,7 +194,7 @@ export default async function EventosPage() {
             <Link
               key={event.id}
               href={`/eventos/${event.id}`}
-              className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5 transition-colors hover:border-brand-deep-2"
+              className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5 transition-shadow hover:shadow-[0_4px_16px_-8px_rgba(23,23,15,0.15)] hover:border-brand-deep-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="rounded-full bg-gold-tint px-2.5 py-0.5 text-[10.5px] font-medium text-gold-ink">

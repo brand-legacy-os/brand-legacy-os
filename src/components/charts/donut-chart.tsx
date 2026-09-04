@@ -6,15 +6,24 @@ const CATEGORICAL = ["#0f6c2b", "#eca206", "#2166AC", "#B0473A"];
 export function DonutChart({
   data,
   formatValue,
+  centerLabel = "mentorados",
+  emptyMessage = "Sem mentorados cadastrados ainda.",
+  ariaLabel = "Distribuição de mentorados por produto",
+  centerAsCurrency = false,
 }: {
   data: { label: string; value: number }[];
   formatValue: (v: number) => string;
+  centerLabel?: string;
+  emptyMessage?: string;
+  ariaLabel?: string;
+  /** Mostra formatValue(total) no centro em vez da contagem bruta. */
+  centerAsCurrency?: boolean;
 }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0 || data.length === 0) {
     return (
       <p className="py-6 text-center text-[12.5px] text-ink-faint">
-        Sem mentorados cadastrados ainda.
+        {emptyMessage}
       </p>
     );
   }
@@ -48,7 +57,7 @@ export function DonutChart({
         width={size}
         height={size}
         role="img"
-        aria-label="Distribuição de mentorados por produto"
+        aria-label={ariaLabel}
       >
         <g transform={`rotate(-90 ${cx} ${cy})`}>
           {segments.map((s) => (
@@ -72,15 +81,15 @@ export function DonutChart({
           x={cx}
           y={cy - 4}
           textAnchor="middle"
-          fontSize="20"
+          fontSize={centerAsCurrency ? "14" : "20"}
           fontWeight="600"
           fill="var(--color-ink)"
           className="tnum"
         >
-          {total}
+          {centerAsCurrency ? formatValue(total) : total}
         </text>
         <text x={cx} y={cy + 14} textAnchor="middle" fontSize="10" fill="var(--color-ink-faint)">
-          mentorados
+          {centerLabel}
         </text>
       </svg>
 
@@ -93,7 +102,7 @@ export function DonutChart({
             />
             <span className="text-ink">{s.label}</span>
             <span className="tnum text-ink-faint">
-              {s.value} · {s.pct}%
+              {formatValue(s.value)} · {s.pct}%
             </span>
           </div>
         ))}

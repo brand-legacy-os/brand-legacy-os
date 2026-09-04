@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useEffect, useState } from "react";
 import { addAttendeeAction, type ActionState } from "@/lib/actions/events";
-import { ATTENDEE_CATEGORY_META } from "@/lib/events";
+import { AttendeeFormFields } from "./attendee-form-fields";
 
 const initialState: ActionState = {};
 
@@ -36,49 +36,7 @@ export function AddAttendeeForm({ eventId }: { eventId: string }) {
       className="flex flex-col gap-2.5 rounded-(--radius-s) bg-surface-muted p-3"
     >
       <input type="hidden" name="eventId" value={eventId} />
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <input
-          name="name"
-          required
-          placeholder="Nome"
-          className="h-9 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
-        />
-        <input
-          name="empresa"
-          placeholder="Empresa (opcional)"
-          className="h-9 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
-        />
-        <select
-          name="category"
-          required
-          defaultValue=""
-          className="h-9 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
-        >
-          <option value="" disabled>
-            Categoria…
-          </option>
-          {Object.entries(ATTENDEE_CATEGORY_META).map(([key, meta]) => (
-            <option key={key} value={key}>
-              {meta.label}
-            </option>
-          ))}
-        </select>
-        <select
-          name="ticketType"
-          defaultValue=""
-          className="h-9 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
-        >
-          <option value="">Ingresso: N/A</option>
-          <option value="Gold">Gold</option>
-          <option value="VIP">VIP</option>
-        </select>
-        <input
-          name="email"
-          type="email"
-          placeholder="E-mail (opcional)"
-          className="h-9 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
-        />
-      </div>
+      <AttendeeFormFields />
       <div className="flex items-center gap-3">
         <button
           type="submit"

@@ -1,11 +1,13 @@
-import type { Event, EventAttendee, EventSponsor, EventSponsorPayment } from "@prisma/client";
+import type { Event, EventAttendee, Sponsor, SponsorInstallment } from "@prisma/client";
+import { sponsorPaidValue, sponsorshipGoalFor } from "@/lib/sponsors";
 
 export const EVENT_TYPES = ["Imersão", "Summit", "Experience", "Jantar"] as const;
 
-/** Target de patrocínio por evento: R$110k para imersões/summits, R$45k para os demais (coquetéis, jantares etc). */
-export function sponsorTarget(eventType: string) {
-  const t = eventType.toLowerCase();
-  return t.includes("imers") || t.includes("summit") ? 110000 : 45000;
+/** Meta de patrocínio do evento — sempre 50% acima do budget planejado, nunca
+ * digitada manualmente. Mantido aqui por compat (usa o mesmo helper de
+ * lib/sponsors.ts) já que boa parte do código já importa de events.ts. */
+export function sponsorTarget(budgetPlanned: number | null) {
+  return sponsorshipGoalFor(budgetPlanned);
 }
 
 export const EVENT_STATUS_META: Record<
@@ -64,17 +66,6 @@ export function budgetLineStatusTone(status: string | null) {
   }
 }
 
-export const SPONSOR_STATUS_META: Record<
-  "negociacao" | "assinado" | "pago_parcial" | "pago_total" | "cancelado",
-  { label: string }
-> = {
-  negociacao: { label: "Em negociação" },
-  assinado: { label: "Assinado" },
-  pago_parcial: { label: "Pago parcialmente" },
-  pago_total: { label: "Pago integralmente" },
-  cancelado: { label: "Cancelado" },
-};
-
 export type EventStats = {
   registeredCount: number | null;
   presentCount: number | null;
@@ -93,7 +84,7 @@ export type EventStats = {
 
 /**
  * An event tracked from the start (new events) gets its stats computed live
- * from EventAttendee/EventSponsor rows. An event migrated from the old
+ * from EventAttendee/Sponsor rows. An event migrated from the old
  * spreadsheet has no individual attendee records — real names weren't in the
  * summary we imported from — so it falls back to the aggregate snapshot
  * fields on Event, which are themselves real historical numbers.
@@ -101,7 +92,7 @@ export type EventStats = {
 export function computeEventStats(
   event: Event & {
     attendees: EventAttendee[];
-    sponsors: (EventSponsor & { payments: EventSponsorPayment[] })[];
+    sponsors: (Sponsor & { installments: SponsorInstallment[] })[];
     budgetLines: { actualValue: number | null }[];
   }
 ): EventStats {
@@ -110,16 +101,13 @@ export function computeEventStats(
     0
   );
 
+  const sponsorRevenuePlanned = event.sponsors.reduce((s, sp) => s + sp.totalValue, 0);
+  const sponsorRevenueRealized = event.sponsors.reduce(
+    (s, sp) => s + sponsorPaidValue(sp),
+    0
+  );
+
   if (event.attendees.length === 0) {
-    const sponsorRevenuePlanned = event.sponsors.reduce(
-      (s, sp) => s + sp.contractValue,
-      0
-    );
-    const sponsorRevenueRealized = event.sponsors.reduce(
-      (s, sp) =>
-        s + sp.payments.filter((p) => p.paid).reduce((a, p) => a + p.amount, 0),
-      0
-    );
     return {
       registeredCount: event.registeredCount,
       presentCount: event.presentCount,
@@ -139,15 +127,6 @@ export function computeEventStats(
 
   const present = event.attendees.filter((a) => a.checkedIn);
   const nps = event.attendees.filter((a) => a.npsScore !== null);
-  const sponsorRevenuePlanned = event.sponsors.reduce(
-    (s, sp) => s + sp.contractValue,
-    0
-  );
-  const sponsorRevenueRealized = event.sponsors.reduce(
-    (s, sp) =>
-      s + sp.payments.filter((p) => p.paid).reduce((a, p) => a + p.amount, 0),
-    0
-  );
 
   return {
     registeredCount: event.attendees.filter((a) => a.confirmed).length,
