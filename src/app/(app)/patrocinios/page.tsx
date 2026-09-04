@@ -1,50 +1,63 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canViewArea, isAdmin, isLeaderOf } from "@/lib/permissions";
-import { formatCompactCurrency, formatDate } from "@/lib/format";
-import { StatusPill, type Tone } from "@/components/ui/status-pill";
+import { canViewSponsors, canManageSponsors } from "@/lib/permissions";
+import { resolvePeriod, type PeriodKey } from "@/lib/period";
+import { formatCompactCurrency, formatCurrency } from "@/lib/format";
+import { sponsorPaidValue } from "@/lib/sponsors";
+import { FilterBar } from "@/components/dashboard/filter-bar";
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
+import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
+import { CreateSponsorForm } from "@/components/patrocinios/create-sponsor-form";
 
-const STATUS_TONE: Record<string, Tone> = {
-  Pago: "positive",
-  "A vencer": "neutral",
-  "Em negociação": "warning",
-  "Em atraso": "critical",
-};
+const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-export default async function PatrociniosPage() {
+export default async function PatrociniosPage({
+  searchParams,
+}: PageProps<"/patrocinios">) {
   const user = await requireUser();
-  if (!isAdmin(user) && !canViewArea(user, "eventos") && !isLeaderOf(user, "operacoes")) notFound();
+  if (!canViewSponsors(user)) notFound();
+  const sp = await searchParams;
+  const canManage = canManageSponsors(user);
 
-  const sponsorships = await prisma.sponsorship.findMany({
-    include: { event: true },
-    orderBy: [{ dueDate: "asc" }],
-  });
+  const periodKey = (sp.periodo as PeriodKey) || "mes";
+  const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
+  const year = Number(sp.ano as string) || new Date().getFullYear();
 
-  const totalPlanned = sponsorships.reduce((s, r) => s + (r.plannedValue ?? 0), 0);
-  const totalPaid = sponsorships.reduce((s, r) => s + (r.paidValue ?? 0), 0);
-  const totalOpen = sponsorships
-    .filter((r) => r.status !== "Pago")
-    .reduce((s, r) => s + (r.plannedValue ?? 0), 0);
+  const [sponsors, events] = await Promise.all([
+    prisma.sponsor.findMany({ include: { installments: true } }),
+    prisma.event.findMany({ orderBy: { startDate: "desc" }, select: { id: true, name: true } }),
+  ]);
 
-  const byMonth = new Map<string, typeof sponsorships>();
-  for (const s of sponsorships) {
-    const key = s.cashMonth || s.competencia || "Sem competência";
-    byMonth.set(key, [...(byMonth.get(key) ?? []), s]);
+  const inPeriod = sponsors.filter(
+    (s) => s.createdAt >= period.start && s.createdAt <= period.end
+  );
+  const totalContratado = inPeriod.reduce((s, sp) => s + sp.totalValue, 0);
+  const totalRecebido = inPeriod.reduce((s, sp) => s + sponsorPaidValue(sp), 0);
+
+  // Recebido x Aberto mês a mês no ano selecionado.
+  const recebidoPorMes = Array(12).fill(0);
+  const abertoPorMes = Array(12).fill(0);
+  for (const s of sponsors) {
+    if (s.paymentPlan === "parcelado") {
+      for (const inst of s.installments) {
+        if (inst.dueDate.getFullYear() !== year) continue;
+        const m = inst.dueDate.getMonth();
+        if (inst.paid) recebidoPorMes[m] += inst.amount;
+        else abertoPorMes[m] += inst.amount;
+      }
+    } else if (s.createdAt.getFullYear() === year) {
+      const m = s.createdAt.getMonth();
+      const paid = sponsorPaidValue(s);
+      recebidoPorMes[m] += paid;
+      abertoPorMes[m] += s.totalValue - paid;
+    }
   }
-  const months = [...byMonth.keys()].sort();
 
-  const bySponsor = new Map<string, { planned: number; paid: number; count: number }>();
-  for (const s of sponsorships) {
-    const cur = bySponsor.get(s.sponsorName) ?? { planned: 0, paid: 0, count: 0 };
-    cur.planned += s.plannedValue ?? 0;
-    cur.paid += s.paidValue ?? 0;
-    cur.count += 1;
-    bySponsor.set(s.sponsorName, cur);
-  }
-  const topSponsors = [...bySponsor.entries()]
-    .sort((a, b) => b[1].paid - a[1].paid)
+  const ranking = [...sponsors]
+    .map((s) => ({ ...s, paid: sponsorPaidValue(s) }))
+    .sort((a, b) => b.totalValue - a.totalValue)
     .slice(0, 8);
 
   return (
@@ -56,111 +69,77 @@ export default async function PatrociniosPage() {
         <h1 className="font-(family-name:--font-display) text-[28px] text-ink">
           Patrocínios
         </h1>
-        <p className="max-w-[72ch] text-[13px] text-ink-soft">
-          Histórico real de patrocínios (Abril/2025 – hoje), importado direto da
-          planilha do time. Contratos com mês de competência batendo com um
-          evento real ficam automaticamente vinculados a ele.
-        </p>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <PatrociniosTabs />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <FilterBar areaOptions={[]} responsibleOptions={[]} />
+        {canManage && <CreateSponsorForm events={events} />}
+      </div>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Total contratado (histórico)</p>
+          <p className="text-[12px] text-ink-soft">Total contratado · {period.label.toLowerCase()}</p>
           <p className="tnum font-(family-name:--font-display) text-[24px] text-ink">
-            {formatCompactCurrency(totalPlanned)}
+            {formatCurrency(totalContratado)}
           </p>
         </div>
         <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Total recebido</p>
+          <p className="text-[12px] text-ink-soft">Total recebido · {period.label.toLowerCase()}</p>
           <p className="tnum font-(family-name:--font-display) text-[24px] text-positive">
-            {formatCompactCurrency(totalPaid)}
-          </p>
-        </div>
-        <div className="rounded-(--radius-l) border border-border bg-surface p-5">
-          <p className="text-[12px] text-ink-soft">Em aberto (não pago)</p>
-          <p className="tnum font-(family-name:--font-display) text-[24px] text-warning">
-            {formatCompactCurrency(totalOpen)}
+            {formatCurrency(totalRecebido)}
           </p>
         </div>
       </section>
 
       <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-        <h2 className="text-[13px] font-medium text-ink-soft">Maiores patrocinadores (histórico)</h2>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {topSponsors.map(([name, v]) => (
-            <div key={name} className="flex items-center justify-between rounded-(--radius-s) bg-surface-muted px-3 py-2">
-              <div className="flex flex-col">
-                <span className="text-[12.5px] font-medium text-ink">{name}</span>
-                <span className="text-[11px] text-ink-faint">{v.count} contrato(s)</span>
-              </div>
-              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(v.paid)}</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-[13px] font-medium text-ink-soft">Recebido x Aberto — mês a mês</h2>
+          <div className="flex items-center gap-1.5">
+            {[year - 1, year, year + 1].map((y) => (
+              <Link
+                key={y}
+                href={`/patrocinios?${new URLSearchParams({ ...(sp as Record<string, string>), ano: String(y) }).toString()}`}
+                className={`rounded-full px-3 py-1 text-[12px] font-medium ${
+                  y === year ? "bg-brand-deep text-gold-soft" : "bg-surface-muted text-ink-soft"
+                }`}
+              >
+                {y}
+              </Link>
+            ))}
+          </div>
         </div>
+        <GroupedBarChart
+          categories={MONTH_LABELS}
+          series={[
+            { label: "Recebido", values: recebidoPorMes },
+            { label: "Aberto", values: abertoPorMes },
+          ]}
+          formatValue={formatCompactCurrency}
+        />
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-[14px] font-medium text-ink">Histórico completo por competência</h2>
-        {months.map((month) => {
-          const rows = byMonth.get(month) ?? [];
-          const monthPlanned = rows.reduce((s, r) => s + (r.plannedValue ?? 0), 0);
-          const monthPaid = rows.reduce((s, r) => s + (r.paidValue ?? 0), 0);
-          return (
-            <div key={month} className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
-              <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-                <span className="text-[12.5px] font-medium text-ink">{month}</span>
-                <span className="tnum text-[12px] text-ink-faint">
-                  {formatCompactCurrency(monthPaid)} / {formatCompactCurrency(monthPlanned)}
-                </span>
+      <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <h2 className="text-[13px] font-medium text-ink-soft">Ranking de maiores patrocinadores</h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {ranking.map((s) => (
+            <Link
+              key={s.id}
+              href={`/patrocinios/${s.id}`}
+              className="flex items-center justify-between rounded-(--radius-s) bg-surface-muted px-3 py-2 hover:bg-border/30"
+            >
+              <div className="flex flex-col">
+                <span className="text-[12.5px] font-medium text-ink">{s.name}</span>
+                <span className="text-[11px] text-ink-faint">Recebido: {formatCompactCurrency(s.paid)}</span>
               </div>
-              <table className="w-full min-w-[820px] border-collapse text-[12.5px]">
-                <thead>
-                  <tr className="border-b border-border text-left text-[10.5px] uppercase tracking-[0.04em] text-ink-faint">
-                    <th className="px-3 py-2 font-medium">Patrocinador</th>
-                    <th className="px-3 py-2 font-medium">Categoria</th>
-                    <th className="px-3 py-2 font-medium">Evento vinculado</th>
-                    <th className="px-3 py-2 font-medium">Previsto</th>
-                    <th className="px-3 py-2 font-medium">Pago</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-b border-border last:border-b-0 hover:bg-surface-muted">
-                      <td className="px-3 py-2 text-ink">{r.sponsorName}</td>
-                      <td className="px-3 py-2 text-ink-soft">{r.category ?? "—"}</td>
-                      <td className="px-3 py-2">
-                        {r.event ? (
-                          <Link href={`/eventos/${r.event.id}`} className="font-medium text-brand hover:underline">
-                            {r.event.name}
-                          </Link>
-                        ) : (
-                          <span className="text-ink-faint">—</span>
-                        )}
-                      </td>
-                      <td className="tnum px-3 py-2 text-ink-soft">
-                        {r.plannedValue !== null ? formatCompactCurrency(r.plannedValue) : "—"}
-                      </td>
-                      <td className="tnum px-3 py-2 text-ink-soft">
-                        {r.paidValue !== null ? formatCompactCurrency(r.paidValue) : "—"}
-                      </td>
-                      <td className="px-3 py-2">
-                        {r.status && (
-                          <StatusPill label={r.status} tone={STATUS_TONE[r.status] ?? "neutral"} />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
-        {sponsorships.length === 0 && (
-          <p className="rounded-(--radius-l) border border-dashed border-border p-8 text-center text-[13px] text-ink-faint">
-            Nenhum patrocínio importado ainda.
-          </p>
-        )}
+              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(s.totalValue)}</span>
+            </Link>
+          ))}
+          {ranking.length === 0 && (
+            <p className="text-[12.5px] text-ink-faint">Nenhum patrocinador cadastrado ainda.</p>
+          )}
+        </div>
       </section>
     </>
   );

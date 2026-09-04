@@ -73,6 +73,54 @@ enum SponsorStatus {
   cancelado
 }
 
+enum SponsorPaymentPlan {
+  avista
+  parcelado
+}
+
+enum SponsorPaymentMethod {
+  pix
+  boleto
+  pagarme
+}
+
+enum SponsorTier {
+  gold
+  silver
+}
+
+enum SponsorDealStatus {
+  em_negociacao
+  assinado
+  pago_integralmente
+  pago_parcialmente
+  pagamento_atrasado
+  cancelado
+  outro
+}
+
+enum EventBudgetCategory {
+  press_kit_gold
+  press_kit_vip
+  a_e_b
+  audiovisual
+  cenografia
+  staff
+  reembolsos
+  outro
+}
+
+enum EventDynamicChoice {
+  plano_perfeito
+  shark_tank
+  outro
+}
+
+enum CommsStatus {
+  planejado
+  enviado
+}
+
 enum AttendeeCategory {
   pagante
   convidado_socio
@@ -201,6 +249,8 @@ model User {
   customerFollowUps    CustomerExperience[]  @relation("ExperienceFollowUpOwner")
   customerMeetings     CustomerMeeting[]     @relation("CustomerMeetingAuthor")
   csActions            CsAction[]            @relation("CsActionAuthor")
+  sponsorsCreated      Sponsor[]             @relation("SponsorCreatedBy")
+  sponsorInteractions  SponsorInteraction[]  @relation("SponsorInteractionAuthor")
 }
 
 model Area {
@@ -297,40 +347,45 @@ model Project {
 }
 
 model Task {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  product     String?
-  areaId      String
-  projectId   String?
-  assigneeId  String
-  deadline    DateTime
-  status      TaskStatus   @default(no_ritmo)
-  priority    TaskPriority @default(media)
-  note        String?
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  product       String?
+  areaId        String
+  projectId     String?
+  assigneeId    String
+  deadline      DateTime
+  status        TaskStatus   @default(no_ritmo)
+  priority      TaskPriority @default(media)
+  note          String?
   /// Marcado quando o status vira "concluida" — base para calcular
   /// pontualidade de entregas automaticamente (completedAt <= deadline).
-  completedAt DateTime?
+  completedAt   DateTime?
   /// Cliente relacionado (CS) — opcional, só preenchido quando a tarefa é
   /// sobre um mentorado específico.
-  customerId  String?
+  customerId    String?
   /// Texto livre ("semanal", "mensal"...) ou null para tarefa avulsa.
-  recurrence  String?
+  recurrence    String?
   /// Post do calendário de Social que originou esta tarefa (card estilo
   /// Asana) — opcional, só preenchido para tarefas abertas por lá.
   contentPostId String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  /// Patrocinador relacionado (Patrocínios) — opcional, mesmo padrão do
+  /// customerId acima, pra tarefas específicas de um patrocinador.
+  sponsorId     String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   area        Area                 @relation(fields: [areaId], references: [id], onDelete: Cascade)
   project     Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
   assignee    User                 @relation("TaskAssignee", fields: [assigneeId], references: [id])
   customer    Customer?            @relation(fields: [customerId], references: [id], onDelete: SetNull)
   contentPost ContentCalendarPost? @relation(fields: [contentPostId], references: [id], onDelete: SetNull)
+  sponsor     Sponsor?             @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
   checklist   TaskChecklistItem[]
   comments    TaskComment[]
 
   @@index([contentPostId])
+  @@index([sponsorId])
 }
 
 model TaskChecklistItem {
@@ -437,14 +492,32 @@ model Event {
   location        String?
   description     String?
   budgetPlanned   Float?
+  /// Não é mais preenchido diretamente — a meta de patrocínio exibida é
+  /// sempre calculada como budgetPlanned * 1.5 na camada de exibição.
+  /// Coluna mantida por segurança (não removida), mas não gravada mais.
   sponsorshipGoal Float?
   responsibleId   String
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  /// Local do evento.
+  venueAddress String?
+  venueCost    Float?
+  venueNotes   String?
+
+  /// Planilha de respostas de NPS enviada (upload) + comentários livres
+  /// extraídos dela para exibição — ver src/lib/nps-excel.ts.
+  npsExcelUrl      String?
+  npsExcelComments String?
+
+  /// Links de eNPS diário — 3 dias por evento.
+  enpsDay1Url String?
+  enpsDay2Url String?
+  enpsDay3Url String?
+
   /// Estatísticas agregadas de eventos já realizados, quando só o resumo
   /// histórico está disponível (sem lista nominal de confirmados). Eventos
-  /// novos devem preferir EventAttendee/EventSponsor, que dão o mesmo total
+  /// novos devem preferir EventAttendee/Sponsor, que dão o mesmo total
   /// automaticamente — estes campos existem para não perder o histórico real.
   registrationGoal Int?
   registeredCount  Int?
@@ -457,15 +530,21 @@ model Event {
   npsResponses     Int?
   npsAverage       Float?
 
-  responsible   User                 @relation("EventResponsible", fields: [responsibleId], references: [id])
-  days          EventDay[]
-  budgetLines   EventBudgetLine[]
-  sponsors      EventSponsor[]
-  attendees     EventAttendee[]
-  notes         EventNote[]
-  cashMovements CashMovement[]
-  experiences   CustomerExperience[]
-  sponsorships  Sponsorship[]
+  responsible    User                 @relation("EventResponsible", fields: [responsibleId], references: [id])
+  days           EventDay[]
+  budgetLines    EventBudgetLine[]
+  /// Legado — patrocinador cadastrado direto no evento. Descontinuado: novos
+  /// patrocinadores só nascem em Patrocínios (ver model Sponsor). Mantido
+  /// sem uso ativo para não perder histórico já gravado.
+  legacySponsors EventSponsor[]
+  sponsors       Sponsor[]
+  attendees      EventAttendee[]
+  notes          EventNote[]
+  cashMovements  CashMovement[]
+  experiences    CustomerExperience[]
+  sponsorships   Sponsorship[]
+  dinnerGuests   EventDinnerGuest[]
+  commsItems     EventCommsItem[]
 }
 
 model EventDay {
@@ -491,17 +570,28 @@ model EventAgendaItem {
 }
 
 model EventBudgetLine {
-  id            String   @id @default(cuid())
-  eventId       String
-  category      String
-  item          String
-  description   String?
-  supplier      String?
-  paymentMethod String?
-  status        String?
-  plannedValue  Float
-  actualValue   Float?
-  createdAt     DateTime @default(now())
+  id              String              @id @default(cuid())
+  eventId         String
+  category        EventBudgetCategory
+  item            String
+  description     String?
+  supplier        String?
+  /// Dados do fornecedor, preenchidos ao lançar o realizado (opcionais —
+  /// uma linha de previsão por categoria criada na abertura do evento não
+  /// tem fornecedor ainda).
+  supplierCnpj    String?
+  supplierContact String?
+  supplierPhone   String?
+  quantity        Float?
+  unitValue       Float?
+  nfUrl           String?
+  paymentMethod   String?
+  status          String?
+  /// Nulo quando a linha nasce como lançamento avulso de "realizado", sem
+  /// previsão prévia por categoria.
+  plannedValue    Float?
+  actualValue     Float?
+  createdAt       DateTime            @default(now())
 
   event    Event                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   payments EventBudgetLinePayment[]
@@ -549,23 +639,122 @@ model EventSponsorPayment {
   sponsor EventSponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
 }
 
+// ---------------------------------------------------------------------------
+// Patrocínios (Igor/Operações): cadastro único de patrocinadores, só criado
+// aqui — Eventos apenas exibe (ver Event.sponsors). Cada ficha é um evento
+// (patrocínio recorrente vira uma ficha nova a cada evento/ano).
+// ---------------------------------------------------------------------------
+
+model Sponsor {
+  id               String               @id @default(cuid())
+  name             String
+  cnpj             String
+  contactName      String
+  contactPhone     String
+  totalValue       Float
+  paymentPlan      SponsorPaymentPlan
+  paymentMethod    SponsorPaymentMethod
+  paymentLink      String?
+  paymentProofUrl  String?
+  hasStageTime     Boolean              @default(false)
+  stageTimeMinutes Int?
+  eventId          String?
+  /// Patrocínio anual/recorrente sem um Event específico vinculado (ou além
+  /// dele) — sinalizado aqui, com o Event ainda podendo apontar a edição
+  /// mais próxima quando existir uma.
+  isAnnual         Boolean              @default(false)
+  tier             SponsorTier
+  status           SponsorDealStatus    @default(em_negociacao)
+  statusOther      String?
+  /// Campos de perfil, exibidos aqui e na aba "Patrocínio" (só leitura) do
+  /// evento vinculado.
+  nfUrl            String?
+  presentationUrl  String?
+  logoUrl          String?
+  videoUrl         String?
+  activation       String?
+  createdById      String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  event        Event?               @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  createdBy    User                 @relation("SponsorCreatedBy", fields: [createdById], references: [id])
+  installments SponsorInstallment[]
+  interactions SponsorInteraction[]
+  leadSales    SponsorLeadSale[]
+  tasks        Task[]
+
+  @@index([eventId])
+}
+
+/// Parcela de um contrato de patrocínio, quando paymentPlan = parcelado.
+model SponsorInstallment {
+  id        String    @id @default(cuid())
+  sponsorId String
+  number    Int
+  amount    Float
+  dueDate   DateTime
+  paid      Boolean   @default(false)
+  paidDate  DateTime?
+
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@index([sponsorId])
+}
+
+/// Histórico de interações com o patrocinador — log, mesmo padrão de
+/// CustomerInteraction.
+model SponsorInteraction {
+  id        String   @id @default(cuid())
+  sponsorId String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  author  User    @relation("SponsorInteractionAuthor", fields: [authorId], references: [id])
+
+  @@index([sponsorId])
+}
+
+/// Venda originada de um lead do patrocinador — visão de ROI do patrocínio.
+model SponsorLeadSale {
+  id          String    @id @default(cuid())
+  sponsorId   String
+  description String?
+  value       Float
+  saleDate    DateTime?
+  createdAt   DateTime  @default(now())
+
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@index([sponsorId])
+}
+
 model EventAttendee {
-  id         String           @id @default(cuid())
-  eventId    String
-  name       String
-  empresa    String?
-  category   AttendeeCategory
+  id            String              @id @default(cuid())
+  eventId       String
+  name          String
+  empresa       String?
+  category      AttendeeCategory
   /// "Gold", "VIP" ou null (N/A — não se aplica, ex.: equipe interna)
-  ticketType String?
-  email      String?
-  phone      String?
-  confirmed  Boolean          @default(true)
-  checkedIn  Boolean          @default(false)
-  npsScore   Int?
+  ticketType    String?
+  email         String?
+  phone         String?
+  cpfRg         String?
+  instagram     String?
+  /// Sinaliza se o confirmado deu okay pra participar de uma dinâmica do
+  /// evento (Plano Perfeito, Shark Tank, ou outra — texto livre em
+  /// dynamicOther quando "outro").
+  dynamicChoice EventDynamicChoice?
+  dynamicOther  String?
+  confirmed     Boolean             @default(true)
+  checkedIn     Boolean             @default(false)
+  npsScore      Int?
   /// Link opcional para o mentorado real (Customer), quando o confirmado é
   /// alguém da carteira de CS — evita recadastrar presença/NPS em duplicado.
-  customerId String?
-  createdAt  DateTime         @default(now())
+  customerId    String?
+  createdAt     DateTime            @default(now())
 
   event    Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   customer Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
@@ -593,6 +782,41 @@ model EventNote {
 
   event  Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author User  @relation("EventNoteAuthor", fields: [authorId], references: [id])
+}
+
+/// Lista de convidados do jantar da imersão.
+model EventDinnerGuest {
+  id        String   @id @default(cuid())
+  eventId   String
+  name      String
+  category  String?
+  empresa   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+/// Fluxo de comunicação com o grupo do evento (WhatsApp etc.) — o quê, quando
+/// e com que objetivo, com a arte anexada ou linkada.
+model EventCommsItem {
+  id        String      @id @default(cuid())
+  eventId   String
+  date      DateTime
+  time      String?
+  artUrl    String?
+  artLink   String?
+  message   String
+  objective String?
+  status    CommsStatus @default(planejado)
+  createdAt DateTime    @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
 
 // ---------------------------------------------------------------------------
@@ -809,7 +1033,7 @@ model SocialProfile {
   contentScope    String?
   order           Int     @default(0)
 
-  person               User?                 @relation(fields: [personId], references: [id])
+  person               User?                   @relation(fields: [personId], references: [id])
   contentCalendarPosts ContentCalendarPost[]
   reporteiMetrics      SocialReporteiMetric[]
   reporteiInsights     SocialReporteiInsight[]
@@ -1054,15 +1278,15 @@ model CustomerMeeting {
 /// materiais. Complementa o calendário de Eventos e o "Calendário de ações"
 /// importado (ver CsActionCalendarItem).
 model CsAction {
-  id            String   @id @default(cuid())
-  title         String
-  description   String?
-  location      String?
-  link          String?
-  materialsUrl  String?
-  date          DateTime
-  createdById   String
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  location     String?
+  link         String?
+  materialsUrl String?
+  date         DateTime
+  createdById  String
+  createdAt    DateTime @default(now())
 
   createdBy User @relation("CsActionAuthor", fields: [createdById], references: [id])
 }

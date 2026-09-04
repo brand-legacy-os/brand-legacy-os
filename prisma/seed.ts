@@ -479,8 +479,8 @@ async function main() {
       await prisma.eventBudgetLine.create({
         data: {
           eventId: event.id,
-          category: "Consolidado (histórico)",
-          item: "Gasto total apurado na operação do evento",
+          category: "outro",
+          item: "Consolidado (histórico) — gasto total apurado na operação do evento",
           plannedValue: def.budgetPlanned ?? 0,
           actualValue: def.budgetActual,
           status: "Apurado",

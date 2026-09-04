@@ -45,6 +45,19 @@ export function canManageAnyAreaTask(user: SessionUser) {
   return isAdmin(user) || isLeaderOf(user, "operacoes");
 }
 
+/** Ver a área Patrocínios — membros de Eventos (onde o patrocínio vive
+ * hoje na navegação) + líderes de Operações, mesmo grupo já usado pra
+ * Patrocínios em nav.ts. */
+export function canViewSponsors(user: SessionUser) {
+  return isAdmin(user) || canViewArea(user, "eventos") || isLeaderOf(user, "operacoes");
+}
+
+/** Criar/editar patrocinadores — só quem edita KPIs de Eventos ou lidera
+ * Operações, já que patrocinador cadastrado errado afeta o financeiro real. */
+export function canManageSponsors(user: SessionUser) {
+  return isAdmin(user) || canEditAreaKpis(user, "eventos") || isLeaderOf(user, "operacoes");
+}
+
 export function visibleAreaSlugs(user: SessionUser): "all" | string[] {
   if (isAdmin(user)) return "all";
   return user.memberships.map((m) => m.area.slug);
