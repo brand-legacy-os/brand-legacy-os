@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canManageRhFor } from "@/lib/permissions";
+import { RH_QUESTIONS_BY_TYPE } from "@/lib/rh";
 import type { RhReviewType, RhClassification } from "@prisma/client";
 
 export type ActionState = { error?: string; success?: boolean };
@@ -46,23 +47,26 @@ export async function submitSelfAssessmentAction(
   const type = formData.get("type") as RhReviewType | null;
   const dateRaw = String(formData.get("date") ?? "");
   const classification = (formData.get("classification") as RhClassification | null) || null;
-  const workLifeBalance = String(formData.get("workLifeBalance") ?? "").trim();
-  const scoreRaw = String(formData.get("contributionScore") ?? "");
-  const contributionReason = String(formData.get("contributionReason") ?? "").trim();
-  const feedbackToLeader = String(formData.get("feedbackToLeader") ?? "").trim() || null;
-  const selfHighlights = String(formData.get("selfHighlights") ?? "").trim() || null;
-  const selfImprovements = String(formData.get("selfImprovements") ?? "").trim() || null;
+  const classificationReason = String(formData.get("classificationReason") ?? "").trim();
 
-  if (!type || !dateRaw || !workLifeBalance || !scoreRaw || !contributionReason) {
-    return {
-      error:
-        "Preencha tipo, data, equilíbrio vida/trabalho, nota de contribuição e o porquê.",
-    };
+  if (!type || !dateRaw || !classification || !classificationReason) {
+    return { error: "Preencha tipo, data, classificação e o porquê." };
   }
 
-  const contributionScore = Math.max(0, Math.min(10, Number(scoreRaw)));
-  if (Number.isNaN(contributionScore)) {
-    return { error: "Nota de contribuição inválida." };
+  const questions = RH_QUESTIONS_BY_TYPE[type];
+  const answers: Record<string, string> = {};
+  for (const q of questions) {
+    const raw = String(formData.get(`answer_${q.key}`) ?? "").trim();
+    if (!raw) {
+      return { error: `Preencha: ${q.label}` };
+    }
+    if (q.kind === "number") {
+      const n = Math.max(0, Math.min(10, Number(raw)));
+      if (Number.isNaN(n)) return { error: `Valor inválido em: ${q.label}` };
+      answers[q.key] = String(n);
+    } else {
+      answers[q.key] = raw;
+    }
   }
 
   const evaluatorId = await getManagerId(user.id);
@@ -70,19 +74,15 @@ export async function submitSelfAssessmentAction(
     return { error: "Não encontramos seu líder direto para formalizar esta avaliação." };
   }
 
-  const review = await prisma.rhReview.create({
+  await prisma.rhReview.create({
     data: {
       subjectId: user.id,
       evaluatorId,
       type,
       date: new Date(`${dateRaw}T12:00:00`),
       selfClassification: classification,
-      selfWorkLifeBalance: workLifeBalance,
-      selfContributionScore: contributionScore,
-      selfContributionReason: contributionReason,
-      selfFeedbackToLeader: feedbackToLeader,
-      selfHighlights,
-      selfImprovements,
+      selfClassificationReason: classificationReason,
+      selfAnswers: answers,
       selfSubmittedAt: new Date(),
     },
   });
@@ -100,11 +100,8 @@ export async function submitLeaderFeedbackAction(
 
   const reviewId = String(formData.get("reviewId") ?? "");
   const classification = (formData.get("classification") as RhClassification | null) || null;
+  const classificationComment = String(formData.get("classificationComment") ?? "").trim() || null;
   const ratingRaw = String(formData.get("rating") ?? "");
-  const highlights = String(formData.get("highlights") ?? "").trim() || null;
-  const improvements = String(formData.get("improvements") ?? "").trim() || null;
-  const actionItems = String(formData.get("actionItems") ?? "").trim() || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
 
   const review = await prisma.rhReview.findUnique({
     where: { id: reviewId },
@@ -125,15 +122,33 @@ export async function submitLeaderFeedbackAction(
     return { error: "Nota inválida." };
   }
 
+  // Um comentário do líder por pergunta que o liderado respondeu — mesma
+  // chave de RH_QUESTIONS_BY_TYPE[review.type], vinda do formulário dinâmico.
+  const comments: Record<string, string> = {};
+  for (const q of RH_QUESTIONS_BY_TYPE[review.type]) {
+    const raw = String(formData.get(`comment_${q.key}`) ?? "").trim();
+    if (raw) comments[q.key] = raw;
+  }
+
+  const isAnual = review.type === "anual";
+  const leaderSalaryHistory = isAnual ? String(formData.get("leaderSalaryHistory") ?? "").trim() || null : null;
+  const postSalaryRaw = isAnual ? String(formData.get("leaderPostReviewSalary") ?? "").trim() : "";
+  const bonusRaw = isAnual ? String(formData.get("leaderExceptionalBonus") ?? "").trim() : "";
+  const roleChangedRaw = isAnual ? formData.get("leaderRoleChanged") : null;
+  const leaderNextYearRole = isAnual ? String(formData.get("leaderNextYearRole") ?? "").trim() || null : null;
+
   await prisma.rhReview.update({
     where: { id: reviewId },
     data: {
       leaderClassification: classification,
+      leaderClassificationComment: classificationComment,
+      leaderComments: comments,
       rating,
-      highlights,
-      improvements,
-      actionItems,
-      notes,
+      leaderSalaryHistory,
+      leaderPostReviewSalary: postSalaryRaw ? Number(postSalaryRaw) : null,
+      leaderExceptionalBonus: bonusRaw ? Number(bonusRaw) : null,
+      leaderRoleChanged: roleChangedRaw === null ? null : roleChangedRaw === "sim",
+      leaderNextYearRole,
       leaderSubmittedAt: new Date(),
     },
   });

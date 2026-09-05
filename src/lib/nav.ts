@@ -1,5 +1,5 @@
 import type { SessionUser } from "./auth";
-import { isAdmin, isLeaderOf } from "./permissions";
+import { isAdmin, isLeaderOf, canAccessSalaryArea } from "./permissions";
 import { hasFinanceRole } from "./finance-auth";
 
 export type NavItem = { label: string; href: string; badge?: number };
@@ -39,6 +39,7 @@ export function buildNav(
         { label: "Workflow", href: "/workflow" },
         { label: "Projetos e Tarefas", href: "/projetos" },
         { label: "RH", href: "/rh" },
+        ...(canAccessSalaryArea(user) ? [{ label: "Cargos e Salários", href: "/rh/cargos-salarios" }] : []),
       ],
     },
     {

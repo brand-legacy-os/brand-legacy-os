@@ -1,5 +1,11 @@
-import { RH_TYPE_META, RH_CLASSIFICATION_META } from "@/lib/rh";
-import { formatDate, formatDateTime } from "@/lib/format";
+import {
+  RH_TYPE_META,
+  RH_CLASSIFICATION_META,
+  RH_QUESTIONS_BY_TYPE,
+  legacyOneOnOneAnswers,
+  legacyLeaderComments,
+} from "@/lib/rh";
+import { formatDate, formatDateTime, formatCurrency } from "@/lib/format";
 import { LeaderFeedbackForm } from "./leader-feedback-form";
 import { deleteRhReviewAction } from "@/lib/actions/rh";
 import type { RhReview } from "@prisma/client";
@@ -15,6 +21,10 @@ export function RhReviewCard({
   canFormalize: boolean;
   canDelete: boolean;
 }) {
+  const questions = RH_QUESTIONS_BY_TYPE[review.type];
+  const selfAnswers = (review.selfAnswers as Record<string, string> | null) ?? legacyOneOnOneAnswers(review);
+  const leaderComments = (review.leaderComments as Record<string, string> | null) ?? legacyLeaderComments(review);
+
   return (
     <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -43,38 +53,23 @@ export function RhReviewCard({
           {review.selfSubmittedAt ? (
             <>
               {review.selfClassification && (
-                <span className="w-fit rounded-full bg-surface-muted px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
-                  {RH_CLASSIFICATION_META[review.selfClassification].label}
-                </span>
-              )}
-              <div className="flex flex-col gap-1.5 text-[13px] text-ink-soft">
-                <p>
-                  <span className="font-medium text-ink">Equilíbrio vida/trabalho: </span>
-                  {review.selfWorkLifeBalance}
-                </p>
-                <p>
-                  <span className="font-medium text-ink">
-                    Contribuição: {review.selfContributionScore}/10 —{" "}
+                <div className="flex flex-col gap-1">
+                  <span className="w-fit rounded-full bg-surface-muted px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
+                    {RH_CLASSIFICATION_META[review.selfClassification].label}
                   </span>
-                  {review.selfContributionReason}
-                </p>
-                {review.selfHighlights && (
-                  <p>
-                    <span className="font-medium text-ink">Pontos fortes: </span>
-                    {review.selfHighlights}
-                  </p>
-                )}
-                {review.selfImprovements && (
-                  <p>
-                    <span className="font-medium text-ink">Quer se desenvolver em: </span>
-                    {review.selfImprovements}
-                  </p>
-                )}
-                {review.selfFeedbackToLeader && (
-                  <p>
-                    <span className="font-medium text-ink">Feedback ao líder: </span>
-                    {review.selfFeedbackToLeader}
-                  </p>
+                  {review.selfClassificationReason && (
+                    <p className="text-[12.5px] text-ink-soft">{review.selfClassificationReason}</p>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-col gap-2 text-[13px] text-ink-soft">
+                {questions.map((q) =>
+                  selfAnswers[q.key] ? (
+                    <p key={q.key}>
+                      <span className="font-medium text-ink">{q.label}: </span>
+                      {selfAnswers[q.key]}
+                    </p>
+                  ) : null
                 )}
               </div>
               <span className="text-[11px] text-ink-faint">
@@ -105,39 +100,68 @@ export function RhReviewCard({
                   <span className="text-[12px] text-ink-faint">nota {review.rating}/5</span>
                 )}
               </div>
-              <div className="flex flex-col gap-1.5 text-[13px] text-ink-soft">
-                {review.highlights && (
-                  <p>
-                    <span className="font-medium text-ink">Pontos fortes: </span>
-                    {review.highlights}
-                  </p>
-                )}
-                {review.improvements && (
-                  <p>
-                    <span className="font-medium text-ink">Desenvolvimento: </span>
-                    {review.improvements}
-                  </p>
-                )}
-                {review.actionItems && (
-                  <p>
-                    <span className="font-medium text-ink">Combinados: </span>
-                    {review.actionItems}
-                  </p>
-                )}
-                {review.notes && (
-                  <p>
-                    <span className="font-medium text-ink">Observações: </span>
-                    {review.notes}
-                  </p>
+              {review.leaderClassificationComment && (
+                <p className="text-[13px] text-ink-soft">{review.leaderClassificationComment}</p>
+              )}
+              <div className="flex flex-col gap-2 text-[13px] text-ink-soft">
+                {questions.map((q) =>
+                  leaderComments[q.key] ? (
+                    <p key={q.key}>
+                      <span className="font-medium text-ink">{q.label}: </span>
+                      {leaderComments[q.key]}
+                    </p>
+                  ) : null
                 )}
               </div>
+              {review.type === "anual" &&
+                (review.leaderSalaryHistory ||
+                  review.leaderPostReviewSalary !== null ||
+                  review.leaderExceptionalBonus !== null ||
+                  review.leaderRoleChanged !== null ||
+                  review.leaderNextYearRole) && (
+                  <div className="flex flex-col gap-1 rounded-(--radius-s) bg-surface-muted p-2.5 text-[12.5px] text-ink-soft">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                      Retorno de remuneração
+                    </p>
+                    {review.leaderSalaryHistory && (
+                      <p>
+                        <span className="font-medium text-ink">Histórico (3 anos): </span>
+                        {review.leaderSalaryHistory}
+                      </p>
+                    )}
+                    {review.leaderPostReviewSalary !== null && (
+                      <p>
+                        <span className="font-medium text-ink">Salário pós retorno: </span>
+                        {formatCurrency(review.leaderPostReviewSalary)}
+                      </p>
+                    )}
+                    {review.leaderExceptionalBonus !== null && (
+                      <p>
+                        <span className="font-medium text-ink">Prêmio excepcional: </span>
+                        {formatCurrency(review.leaderExceptionalBonus)}
+                      </p>
+                    )}
+                    {review.leaderRoleChanged !== null && (
+                      <p>
+                        <span className="font-medium text-ink">Recolocação de cargo: </span>
+                        {review.leaderRoleChanged ? "Sim" : "Não"}
+                      </p>
+                    )}
+                    {review.leaderNextYearRole && (
+                      <p>
+                        <span className="font-medium text-ink">Cargo próximo ano: </span>
+                        {review.leaderNextYearRole}
+                      </p>
+                    )}
+                  </div>
+                )}
               <span className="text-[11px] text-ink-faint">
                 formalizado {formatDateTime(review.leaderSubmittedAt)}
               </span>
             </>
           ) : canFormalize ? (
             review.selfSubmittedAt ? (
-              <LeaderFeedbackForm reviewId={review.id} />
+              <LeaderFeedbackForm review={review} />
             ) : (
               <p className="text-[13px] text-ink-faint">
                 Você poderá formalizar sua visão assim que o liderado responder.

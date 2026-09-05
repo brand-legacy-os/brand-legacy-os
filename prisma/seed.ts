@@ -189,6 +189,40 @@ async function main() {
     });
   }
 
+  console.log("Criando cargos e salários (Cargos e Salários — acesso restrito)...");
+  const salaryRecords: Array<{
+    userKey: string;
+    fullName: string;
+    cargo: string;
+    areaLabel: string;
+    salary: number;
+  }> = [
+    { userKey: "gabriel", fullName: "Gabriel Silva dos Santos", cargo: "Designer Pl.", areaLabel: "Social", salary: 6000 },
+    { userKey: "isabella", fullName: "Isabella Ribeiro Iannaconi", cargo: "Advogada", areaLabel: "Jurídico", salary: 3000 },
+    { userKey: "igor", fullName: "Igor Luis de França Silva", cargo: "Analista de Social e Eventos Pl", areaLabel: "Eventos e Social", salary: 7500 },
+    { userKey: "marcus", fullName: "Marcus Vinícius Rodriguês Ferreira da Silva", cargo: "COO", areaLabel: "C-Level", salary: 12000 },
+    { userKey: "thiago", fullName: "Tiago", cargo: "SDR Pl", areaLabel: "Comercial", salary: 4000 },
+    { userKey: "alessandra", fullName: "Alessandra", cargo: "Customer Success Pl", areaLabel: "Customer Success", salary: 5000 },
+    { userKey: "karinaMeotti", fullName: "Karina Meotti", cargo: "Social Seller Jr", areaLabel: "Comercial", salary: 4000 },
+    { userKey: "guilherme", fullName: "Guilherme da Rocha", cargo: "Editor de Vídeo Pl.", areaLabel: "Social", salary: 5000 },
+    { userKey: "camila", fullName: "Camila", cargo: "Customer Success Pl", areaLabel: "Customer Success", salary: 4500 },
+    { userKey: "william", fullName: "William Tavares", cargo: "Analista Financeiro Sr", areaLabel: "Financeiro", salary: 4500 },
+    { userKey: "karina", fullName: "Karina de Carvalho", cargo: "Head Comercial", areaLabel: "Comercial", salary: 6000 },
+    { userKey: "lucas", fullName: "Lucas Carvalho", cargo: "Closer Pl", areaLabel: "Comercial", salary: 4000 },
+    { userKey: "lara", fullName: "Lara Belle", cargo: "Head de Social", areaLabel: "Social", salary: 9500 },
+  ];
+  for (const s of salaryRecords) {
+    await prisma.salaryRecord.create({
+      data: {
+        userId: people[s.userKey].id,
+        fullName: s.fullName,
+        cargo: s.cargo,
+        areaLabel: s.areaLabel,
+        salary: s.salary,
+      },
+    });
+  }
+
   console.log("Criando catálogo de indicadores (sem metas inventadas — cada líder define a própria meta)...");
   // O catálogo (nome/unidade/periodicidade/responsável) é estrutura da
   // plataforma, definida junto com cada líder de área. Os NÚMEROS (metas e

@@ -85,6 +85,35 @@ export function canManageRhFor(
   return target.areaSlugs.some((slug) => isLeaderOf(user, slug));
 }
 
+/** Financeiro fecha folha — William enxerga cargo/salário de toda a empresa
+ * mesmo só liderando Financeiro, diferente de qualquer outro líder. */
+const SALARY_FULL_ACCESS_EMAILS = ["willian.tavares@brandlegacy.com.br"];
+
+/**
+ * Cargos e Salários: nunca visível pra colaborador comum. Admin e o
+ * Financeiro (ver acima) veem tudo; qualquer outro líder só vê quem tem
+ * vínculo numa área que ele lidera — targetAreaSlugs são as áreas da PESSOA
+ * cujo salário está sendo consultado, não do viewer.
+ */
+export function canViewSalaryFor(user: SessionUser, target: { areaSlugs: string[] }) {
+  if (isAdmin(user)) return true;
+  if (SALARY_FULL_ACCESS_EMAILS.includes(user.email)) return true;
+  return target.areaSlugs.some((slug) => isLeaderOf(user, slug));
+}
+
+/** Só admin cadastra/edita cargo e salário — mesmo William só visualiza. */
+export function canManageSalaryRecords(user: SessionUser) {
+  return isAdmin(user);
+}
+
+/** Decide se a aba "Cargos e Salários" aparece pra este usuário — admin,
+ * William, ou qualquer líder de pelo menos uma área. */
+export function canAccessSalaryArea(user: SessionUser) {
+  if (isAdmin(user)) return true;
+  if (SALARY_FULL_ACCESS_EMAILS.includes(user.email)) return true;
+  return user.memberships.some((m) => m.role === "lider");
+}
+
 /**
  * CS: diferente das outras áreas, "líder de CS" aqui significa "dono da
  * própria carteira", não "gestor de todo o departamento" — Camila e

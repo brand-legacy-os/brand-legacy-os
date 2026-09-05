@@ -243,6 +243,7 @@ model User {
   receivables          Receivable[]          @relation("ReceivableResponsible")
   rhReviewsReceived    RhReview[]            @relation("RhReviewSubject")
   rhReviewsGiven       RhReview[]            @relation("RhReviewEvaluator")
+  salaryRecord         SalaryRecord?
   trainingRsvps        TrainingAttendee[]
   socialProfiles       SocialProfile[]
   socialLeads          SocialSellingLead[]
@@ -952,29 +953,68 @@ model RhReview {
   createdAt   DateTime     @default(now())
 
   // Autoavaliação do liderado — preenchida primeiro, pelo próprio subject.
-  selfClassification     RhClassification?
-  selfWorkLifeBalance    String?
-  selfContributionScore  Int?
-  selfContributionReason String?
-  selfFeedbackToLeader   String?
-  selfHighlights         String?
-  selfImprovements       String?
-  selfSubmittedAt        DateTime?
+  // Campos legados (pré-perguntas-por-tipo) — mantidos só pra exibir reviews
+  // antigas; novas reviews de qualquer tipo (incl. one_on_one) gravam em
+  // selfAnswers, com as chaves de RH_QUESTIONS_BY_TYPE (ver lib/rh.ts).
+  selfClassification       RhClassification?
+  selfClassificationReason String?
+  selfWorkLifeBalance      String?
+  selfContributionScore    Int?
+  selfContributionReason   String?
+  selfFeedbackToLeader     String?
+  selfHighlights           String?
+  selfImprovements         String?
+  selfAnswers              Json?
+  selfSubmittedAt          DateTime?
 
   // Formalização do líder — só faz sentido depois da autoavaliação existir.
-  leaderClassification RhClassification?
-  rating               Int?
-  highlights           String?
-  improvements         String?
-  actionItems          String?
-  notes                String?
-  leaderSubmittedAt    DateTime?
+  // leaderComments espelha as mesmas chaves de selfAnswers — um comentário
+  // do líder por pergunta respondida, como pedido pelo negócio.
+  leaderClassification        RhClassification?
+  leaderClassificationComment String?
+  rating                      Int?
+  highlights                  String?
+  improvements                String?
+  actionItems                 String?
+  notes                       String?
+  leaderComments               Json?
+  leaderSubmittedAt            DateTime?
+
+  // Só usado em avaliações anuais — preenchido pelo líder junto da
+  // formalização, não pelo liderado.
+  leaderSalaryHistory    String?
+  leaderPostReviewSalary Float?
+  leaderExceptionalBonus Float?
+  leaderRoleChanged      Boolean?
+  leaderNextYearRole     String?
 
   subject   User @relation("RhReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
   evaluator User @relation("RhReviewEvaluator", fields: [evaluatorId], references: [id])
 
   @@index([subjectId])
   @@index([evaluatorId])
+}
+
+/// Cargo e salário atual de cada colaborador — visível só por admin, pelo
+/// líder da área da pessoa (nunca de outras áreas) e por William
+/// (Financeiro tem acesso total, ver SALARY_FULL_ACCESS_EMAILS em
+/// lib/permissions.ts). Nunca visível pro próprio colaborador comum.
+model SalaryRecord {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  /// Nome completo formal, pra registro de RH — User.name pode ser só o
+  /// primeiro nome (usado em todo o resto do app) e não deve mudar por
+  /// causa desta tela.
+  fullName  String
+  cargo     String
+  /// Rótulo livre pra exibição (ex.: "Eventos e Social", "C-Level") — o
+  /// controle de acesso usa as Memberships reais do usuário, não este texto.
+  areaLabel String
+  salary    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ---------------------------------------------------------------------------
