@@ -29,7 +29,8 @@ export const ATTENDEE_CATEGORY_META: Record<
   | "socio"
   | "membro_club"
   | "membro_tracao"
-  | "equipe_evento",
+  | "equipe_evento"
+  | "patrocinador",
   { label: string }
 > = {
   pagante: { label: "Pagante" },
@@ -40,6 +41,7 @@ export const ATTENDEE_CATEGORY_META: Record<
   membro_club: { label: "Membro Club" },
   membro_tracao: { label: "Membro Tração" },
   equipe_evento: { label: "Equipe do evento" },
+  patrocinador: { label: "Patrocinador" },
 };
 
 export const BUDGET_LINE_STATUS_OPTIONS = [

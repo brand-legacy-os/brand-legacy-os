@@ -130,6 +130,9 @@ enum AttendeeCategory {
   membro_club
   membro_tracao
   equipe_evento
+  /// Representante do próprio patrocinador (não confundir com
+  /// convidado_patrocinador, que é alguém trazido POR um patrocinador).
+  patrocinador
 }
 
 enum FinanceCategoryKind {
@@ -735,6 +738,7 @@ model EventAttendee {
   id            String              @id @default(cuid())
   eventId       String
   name          String
+  gender        String?
   empresa       String?
   category      AttendeeCategory
   /// "Gold", "VIP" ou null (N/A — não se aplica, ex.: equipe interna)
@@ -742,6 +746,9 @@ model EventAttendee {
   email         String?
   phone         String?
   cpfRg         String?
+  /// Faixa de faturamento da empresa do confirmado (texto livre, ex.: "Acima
+  /// de 1 milhão por mês") — coletado no formulário de inscrição.
+  revenueRange  String?
   instagram     String?
   /// Sinaliza se o confirmado deu okay pra participar de uma dinâmica do
   /// evento (Plano Perfeito, Shark Tank, ou outra — texto livre em

@@ -86,6 +86,7 @@ function EditPaymentForm({
 export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boolean }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(
     addBudgetLinePaymentAction,
@@ -125,6 +126,9 @@ export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boo
             {formatCompactCurrency(line.actualValue ?? 0)} /{" "}
             {formatCompactCurrency(line.plannedValue ?? 0)}
           </span>
+          <button onClick={() => setShowDetails((v) => !v)} className="text-[11px] font-medium text-ink-soft hover:text-ink">
+            {showDetails ? "ocultar detalhes" : "ver detalhes"}
+          </button>
           {canManage && (
             <>
               <button onClick={() => setEditing((v) => !v)} className="text-[11px] font-medium text-brand hover:underline">
@@ -148,6 +152,8 @@ export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boo
         </div>
       </div>
 
+      {showDetails && (
+        <>
       {line.description && (
         <p className="text-[11.5px] text-ink-soft">{line.description}</p>
       )}
@@ -267,6 +273,8 @@ export function BudgetLineCard({ line, canManage }: { line: Line; canManage: boo
               + Parcela (à vista = 1 parcela, parcelado = várias)
             </button>
           )}
+        </>
+      )}
         </>
       )}
 

@@ -14,13 +14,19 @@ export function GroupedBarChart({
 }) {
   const allValues = series.flatMap((s) => s.values);
   const max = Math.max(1, ...allValues);
-  const width = Math.max(560, categories.length * 56);
-  const height = 200;
-  const padBottom = 24;
+  // Nomes de categoria longos (ex.: nome de evento) não cabem centralizados
+  // sob uma barra estreita — rótulo vai rotacionado e truncado, então a
+  // largura de grupo pode ficar menor sem sobrepor o texto do vizinho.
+  const width = Math.max(560, categories.length * 72);
+  const height = 220;
+  const padBottom = 56;
   const padTop = 8;
   const chartH = height - padBottom - padTop;
   const groupWidth = width / categories.length;
   const barWidth = Math.min(14, (groupWidth - 12) / series.length);
+  const maxLabelChars = 16;
+  const truncate = (label: string) =>
+    label.length > maxLabelChars ? `${label.slice(0, maxLabelChars - 1)}…` : label;
 
   return (
     <div className="flex flex-col gap-2">
@@ -77,12 +83,14 @@ export function GroupedBarChart({
                 })}
                 <text
                   x={groupX + groupWidth / 2}
-                  y={height - 8}
-                  textAnchor="middle"
+                  y={height - padBottom + 14}
+                  textAnchor="end"
                   fontSize="9.5"
                   fill="var(--color-ink-faint)"
+                  transform={`rotate(-40 ${groupX + groupWidth / 2} ${height - padBottom + 14})`}
                 >
-                  {cat}
+                  <title>{cat}</title>
+                  {truncate(cat)}
                 </text>
               </g>
             );

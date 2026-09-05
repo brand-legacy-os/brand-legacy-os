@@ -16,7 +16,7 @@ import { SponsorInstallments } from "@/components/patrocinios/sponsor-installmen
 import { AddSponsorInteractionForm } from "@/components/patrocinios/add-sponsor-interaction-form";
 import { AddSponsorLeadSaleForm } from "@/components/patrocinios/add-sponsor-lead-sale-form";
 import { AddSponsorTaskForm } from "@/components/patrocinios/add-sponsor-task-form";
-import { deleteSponsorLeadSaleAction } from "@/lib/actions/sponsors";
+import { deleteSponsorLeadSaleAction, toggleSponsorPaidAction } from "@/lib/actions/sponsors";
 
 export default async function SponsorDetailPage({
   params,
@@ -76,6 +76,19 @@ export default async function SponsorDetailPage({
         <div className="rounded-(--radius-l) border border-border bg-surface p-4">
           <p className="text-[11.5px] text-ink-soft">Recebido</p>
           <p className="tnum font-(family-name:--font-display) text-[20px] text-positive">{formatCurrency(paid)}</p>
+          {canManage && sponsor.paymentPlan === "avista" && (
+            <form action={toggleSponsorPaidAction} className="mt-1.5">
+              <input type="hidden" name="sponsorId" value={sponsor.id} />
+              <button
+                type="submit"
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  paid > 0 ? "bg-positive-bg text-positive" : "bg-warning-bg text-warning"
+                }`}
+              >
+                {paid > 0 ? "Pago — desmarcar" : "Marcar como pago"}
+              </button>
+            </form>
+          )}
         </div>
         <div className="rounded-(--radius-l) border border-border bg-surface p-4">
           <p className="text-[11.5px] text-ink-soft">Meio de pagamento</p>

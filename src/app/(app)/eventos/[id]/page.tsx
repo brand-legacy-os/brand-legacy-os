@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isAdmin, isLeaderOf } from "@/lib/permissions";
 import { hasFinanceRole, isFinanceUnlocked } from "@/lib/finance-auth";
-import { EVENT_STATUS_META, computeEventStats } from "@/lib/events";
+import { EVENT_STATUS_META, computeEventStats, ATTENDEE_CATEGORY_META } from "@/lib/events";
 import { EVENT_BUDGET_CATEGORY_META, sponsorshipGoalFor } from "@/lib/sponsors";
 import {
   formatCompactCurrency,
@@ -64,6 +64,14 @@ export default async function EventDetailPage({
 
   const sponsorshipGoal = sponsorshipGoalFor(event.budgetPlanned);
   const sponsorPct = sponsorshipGoal > 0 ? Math.round((stats.sponsorRevenuePlanned / sponsorshipGoal) * 100) : null;
+
+  // Pizza de resumo dos confirmados por Tipo (categoria do confirmado).
+  const attendeesByCategory = new Map<string, number>();
+  for (const a of event.attendees) {
+    const label = ATTENDEE_CATEGORY_META[a.category]?.label ?? a.category;
+    attendeesByCategory.set(label, (attendeesByCategory.get(label) ?? 0) + 1);
+  }
+  const attendeeCategoryPieData = [...attendeesByCategory.entries()].map(([label, value]) => ({ label, value }));
 
   // Pizza de custo por categoria (só realizado).
   const costByCategory = new Map<string, number>();
@@ -331,6 +339,14 @@ export default async function EventDetailPage({
             </span>
           )}
         </div>
+        {attendeeCategoryPieData.length > 1 && (
+          <DonutChart
+            data={attendeeCategoryPieData}
+            formatValue={(v) => `${v}`}
+            centerLabel="confirmados"
+            ariaLabel="Resumo dos confirmados por tipo"
+          />
+        )}
         {event.attendees.length > 0 ? (
           <div className="flex flex-col">
             {event.attendees.map((a) => (

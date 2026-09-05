@@ -311,6 +311,29 @@ export async function deleteSponsorInstallmentAction(formData: FormData) {
   revalidateSponsors(existing.sponsorId);
 }
 
+/** Só faz sentido pra patrocinador à vista — parcelado usa o toggle por
+ * parcela (não tem uma única data/valor "o pagamento"). */
+export async function toggleSponsorPaidAction(formData: FormData) {
+  try {
+    await requireSponsorManager();
+  } catch {
+    return;
+  }
+
+  const sponsorId = String(formData.get("sponsorId") ?? "");
+  const sponsor = await prisma.sponsor.findUnique({ where: { id: sponsorId } });
+  if (!sponsor || sponsor.paymentPlan !== "avista") return;
+
+  const isPaid = sponsor.status === "pago_integralmente" || sponsor.status === "pago_parcialmente";
+  await prisma.sponsor.update({
+    where: { id: sponsorId },
+    data: { status: isPaid ? "assinado" : "pago_integralmente" },
+  });
+
+  revalidateSponsors(sponsorId);
+  if (sponsor.eventId) revalidatePath(`/eventos/${sponsor.eventId}`);
+}
+
 export async function toggleSponsorInstallmentPaidAction(formData: FormData) {
   try {
     await requireSponsorManager();

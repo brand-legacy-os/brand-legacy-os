@@ -26,7 +26,7 @@ export default async function PatrociniosPage({
   const year = Number(sp.ano as string) || new Date().getFullYear();
 
   const [sponsors, events, imersoes] = await Promise.all([
-    prisma.sponsor.findMany({ include: { installments: true } }),
+    prisma.sponsor.findMany({ include: { installments: true, event: { select: { startDate: true } } } }),
     prisma.event.findMany({ orderBy: { startDate: "desc" }, select: { id: true, name: true } }),
     prisma.event.findMany({
       where: { type: "Imersão" },
@@ -41,27 +41,48 @@ export default async function PatrociniosPage({
   const totalContratado = inPeriod.reduce((s, sp) => s + sp.totalValue, 0);
   const totalRecebido = inPeriod.reduce((s, sp) => s + sponsorPaidValue(sp), 0);
 
-  // Recebido x Aberto mês a mês no ano selecionado.
+  // Recebido x Aberto mês a mês no ano selecionado. Recebido usa o mês em que
+  // a parcela foi de fato PAGA (paidDate) — não o vencimento — porque é isso
+  // que "recebido" significa; aberto (ainda não pago) usa o vencimento, já
+  // que é quando o dinheiro é esperado. À vista não tem parcela pra ancorar —
+  // usa a data do evento vinculado (é quando o patrocínio "acontece" de
+  // fato), caindo pra createdAt só quando não há evento (anual/recorrente).
   const recebidoPorMes = Array(12).fill(0);
   const abertoPorMes = Array(12).fill(0);
   for (const s of sponsors) {
     if (s.paymentPlan === "parcelado") {
       for (const inst of s.installments) {
-        if (inst.dueDate.getFullYear() !== year) continue;
-        const m = inst.dueDate.getMonth();
-        if (inst.paid) recebidoPorMes[m] += inst.amount;
-        else abertoPorMes[m] += inst.amount;
+        if (inst.paid) {
+          const paidDate = inst.paidDate ?? inst.dueDate;
+          if (paidDate.getFullYear() === year) recebidoPorMes[paidDate.getMonth()] += inst.amount;
+        } else if (inst.dueDate.getFullYear() === year) {
+          abertoPorMes[inst.dueDate.getMonth()] += inst.amount;
+        }
       }
-    } else if (s.createdAt.getFullYear() === year) {
-      const m = s.createdAt.getMonth();
+    } else {
+      const anchorDate = s.event?.startDate ?? s.createdAt;
+      if (anchorDate.getFullYear() !== year) continue;
+      const m = anchorDate.getMonth();
       const paid = sponsorPaidValue(s);
       recebidoPorMes[m] += paid;
       abertoPorMes[m] += s.totalValue - paid;
     }
   }
 
-  const ranking = [...sponsors]
-    .map((s) => ({ ...s, paid: sponsorPaidValue(s) }))
+  // Agrupa por nome — o mesmo patrocinador costuma ter uma ficha por
+  // evento/ano, então ranking por ficha individual sub-conta quem patrocina
+  // mais de uma vez. Nome é normalizado (trim + minúsculo) só pra bater
+  // "Empresa X" com " empresa x ", mas o label exibido usa a grafia original.
+  const byName = new Map<string, { name: string; totalValue: number; paid: number; count: number }>();
+  for (const s of sponsors) {
+    const key = s.name.trim().toLowerCase();
+    const cur = byName.get(key) ?? { name: s.name.trim(), totalValue: 0, paid: 0, count: 0 };
+    cur.totalValue += s.totalValue;
+    cur.paid += sponsorPaidValue(s);
+    cur.count += 1;
+    byName.set(key, cur);
+  }
+  const ranking = [...byName.values()]
     .sort((a, b) => b.totalValue - a.totalValue)
     .slice(0, 8);
 
@@ -150,18 +171,23 @@ export default async function PatrociniosPage({
       <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
         <h2 className="text-[13px] font-medium text-ink-soft">Ranking de maiores patrocinadores</h2>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {ranking.map((s) => (
-            <Link
-              key={s.id}
-              href={`/patrocinios/${s.id}`}
-              className="flex items-center justify-between rounded-(--radius-s) bg-surface-muted px-3 py-2 hover:bg-border/30"
+          {ranking.map((s, i) => (
+            <div
+              key={s.name}
+              className="flex items-center gap-3 rounded-(--radius-s) bg-surface-muted px-3 py-2"
             >
-              <div className="flex flex-col">
-                <span className="text-[12.5px] font-medium text-ink">{s.name}</span>
-                <span className="text-[11px] text-ink-faint">Recebido: {formatCompactCurrency(s.paid)}</span>
+              <span className="tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold-tint text-[11px] font-semibold text-gold-ink">
+                {i + 1}º
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-[12.5px] font-medium text-ink">{s.name}</span>
+                <span className="text-[11px] text-ink-faint">
+                  Recebido: {formatCompactCurrency(s.paid)}
+                  {s.count > 1 ? ` · ${s.count} fichas` : ""}
+                </span>
               </div>
-              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(s.totalValue)}</span>
-            </Link>
+              <span className="tnum shrink-0 text-[13px] font-medium text-ink">{formatCompactCurrency(s.totalValue)}</span>
+            </div>
           ))}
           {ranking.length === 0 && (
             <p className="text-[12.5px] text-ink-faint">Nenhum patrocinador cadastrado ainda.</p>
