@@ -6,6 +6,7 @@ import { TaskRow } from "@/components/area/task-row";
 import { CreateTaskForm } from "@/components/area/create-task-form";
 import { SOCIAL_TASK_CATEGORIES } from "@/lib/social";
 import { notFound } from "next/navigation";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function SocialTarefasPage() {
   const user = await requireUser();
@@ -28,6 +29,12 @@ export default async function SocialTarefasPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Marca forte não acontece por acaso — se constrói todo dia."
+        subtitle="Consistência, autenticidade e presença — cada post é um tijolo na autoridade da marca."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Área

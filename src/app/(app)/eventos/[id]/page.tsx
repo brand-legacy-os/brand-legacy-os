@@ -26,6 +26,7 @@ import { DinnerGuestsSection } from "@/components/events/dinner-guests-section";
 import { CommsSection } from "@/components/events/comms-section";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function EventDetailPage({
   params,
@@ -98,6 +99,12 @@ export default async function EventDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Experiência inesquecível é entrega, não sorte."
+        subtitle="Cada detalhe planejado é respeito por quem confiou na Brand Legacy para estar na sala."
+      />
+
       <Link
         href="/eventos"
         className="w-fit text-[12.5px] font-medium text-ink-soft hover:text-brand-deep"

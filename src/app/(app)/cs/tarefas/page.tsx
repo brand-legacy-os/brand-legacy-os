@@ -6,6 +6,7 @@ import { CsTabs } from "@/components/cs/cs-tabs";
 import { CreateCsTaskForm } from "@/components/cs/create-cs-task-form";
 import { TaskRow } from "@/components/area/task-row";
 import { TASK_PRIORITY_META } from "@/lib/format";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 function initials(name: string) {
   return name
@@ -64,6 +65,12 @@ export default async function CsTarefasPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Cliente satisfeito é a prova real do que entregamos."
+        subtitle="Renovação não se pede — se conquista, mentoria após mentoria, resultado após resultado."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">

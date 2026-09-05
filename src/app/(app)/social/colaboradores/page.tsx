@@ -5,6 +5,7 @@ import { resolvePeriod, type PeriodKey } from "@/lib/period";
 import { SocialTabs } from "@/components/social/social-tabs";
 import { FilterBar } from "@/components/dashboard/filter-bar";
 import { notFound } from "next/navigation";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function SocialColaboradoresPage({
   searchParams,
@@ -73,6 +74,12 @@ export default async function SocialColaboradoresPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Marca forte não acontece por acaso — se constrói todo dia."
+        subtitle="Consistência, autenticidade e presença — cada post é um tijolo na autoridade da marca."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">

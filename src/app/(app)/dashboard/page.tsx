@@ -188,18 +188,6 @@ export default async function DashboardPage({
   const nextEvent = allEvents
     .filter((e) => e.status !== "realizado" && e.status !== "cancelado")
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0];
-  const nextImersao = allEvents
-    .filter(
-      (e) =>
-        e.status !== "realizado" &&
-        e.status !== "cancelado" &&
-        (e.type.toLowerCase().includes("imers") || e.name.toLowerCase().includes("imers")) &&
-        e.startDate >= now
-    )
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())[0];
-  const daysToImersao = nextImersao
-    ? Math.max(0, Math.ceil((nextImersao.startDate.getTime() - now.getTime()) / 86400000))
-    : null;
   const eventsBudgetPlanned = allEvents.reduce((s, e) => s + (e.budgetPlanned ?? 0), 0);
   const eventsBudgetActual = allEvents.reduce(
     (s, e) => s + computeEventStats(e).budgetActual,
@@ -283,56 +271,11 @@ export default async function DashboardPage({
 
   return (
     <>
-      {nextImersao && (
-        <div className="relative flex flex-wrap items-center justify-between gap-6 overflow-hidden rounded-(--radius-xl) bg-brand-deep px-8 py-7 text-[#F3EFE1]">
-          <div
-            className="pointer-events-none absolute -right-16 -top-24 h-[320px] w-[320px] rounded-full opacity-[0.14] blur-3xl"
-            style={{ background: "radial-gradient(circle, #E3C374, transparent 70%)" }}
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] lg:block"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, #0A1A10 0%, rgba(10,26,16,0.55) 30%, rgba(10,26,16,0.15) 65%, rgba(10,26,16,0) 100%), url(/brand/hero-socios.jpg)",
-              backgroundSize: "cover",
-              backgroundPosition: "center 30%",
-            }}
-          />
-          <div className="relative flex flex-col gap-2">
-            <span className="w-fit rounded-full border border-gold-soft/30 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-[0.12em] text-gold-soft/90">
-              Próxima imersão
-            </span>
-            <h2 className="font-(family-name:--font-display) text-[24px] leading-tight text-[#F3EFE1]">
-              {nextImersao.name}
-            </h2>
-            <p className="text-[13px] text-[#BFB9A5]">
-              {formatDateFull(nextImersao.startDate)}
-              {nextImersao.location ? ` · ${nextImersao.location}` : ""}
-            </p>
-            <Link
-              href={`/eventos/${nextImersao.id}`}
-              className="mt-1 w-fit text-[12.5px] font-medium text-gold-soft hover:underline"
-            >
-              Ver detalhes do evento →
-            </Link>
-          </div>
-          <div className="relative flex items-baseline gap-2">
-            <span className="tnum font-(family-name:--font-display) text-[64px] leading-none text-gold-soft">
-              {daysToImersao}
-            </span>
-            <span className="text-[13px] font-medium uppercase tracking-[0.1em] text-[#BFB9A5]">
-              {daysToImersao === 1 ? "dia" : "dias"}
-            </span>
-          </div>
-        </div>
-      )}
-      {!nextImersao && (
-        <CultureBanner
-          eyebrow="Cultura Brand Legacy"
-          title="Bem-vindo de volta ao painel da Brand Legacy."
-          subtitle="Tudo o que importa hoje, em um só lugar — resultado é o que sustenta a autoridade que construímos juntos."
-        />
-      )}
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Resultado é o que sustenta a autoridade."
+        subtitle="Tudo o que importa hoje, em um só lugar — autorresponsabilidade e entrega, todos os dias."
+      />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">

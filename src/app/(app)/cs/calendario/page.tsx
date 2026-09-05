@@ -8,6 +8,7 @@ import { CsTabs } from "@/components/cs/cs-tabs";
 import { CreateCsActionForm } from "@/components/cs/create-cs-action-form";
 import { MONTH_LABELS } from "@/lib/finance";
 import { formatDate } from "@/lib/format";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 const EVENT_STATUS_LABEL: Record<string, string> = {
   planejamento: "Planejamento",
@@ -54,6 +55,12 @@ export default async function CsCalendarioPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Cliente satisfeito é a prova real do que entregamos."
+        subtitle="Renovação não se pede — se conquista, mentoria após mentoria, resultado após resultado."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">

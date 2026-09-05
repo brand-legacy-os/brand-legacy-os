@@ -13,6 +13,7 @@ import {
 } from "@/lib/cs";
 import { formatCompactCurrency, formatDate } from "@/lib/format";
 import { StatusPill } from "@/components/ui/status-pill";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function CsMentoradosPage({
   searchParams,
@@ -78,6 +79,12 @@ export default async function CsMentoradosPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Cliente satisfeito é a prova real do que entregamos."
+        subtitle="Renovação não se pede — se conquista, mentoria após mentoria, resultado após resultado."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
