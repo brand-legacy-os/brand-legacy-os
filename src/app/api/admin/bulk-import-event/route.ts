@@ -9,6 +9,50 @@ import { prisma } from "@/lib/db";
  * direto pro banco de produção, sem passar PII pelo histórico do git.
  * Remover depois de usado (ver commit que introduziu esta rota).
  */
+export async function GET(request: Request) {
+  const user = await getCurrentUser();
+  if (!user || !isAdmin(user)) {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
+  const eventId = new URL(request.url).searchParams.get("eventId");
+  if (!eventId) return NextResponse.json({ error: "eventId obrigatório." }, { status: 400 });
+
+  const [attendees, budgetLines, dinnerGuests, commsItems] = await Promise.all([
+    prisma.eventAttendee.count({ where: { eventId } }),
+    prisma.eventBudgetLine.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
+    prisma.eventDinnerGuest.count({ where: { eventId } }),
+    prisma.eventCommsItem.count({ where: { eventId } }),
+  ]);
+
+  return NextResponse.json({ attendees, budgetLines, dinnerGuests, commsItems });
+}
+
+/**
+ * Reverte dinnerGuests/commsItems adicionados pelo POST acima — o evento já
+ * tinha esses dados reais lançados direto pelo time; só os confirmados
+ * estavam faltando. Não mexe em budgetLines (dado financeiro) nem em
+ * attendees (é o que precisava ficar). Escopado pelo prefixo de id do lote
+ * (cuid gerado localmente nesta importação, não colide com dado real).
+ */
+export async function DELETE(request: Request) {
+  const user = await getCurrentUser();
+  if (!user || !isAdmin(user)) {
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
+  }
+  const eventId = new URL(request.url).searchParams.get("eventId");
+  const idPrefix = new URL(request.url).searchParams.get("idPrefix");
+  if (!eventId || !idPrefix) {
+    return NextResponse.json({ error: "eventId e idPrefix obrigatórios." }, { status: 400 });
+  }
+
+  const [dinnerGuests, commsItems] = await Promise.all([
+    prisma.eventDinnerGuest.deleteMany({ where: { eventId, id: { startsWith: idPrefix } } }),
+    prisma.eventCommsItem.deleteMany({ where: { eventId, id: { startsWith: idPrefix } } }),
+  ]);
+
+  return NextResponse.json({ dinnerGuests: dinnerGuests.count, commsItems: commsItems.count });
+}
+
 export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user || !isAdmin(user)) {
