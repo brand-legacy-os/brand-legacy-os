@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isAdmin } from "@/lib/permissions";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -21,6 +22,12 @@ export default async function SettingsPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Estrutura clara é o que sustenta o crescimento."
+        subtitle="Área, papel e responsabilidade bem definidos evitam retrabalho e dão liberdade pra cada um fazer a sua parte."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Administração

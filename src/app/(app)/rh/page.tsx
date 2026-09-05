@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { isAdmin, isLeaderOf } from "@/lib/permissions";
 import { computeRhCadence, pendingLeaderFormalization } from "@/lib/rh";
 import { RhCadenceBadges } from "@/components/rh/rh-cadence-badges";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function RhPage() {
   const user = await requireUser();
@@ -39,6 +40,12 @@ export default async function RhPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Gente que cresce é empresa que cresce."
+        subtitle="Feedback honesto e frequente — não só uma vez por ano — é o que transforma potencial em performance de verdade."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           RH

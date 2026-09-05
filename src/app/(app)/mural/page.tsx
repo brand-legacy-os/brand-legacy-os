@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CreatePostForm } from "@/components/mural/create-post-form";
 import { PostCard } from "@/components/mural/post-card";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function MuralPage() {
   const user = await requireUser();
@@ -17,6 +18,12 @@ export default async function MuralPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-8">
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="O time que celebra junto, cresce junto."
+        subtitle="Cada post é um registro da nossa história — compartilhe o que te orgulha, reconheça quem fez acontecer."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Conhecimento

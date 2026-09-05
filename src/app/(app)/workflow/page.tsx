@@ -7,6 +7,7 @@ import { StatusPill, taskStatusTone, priorityTone } from "@/components/ui/status
 import { WorkflowFilterBar } from "@/components/workflow/workflow-filter-bar";
 import { WorkflowCreateTaskForm } from "@/components/workflow/workflow-create-task-form";
 import { DeleteTaskButton } from "@/components/workflow/delete-task-button";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 import type { TaskStatus, TaskPriority } from "@prisma/client";
 
 export default async function WorkflowPage({
@@ -78,6 +79,12 @@ export default async function WorkflowPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="O que não está visível, não está sob controle."
+        subtitle="Cada tarefa com dono e prazo claro é combinado cumprido — é assim que a operação inteira confia na entrega do time."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">

@@ -12,6 +12,7 @@ import { StatTile } from "@/components/dashboard/stat-tile";
 import { AreaBar } from "@/components/dashboard/area-bar";
 import { StatusPill, projectStatusTone } from "@/components/ui/status-pill";
 import { PROJECT_STATUS_META } from "@/lib/format";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 import Link from "next/link";
 
 export default async function DashboardPage({
@@ -324,6 +325,13 @@ export default async function DashboardPage({
             </span>
           </div>
         </div>
+      )}
+      {!nextImersao && (
+        <CultureBanner
+          eyebrow="Cultura Brand Legacy"
+          title="Bem-vindo de volta ao painel da Brand Legacy."
+          subtitle="Tudo o que importa hoje, em um só lugar — resultado é o que sustenta a autoridade que construímos juntos."
+        />
       )}
 
       <div className="flex flex-wrap items-end justify-between gap-4">

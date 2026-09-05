@@ -5,6 +5,7 @@ import { canViewCrossAreaProjects, isAdmin, visibleAreaSlugs } from "@/lib/permi
 import { formatDate } from "@/lib/format";
 import { ProjectCard } from "@/components/area/project-card";
 import { TaskRow } from "@/components/area/task-row";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function ProjetosPage() {
   const user = await requireUser();
@@ -43,6 +44,12 @@ export default async function ProjetosPage() {
 
     return (
       <>
+        <CultureBanner
+          eyebrow="Cultura Brand Legacy"
+          title="Projeto sem cobrança vira intenção, não entrega."
+          subtitle="Acompanhar de perto não é desconfiar do time — é garantir que cada prazo combinado vire resultado real."
+        />
+
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
             Operações
@@ -207,6 +214,12 @@ export default async function ProjetosPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Projeto sem cobrança vira intenção, não entrega."
+        subtitle="Acompanhar de perto não é desconfiar do time — é garantir que cada prazo combinado vire resultado real."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Projetos e Tarefas

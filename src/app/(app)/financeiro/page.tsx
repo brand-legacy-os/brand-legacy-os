@@ -12,6 +12,7 @@ import { payableStatus, receivableStatus } from "@/lib/finance";
 import { formatCompactCurrency, formatDate } from "@/lib/format";
 import { FinanceTabs } from "@/components/finance/finance-tabs";
 import { TrendChart } from "@/components/finance/trend-chart";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 function shiftPeriod(periodKey: string, delta: number) {
   const [y, m] = periodKey.split("-").map(Number);
@@ -83,6 +84,12 @@ export default async function FinanceiroPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Número certo é decisão certa."
+        subtitle="Caixa saudável não é sorte — é disciplina todos os dias. Cada lançamento em dia é uma decisão melhor amanhã."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">

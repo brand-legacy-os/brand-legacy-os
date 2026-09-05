@@ -6,6 +6,7 @@ import { canAccessSalaryArea, canViewSalaryFor, canManageSalaryRecords } from "@
 import { formatCompactCurrency } from "@/lib/format";
 import { SalaryRecordForm } from "@/components/rh/salary-record-form";
 import { SalaryRecordRow } from "@/components/rh/salary-record-row";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function CargosSalariosPage() {
   const user = await requireUser();
@@ -35,6 +36,12 @@ export default async function CargosSalariosPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Remuneração justa é reconhecimento com transparência."
+        subtitle="Informação sensível, acesso restrito — cada líder cuida da própria área com o cuidado que ela merece."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">RH</p>
         <h1 className="font-(family-name:--font-display) text-[28px] text-ink">Cargos e Salários</h1>

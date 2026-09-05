@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isAdmin } from "@/lib/permissions";
 import { TrainingCard } from "@/components/training/training-card";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function TreinamentosPage() {
   const user = await requireUser();
@@ -17,6 +18,12 @@ export default async function TreinamentosPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[760px] flex-col gap-6">
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Ninguém evolui sozinho — o time evolui junto."
+        subtitle="Um encontro por mês para trocar, ensinar e aprender. Presença é compromisso com o crescimento de todos."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Conhecimento

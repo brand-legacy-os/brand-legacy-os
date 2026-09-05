@@ -10,6 +10,7 @@ import {
 } from "@/lib/library";
 import { formatDate } from "@/lib/format";
 import { AddLibraryForm } from "@/components/library/add-library-form";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function BibliotecaPage({
   searchParams,
@@ -47,6 +48,12 @@ export default async function BibliotecaPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Quem para de estudar, para de crescer."
+        subtitle="O acervo é da empresa inteira — cada indicação vira PDI de alguém, cada consulta é um degrau a mais."
+      />
+
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
