@@ -7,6 +7,7 @@ import { formatDate, TASK_STATUS_META, TASK_PRIORITY_META } from "@/lib/format";
 import { StatusPill, taskStatusTone, priorityTone } from "@/components/ui/status-pill";
 import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
 import { AddSponsorTaskForm } from "@/components/patrocinios/add-sponsor-task-form";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function PatrociniosTarefasPage() {
   const user = await requireUser();
@@ -34,6 +35,12 @@ export default async function PatrociniosTarefasPage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Patrocínio de verdade é parceria — não é só verba."
+        subtitle="Cada marca que assina com a gente vira parte da história. Contrato bem cuidado hoje é renovação garantida amanhã."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">Área</p>
         <h1 className="font-(family-name:--font-display) text-[28px] text-ink">Patrocínios</h1>

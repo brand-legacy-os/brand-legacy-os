@@ -8,6 +8,7 @@ import { SPONSOR_TIER_META, SPONSOR_DEAL_STATUS_META, sponsorPaidValue } from "@
 import { StatusPill } from "@/components/ui/status-pill";
 import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
 import { toggleSponsorPaidAction } from "@/lib/actions/sponsors";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 export default async function PatrociniosBasePage() {
   const user = await requireUser();
@@ -36,6 +37,12 @@ export default async function PatrociniosBasePage() {
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Patrocínio de verdade é parceria — não é só verba."
+        subtitle="Cada marca que assina com a gente vira parte da história. Contrato bem cuidado hoje é renovação garantida amanhã."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Área

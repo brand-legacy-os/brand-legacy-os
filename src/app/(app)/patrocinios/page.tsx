@@ -10,6 +10,7 @@ import { FilterBar } from "@/components/dashboard/filter-bar";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
 import { CreateSponsorForm } from "@/components/patrocinios/create-sponsor-form";
+import { CultureBanner } from "@/components/dashboard/culture-banner";
 
 const MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -94,6 +95,12 @@ export default async function PatrociniosPage({
 
   return (
     <>
+      <CultureBanner
+        eyebrow="Cultura Brand Legacy"
+        title="Patrocínio de verdade é parceria — não é só verba."
+        subtitle="Cada marca que assina com a gente vira parte da história. Contrato bem cuidado hoje é renovação garantida amanhã."
+      />
+
       <div className="flex flex-col gap-1">
         <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
           Área
