@@ -20,8 +20,8 @@ export async function GET(request: Request) {
   const [attendees, budgetLines, dinnerGuests, commsItems] = await Promise.all([
     prisma.eventAttendee.count({ where: { eventId } }),
     prisma.eventBudgetLine.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
-    prisma.eventDinnerGuest.count({ where: { eventId } }),
-    prisma.eventCommsItem.count({ where: { eventId } }),
+    prisma.eventDinnerGuest.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
+    prisma.eventCommsItem.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
   ]);
 
   return NextResponse.json({ attendees, budgetLines, dinnerGuests, commsItems });
@@ -39,15 +39,12 @@ export async function DELETE(request: Request) {
   if (!user || !isAdmin(user)) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
-  const eventId = new URL(request.url).searchParams.get("eventId");
-  const idPrefix = new URL(request.url).searchParams.get("idPrefix");
-  if (!eventId || !idPrefix) {
-    return NextResponse.json({ error: "eventId e idPrefix obrigatórios." }, { status: 400 });
-  }
+  const body = await request.json();
+  const { dinnerGuestIds, commsItemIds } = body as { dinnerGuestIds: string[]; commsItemIds: string[] };
 
   const [dinnerGuests, commsItems] = await Promise.all([
-    prisma.eventDinnerGuest.deleteMany({ where: { eventId, id: { startsWith: idPrefix } } }),
-    prisma.eventCommsItem.deleteMany({ where: { eventId, id: { startsWith: idPrefix } } }),
+    prisma.eventDinnerGuest.deleteMany({ where: { id: { in: dinnerGuestIds ?? [] } } }),
+    prisma.eventCommsItem.deleteMany({ where: { id: { in: commsItemIds ?? [] } } }),
   ]);
 
   return NextResponse.json({ dinnerGuests: dinnerGuests.count, commsItems: commsItems.count });
