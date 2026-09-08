@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canManageSponsors } from "@/lib/permissions";
-import { saveUpload, validateUpload, UPLOAD_TYPES } from "@/lib/upload";
+import { saveUpload, validateUpload, UPLOAD_TYPES, MAX_VIDEO_UPLOAD_BYTES } from "@/lib/upload";
 import type {
   SponsorPaymentPlan,
   SponsorPaymentMethod,
@@ -148,6 +148,22 @@ export async function createSponsorAction(
     nfUrl = await saveUpload(nf, "patrocinios");
   }
 
+  let presentationFileUrl: string | null = null;
+  const presentationFile = formData.get("presentationFile");
+  if (presentationFile instanceof File && presentationFile.size > 0) {
+    const v = validateUpload(presentationFile, UPLOAD_TYPES.presentation, "Envie um PDF ou PPT válido para a apresentação.");
+    if (v.error) return { error: v.error };
+    presentationFileUrl = await saveUpload(presentationFile, "patrocinios");
+  }
+
+  let videoFileUrl: string | null = null;
+  const videoFile = formData.get("videoFile");
+  if (videoFile instanceof File && videoFile.size > 0) {
+    const v = validateUpload(videoFile, UPLOAD_TYPES.video, "Envie um vídeo válido.", MAX_VIDEO_UPLOAD_BYTES);
+    if (v.error) return { error: v.error };
+    videoFileUrl = await saveUpload(videoFile, "patrocinios");
+  }
+
   const sponsor = await prisma.sponsor.create({
     data: {
       ...data,
@@ -158,6 +174,8 @@ export async function createSponsorAction(
       paymentProofUrl,
       logoUrl,
       nfUrl,
+      presentationFileUrl,
+      videoFileUrl,
       createdById: user.id,
       installments: { create: installments },
     },
@@ -213,6 +231,22 @@ export async function updateSponsorAction(
     nfUrl = await saveUpload(nf, "patrocinios");
   }
 
+  let presentationFileUrl = existing.presentationFileUrl;
+  const presentationFile = formData.get("presentationFile");
+  if (presentationFile instanceof File && presentationFile.size > 0) {
+    const v = validateUpload(presentationFile, UPLOAD_TYPES.presentation, "Envie um PDF ou PPT válido para a apresentação.");
+    if (v.error) return { error: v.error };
+    presentationFileUrl = await saveUpload(presentationFile, "patrocinios");
+  }
+
+  let videoFileUrl = existing.videoFileUrl;
+  const videoFile = formData.get("videoFile");
+  if (videoFile instanceof File && videoFile.size > 0) {
+    const v = validateUpload(videoFile, UPLOAD_TYPES.video, "Envie um vídeo válido.", MAX_VIDEO_UPLOAD_BYTES);
+    if (v.error) return { error: v.error };
+    videoFileUrl = await saveUpload(videoFile, "patrocinios");
+  }
+
   await prisma.sponsor.update({
     where: { id: sponsorId },
     data: {
@@ -224,6 +258,8 @@ export async function updateSponsorAction(
       paymentProofUrl,
       logoUrl,
       nfUrl,
+      presentationFileUrl,
+      videoFileUrl,
     },
   });
 

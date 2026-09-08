@@ -272,8 +272,16 @@ export function SponsorFormFields({
             <input name="presentationUrl" placeholder="https://…" defaultValue={defaults?.presentationUrl ?? ""} className={inputClass} />
           </label>
           <label className="flex flex-col gap-1">
+            <span className={labelClass}>Apresentação (arquivo — PDF ou PPT)</span>
+            <input name="presentationFile" type="file" accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" className="text-[12px]" />
+          </label>
+          <label className="flex flex-col gap-1">
             <span className={labelClass}>Vídeo (link)</span>
             <input name="videoUrl" placeholder="https://…" defaultValue={defaults?.videoUrl ?? ""} className={inputClass} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={labelClass}>Vídeo (arquivo — até 100MB)</span>
+            <input name="videoFile" type="file" accept="video/*" className="text-[12px]" />
           </label>
         </div>
         <label className="flex flex-col gap-1">
