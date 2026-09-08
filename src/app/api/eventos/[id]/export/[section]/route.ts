@@ -104,9 +104,10 @@ export async function GET(
           Valor: s.value,
           "À vista/parcelado": s.paymentPlan,
           Parcelas: s.installmentCount ?? "",
-          "Meio de pagamento": s.paymentMethod,
+          "Meio de pagamento": s.paymentMethod === "outro" ? s.paymentMethodOther ?? "Outro" : s.paymentMethod,
           Data: formatDate(new Date(s.saleDate)),
           Vendedor: s.seller?.name ?? "",
+          Observação: s.notes ?? "",
         }))
       );
       break;

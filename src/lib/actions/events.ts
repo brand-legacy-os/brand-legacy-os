@@ -7,6 +7,7 @@ import { isAdmin, isLeaderOf } from "@/lib/permissions";
 import { saveUpload, validateUpload, UPLOAD_TYPES } from "@/lib/upload";
 import { parseNpsExcel } from "@/lib/nps-excel";
 import { EVENT_BUDGET_CATEGORY_META } from "@/lib/sponsors";
+import { ATTENDEE_CATEGORY_META } from "@/lib/events";
 import type {
   EventStatus,
   AttendeeCategory,
@@ -703,17 +704,18 @@ export async function toggleAttendeeWhatsappAction(formData: FormData) {
 // Vendas por confirmado
 // ---------------------------------------------------------------------------
 
-export async function addAttendeeSaleAction(
-  _prev: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const user = await requireUser();
-  if (!canManageEvents(user)) return { error: "Sem permissão." };
+/** Lê as datas de pagamento acordadas por parcela — mesmo padrão de
+ * parseInstallments em sponsors.ts (installmentDueDate_N por índice). */
+function parseSaleInstallmentDates(formData: FormData, count: number) {
+  const dates: { number: number; dueDate: Date }[] = [];
+  for (let i = 0; i < count; i++) {
+    const raw = String(formData.get(`installmentDueDate_${i}`) ?? "");
+    if (raw) dates.push({ number: i + 1, dueDate: new Date(`${raw}T12:00:00`) });
+  }
+  return dates;
+}
 
-  const attendeeId = String(formData.get("attendeeId") ?? "");
-  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
-  if (!attendee) return { error: "Confirmado não encontrado." };
-
+function readSaleFields(formData: FormData) {
   const program = String(formData.get("program") ?? "").trim();
   const value = Number(formData.get("value") ?? 0);
   const paymentPlan = formData.get("paymentPlan") as "avista" | "parcelado" | null;
@@ -726,23 +728,66 @@ export async function addAttendeeSaleAction(
     | "cartao"
     | "outro"
     | null;
+  const paymentMethodOther =
+    paymentMethod === "outro" ? String(formData.get("paymentMethodOther") ?? "").trim() || null : null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
   const saleDateRaw = String(formData.get("saleDate") ?? "");
   const sellerId = String(formData.get("sellerId") ?? "") || null;
 
-  if (!program || !value || value <= 0 || !paymentPlan || !paymentMethod || !saleDateRaw) {
-    return { error: "Preencha programa, valor, forma de pagamento e data da venda." };
-  }
+  const errors =
+    !program || !value || value <= 0 || !paymentPlan || !paymentMethod || !saleDateRaw
+      ? "Preencha programa, valor, forma de pagamento e data da venda."
+      : null;
 
-  await prisma.eventAttendeeSale.create({
+  return {
+    error: errors,
     data: {
-      attendeeId,
       program,
       value,
       paymentPlan,
       installmentCount,
       paymentMethod,
-      saleDate: new Date(`${saleDateRaw}T12:00:00`),
+      paymentMethodOther,
+      notes,
+      saleDate: saleDateRaw ? new Date(`${saleDateRaw}T12:00:00`) : null,
       sellerId,
+    },
+    installments:
+      paymentPlan === "parcelado" && installmentCount
+        ? parseSaleInstallmentDates(formData, installmentCount)
+        : [],
+  };
+}
+
+export async function addAttendeeSaleAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return { error: "Confirmado não encontrado." };
+
+  const { error, data, installments } = readSaleFields(formData);
+  if (error || !data.paymentPlan || !data.paymentMethod || !data.saleDate) {
+    return { error: error ?? "Preencha os campos obrigatórios." };
+  }
+
+  await prisma.eventAttendeeSale.create({
+    data: {
+      attendeeId,
+      program: data.program,
+      value: data.value,
+      paymentPlan: data.paymentPlan,
+      installmentCount: data.installmentCount,
+      paymentMethod: data.paymentMethod,
+      paymentMethodOther: data.paymentMethodOther,
+      notes: data.notes,
+      saleDate: data.saleDate,
+      sellerId: data.sellerId,
+      installments: { create: installments },
     },
   });
 
@@ -764,35 +809,25 @@ export async function updateAttendeeSaleAction(
   });
   if (!existing) return { error: "Venda não encontrada." };
 
-  const program = String(formData.get("program") ?? "").trim();
-  const value = Number(formData.get("value") ?? 0);
-  const paymentPlan = formData.get("paymentPlan") as "avista" | "parcelado" | null;
-  const installmentCountRaw = String(formData.get("installmentCount") ?? "");
-  const installmentCount =
-    paymentPlan === "parcelado" && installmentCountRaw ? Number(installmentCountRaw) : null;
-  const paymentMethod = formData.get("paymentMethod") as
-    | "pix"
-    | "boleto"
-    | "cartao"
-    | "outro"
-    | null;
-  const saleDateRaw = String(formData.get("saleDate") ?? "");
-  const sellerId = String(formData.get("sellerId") ?? "") || null;
-
-  if (!program || !value || value <= 0 || !paymentPlan || !paymentMethod || !saleDateRaw) {
-    return { error: "Preencha programa, valor, forma de pagamento e data da venda." };
+  const { error, data, installments } = readSaleFields(formData);
+  if (error || !data.paymentPlan || !data.paymentMethod || !data.saleDate) {
+    return { error: error ?? "Preencha os campos obrigatórios." };
   }
 
+  await prisma.eventAttendeeSaleInstallment.deleteMany({ where: { saleId } });
   await prisma.eventAttendeeSale.update({
     where: { id: saleId },
     data: {
-      program,
-      value,
-      paymentPlan,
-      installmentCount,
-      paymentMethod,
-      saleDate: new Date(`${saleDateRaw}T12:00:00`),
-      sellerId,
+      program: data.program,
+      value: data.value,
+      paymentPlan: data.paymentPlan,
+      installmentCount: data.installmentCount,
+      paymentMethod: data.paymentMethod,
+      paymentMethodOther: data.paymentMethodOther,
+      notes: data.notes,
+      saleDate: data.saleDate,
+      sellerId: data.sellerId,
+      installments: { create: installments },
     },
   });
 
@@ -811,6 +846,34 @@ export async function deleteAttendeeSaleAction(formData: FormData) {
   if (!sale) return;
   await prisma.eventAttendeeSale.delete({ where: { id: saleId } });
   revalidateEvent(sale.attendee.eventId);
+}
+
+export async function toggleAttendeeDinnerAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return;
+
+  if (attendee.inDinner) {
+    await prisma.eventDinnerGuest.deleteMany({ where: { attendeeId } });
+    await prisma.eventAttendee.update({ where: { id: attendeeId }, data: { inDinner: false } });
+  } else {
+    await prisma.eventDinnerGuest.create({
+      data: {
+        eventId: attendee.eventId,
+        attendeeId,
+        name: attendee.name,
+        category: ATTENDEE_CATEGORY_META[attendee.category]?.label ?? attendee.category,
+        empresa: attendee.empresa,
+        phone: attendee.phone,
+        email: attendee.email,
+      },
+    });
+    await prisma.eventAttendee.update({ where: { id: attendeeId }, data: { inDinner: true } });
+  }
+
+  revalidateEvent(attendee.eventId);
 }
 
 // ---------------------------------------------------------------------------

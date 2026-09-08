@@ -9,6 +9,7 @@ import { CultureBanner } from "@/components/dashboard/culture-banner";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { TrendChart } from "@/components/finance/trend-chart";
+import { DonutChart } from "@/components/charts/donut-chart";
 
 export default async function EventosPage() {
   const user = await requireUser();
@@ -16,12 +17,26 @@ export default async function EventosPage() {
 
   const events = await prisma.event.findMany({
     include: {
-      attendees: true,
+      attendees: { include: { sales: { include: { seller: true } } } },
       sponsors: { include: { installments: true } },
       budgetLines: true,
     },
     orderBy: { startDate: "asc" },
   });
+
+  // Vendas — agregado de todos os eventos, por programa e por vendedor.
+  const allSales = events.flatMap((e) => e.attendees.flatMap((a) => a.sales));
+  const salesTotal = allSales.reduce((s, sale) => s + sale.value, 0);
+  const salesByProgram = new Map<string, number>();
+  for (const s of allSales) {
+    salesByProgram.set(s.program, (salesByProgram.get(s.program) ?? 0) + s.value);
+  }
+  const salesByProgramData = [...salesByProgram.entries()].map(([label, value]) => ({ label, value }));
+  const salesBySeller = new Map<string, number>();
+  for (const s of allSales) {
+    const label = s.seller?.name ?? "Sem vendedor";
+    salesBySeller.set(label, (salesBySeller.get(label) ?? 0) + s.value);
+  }
 
   const totalBudgetPlanned = events.reduce(
     (s, e) => s + (e.budgetPlanned ?? 0),
@@ -75,6 +90,40 @@ export default async function EventosPage() {
         <StatTile label="Patrocínio recebido (total)" value={formatCompactCurrency(totalSponsorRealized)} />
         <StatTile label="Eventos cadastrados" value={String(events.length)} />
       </div>
+
+      {allSales.length > 0 && (
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">Vendas — todos os eventos</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <StatTile label="Valor geral vendido" value={formatCompactCurrency(salesTotal)} />
+            <StatTile label="Vendas registradas" value={String(allSales.length)} />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {salesByProgramData.length > 1 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[12px] text-ink-faint">Por programa</span>
+                <DonutChart
+                  data={salesByProgramData}
+                  formatValue={(v) => formatCompactCurrency(v)}
+                  centerLabel="vendido"
+                  ariaLabel="Vendas por programa"
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12px] text-ink-faint">Por vendedor</span>
+              {[...salesBySeller.entries()]
+                .sort(([, a], [, b]) => b - a)
+                .map(([name, value]) => (
+                  <div key={name} className="flex items-center justify-between text-[12.5px]">
+                    <span className="text-ink">{name}</span>
+                    <span className="tnum text-ink-soft">{formatCompactCurrency(value)}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {(budgetedEvents.length > 0 || enpsEvents.length > 0) && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -4,6 +4,7 @@ import { useTransition, useState, useActionState, useEffect } from "react";
 import {
   toggleAttendeeCheckedInAction,
   toggleAttendeeWhatsappAction,
+  toggleAttendeeDinnerAction,
   setAttendeeNpsAction,
   updateAttendeeAction,
   deleteAttendeeAction,
@@ -34,8 +35,11 @@ type Sale = {
   paymentPlan: string;
   installmentCount: number | null;
   paymentMethod: string;
+  paymentMethodOther: string | null;
+  notes: string | null;
   saleDate: string | Date;
   seller: { id: string; name: string } | null;
+  installments: { number: number; dueDate: string | Date }[];
 };
 
 /** Campos compartilhados entre o form de adicionar e o de editar venda. */
@@ -47,53 +51,109 @@ function SaleFormFields({
   users: { id: string; name: string }[];
 }) {
   const [paymentPlan, setPaymentPlan] = useState(defaults?.paymentPlan ?? "avista");
+  const [paymentMethod, setPaymentMethod] = useState(defaults?.paymentMethod ?? "");
+  const [installmentCount, setInstallmentCount] = useState(defaults?.installmentCount ?? 1);
   const dateValue = defaults?.saleDate
     ? new Date(defaults.saleDate).toISOString().slice(0, 10)
     : undefined;
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-      <select name="program" required defaultValue={defaults?.program ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-        <option value="" disabled>
-          Programa…
-        </option>
-        {PRODUCTS.map((p) => (
-          <option key={p} value={p}>
-            {p}
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <select name="program" required defaultValue={defaults?.program ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+          <option value="" disabled>
+            Programa…
           </option>
-        ))}
-      </select>
-      <input name="value" type="number" step="0.01" min="0" required placeholder="Valor" defaultValue={defaults?.value} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
-      <input name="saleDate" type="date" required defaultValue={dateValue} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
-      <select
-        name="paymentPlan"
-        value={paymentPlan}
-        onChange={(e) => setPaymentPlan(e.target.value)}
-        className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
-      >
-        <option value="avista">À vista</option>
-        <option value="parcelado">Parcelado</option>
-      </select>
+          {PRODUCTS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+        <input name="value" type="number" step="0.01" min="0" required placeholder="Valor" defaultValue={defaults?.value} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+        <input name="saleDate" type="date" required defaultValue={dateValue} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+        <select
+          name="paymentPlan"
+          value={paymentPlan}
+          onChange={(e) => setPaymentPlan(e.target.value)}
+          className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+        >
+          <option value="avista">À vista</option>
+          <option value="parcelado">Parcelado</option>
+        </select>
+        {paymentPlan === "parcelado" && (
+          <input
+            name="installmentCount"
+            type="number"
+            min="1"
+            max="24"
+            placeholder="Nº parcelas"
+            value={installmentCount}
+            onChange={(e) => setInstallmentCount(Math.max(1, Number(e.target.value) || 1))}
+            className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+          />
+        )}
+        <select
+          name="paymentMethod"
+          required
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+        >
+          <option value="" disabled>
+            Meio de pagamento…
+          </option>
+          <option value="pix">Pix</option>
+          <option value="boleto">Boleto</option>
+          <option value="cartao">Cartão</option>
+          <option value="outro">Outro</option>
+        </select>
+        {paymentMethod === "outro" && (
+          <input
+            name="paymentMethodOther"
+            placeholder="Qual meio de pagamento"
+            defaultValue={defaults?.paymentMethodOther ?? ""}
+            className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+          />
+        )}
+        <select name="sellerId" defaultValue={defaults?.seller?.id ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+          <option value="">Vendedor (opcional)</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {paymentPlan === "parcelado" && (
-        <input name="installmentCount" type="number" min="1" max="24" placeholder="Nº parcelas" defaultValue={defaults?.installmentCount ?? undefined} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] text-ink-faint">Data de pagamento acordada por parcela</span>
+          {Array.from({ length: installmentCount }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-16 shrink-0 text-[11px] text-ink-faint">Parcela {i + 1}</span>
+              <input
+                name={`installmentDueDate_${i}`}
+                type="date"
+                defaultValue={
+                  defaults?.installments?.[i]?.dueDate
+                    ? new Date(defaults.installments[i].dueDate).toISOString().slice(0, 10)
+                    : undefined
+                }
+                className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+              />
+            </div>
+          ))}
+        </div>
       )}
-      <select name="paymentMethod" required defaultValue={defaults?.paymentMethod ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-        <option value="" disabled>
-          Meio de pagamento…
-        </option>
-        <option value="pix">Pix</option>
-        <option value="boleto">Boleto</option>
-        <option value="cartao">Cartão</option>
-        <option value="outro">Outro</option>
-      </select>
-      <select name="sellerId" defaultValue={defaults?.seller?.id ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-        <option value="">Vendedor (opcional)</option>
-        {users.map((u) => (
-          <option key={u.id} value={u.id}>
-            {u.name}
-          </option>
-        ))}
-      </select>
+
+      <textarea
+        name="notes"
+        rows={2}
+        placeholder="Observação (opcional)"
+        defaultValue={defaults?.notes ?? ""}
+        className="rounded-(--radius-s) border border-border bg-surface p-2 text-[12px] outline-none"
+      />
     </div>
   );
 }
@@ -120,6 +180,7 @@ export function AttendeeRow({
     dynamicOther: string | null;
     checkedIn: boolean;
     inWhatsappGroup: boolean;
+    inDinner: boolean;
     npsScore: number | null;
     customer: { product: string; status: keyof typeof CUSTOMER_STATUS_META; notes: string | null } | null;
     sales: Sale[];
@@ -150,7 +211,7 @@ export function AttendeeRow({
 
   return (
     <div className="border-t border-border py-2 first:border-t-0">
-      <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-3">
+      <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] items-center gap-3">
         <div className="flex flex-col">
           <span className="text-[13px] text-ink">
             {attendee.name}
@@ -219,6 +280,24 @@ export function AttendeeRow({
             className="mr-1.5 accent-brand-deep"
           />
           No grupo
+        </label>
+        <label
+          className={`text-[11.5px] ${canManage ? "cursor-pointer" : ""} ${pending ? "opacity-60" : ""}`}
+        >
+          <input
+            type="checkbox"
+            defaultChecked={attendee.inDinner}
+            disabled={!canManage || pending}
+            onChange={() => {
+              const fd = new FormData();
+              fd.set("attendeeId", attendee.id);
+              startTransition(() => {
+                toggleAttendeeDinnerAction(fd);
+              });
+            }}
+            className="mr-1.5 accent-brand-deep"
+          />
+          Jantar
         </label>
         <button
           onClick={() => setShowSales((v) => !v)}
@@ -319,12 +398,23 @@ export function AttendeeRow({
               </form>
             ) : (
               <div key={s.id} className="flex items-center justify-between gap-2 text-[11.5px]">
-                <span>
-                  {s.program} · {formatCurrency(s.value)} ·{" "}
-                  {s.paymentPlan === "parcelado" ? `${s.installmentCount}x` : "à vista"} ·{" "}
-                  {PAYMENT_METHOD_LABEL[s.paymentMethod] ?? s.paymentMethod} · {formatDate(new Date(s.saleDate))}
-                  {s.seller ? ` · ${s.seller.name}` : ""}
-                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span>
+                    {s.program} · {formatCurrency(s.value)} ·{" "}
+                    {s.paymentPlan === "parcelado" ? `${s.installmentCount}x` : "à vista"} ·{" "}
+                    {s.paymentMethod === "outro"
+                      ? s.paymentMethodOther || "Outro"
+                      : PAYMENT_METHOD_LABEL[s.paymentMethod] ?? s.paymentMethod}{" "}
+                    · {formatDate(new Date(s.saleDate))}
+                    {s.seller ? ` · ${s.seller.name}` : ""}
+                  </span>
+                  {s.installments.length > 0 && (
+                    <span className="text-ink-faint">
+                      Parcelas: {s.installments.map((i) => formatDate(new Date(i.dueDate))).join(", ")}
+                    </span>
+                  )}
+                  {s.notes && <span className="text-ink-faint">{s.notes}</span>}
+                </div>
                 {canManage && (
                   <div className="flex items-center gap-2.5">
                     <button onClick={() => setEditingSaleId(s.id)} className="text-brand hover:underline">

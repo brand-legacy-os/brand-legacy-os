@@ -45,7 +45,10 @@ export default async function EventDetailPage({
         orderBy: { name: "asc" },
         include: {
           customer: { select: { product: true, status: true, notes: true } },
-          sales: { include: { seller: true }, orderBy: { saleDate: "desc" } },
+          sales: {
+            include: { seller: true, installments: { orderBy: { number: "asc" } } },
+            orderBy: { saleDate: "desc" },
+          },
         },
       },
       notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
