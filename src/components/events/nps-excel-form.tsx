@@ -30,7 +30,12 @@ export function NpsExcelForm({ eventId }: { eventId: string }) {
       </label>
       {fileName && !pending && <span className="text-[10.5px] text-ink-faint">{fileName}</span>}
       {state.error && <span className="text-[11px] text-critical">{state.error}</span>}
-      {state.success && <span className="text-[11px] text-positive">{state.count} respostas processadas.</span>}
+      {state.success && (
+        <span className="text-[11px] text-positive">
+          {state.count} respostas processadas
+          {state.matched !== undefined ? ` · ${state.matched} vinculadas a confirmados automaticamente` : ""}.
+        </span>
+      )}
     </form>
   );
 }

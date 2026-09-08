@@ -169,7 +169,7 @@ export async function updateEventNpsAction(formData: FormData) {
   revalidateEvent(eventId);
 }
 
-export type NpsExcelState = { error?: string; success?: boolean; count?: number };
+export type NpsExcelState = { error?: string; success?: boolean; count?: number; matched?: number };
 
 export async function uploadNpsExcelAction(
   _prev: NpsExcelState,
@@ -213,8 +213,31 @@ export async function uploadNpsExcelAction(
     },
   });
 
+  // Vincula cada linha da planilha a um EventAttendee do mesmo evento por
+  // nome ou e-mail (case-insensitive, match exato) — best effort, não
+  // bloqueia o upload quando uma linha não bate com ninguém.
+  let matched = 0;
+  const rowsWithIdentity = parsed.rows.filter((r) => r.name || r.email);
+  if (rowsWithIdentity.length > 0) {
+    const attendees = await prisma.eventAttendee.findMany({
+      where: { eventId },
+      select: { id: true, name: true, email: true },
+    });
+    for (const row of rowsWithIdentity) {
+      const attendee = attendees.find(
+        (a) =>
+          (row.email && a.email && a.email.toLowerCase() === row.email.toLowerCase()) ||
+          (row.name && a.name.toLowerCase() === row.name.toLowerCase())
+      );
+      if (attendee) {
+        await prisma.eventAttendee.update({ where: { id: attendee.id }, data: { npsScore: row.score } });
+        matched++;
+      }
+    }
+  }
+
   revalidateEvent(eventId);
-  return { success: true, count: parsed.scores.length };
+  return { success: true, count: parsed.scores.length, matched };
 }
 
 export async function updateEventStatusAction(formData: FormData) {
