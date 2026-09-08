@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
-import { isAdmin } from "@/lib/permissions";
 
 /**
- * Rota temporária, admin-gated, para dois ajustes pontuais em produção:
- * (1) garantir Membership em "eventos" pra 5 pessoas específicas; (2)
- * excluir o Renzo (saiu do time). Chamada uma única vez via fetch
- * autenticado, depois removida do repositório.
+ * Rota temporária, gated por segredo de infraestrutura (env var
+ * ONETIME_ADMIN_SECRET, não uma senha de usuário), pra três ajustes
+ * pontuais em produção: (1) garantir Membership em "eventos" pra 5 pessoas
+ * específicas; (2) excluir o Renzo (saiu do time); (3) resetar a senha de
+ * operacoes@brandlegacy.com.br (login de produção estava travado). Chamada
+ * uma única vez via fetch com o header x-onetime-secret, depois removida do
+ * repositório junto com a env var.
  */
-export async function POST() {
-  const user = await requireUser();
-  if (!isAdmin(user)) {
+export async function POST(request: Request) {
+  const secret = request.headers.get("x-onetime-secret");
+  if (!secret || secret !== process.env.ONETIME_ADMIN_SECRET) {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
@@ -50,5 +53,25 @@ export async function POST() {
     renzoResult = "DELETED";
   }
 
-  return NextResponse.json({ membershipResults, renzoResult });
+  let requestedPassword: string | null = null;
+  try {
+    const body = await request.json();
+    if (typeof body?.newPassword === "string" && body.newPassword.length >= 8) {
+      requestedPassword = body.newPassword;
+    }
+  } catch {
+    // sem corpo JSON — usa a senha gerada
+  }
+  const newPassword = requestedPassword ?? `BL#Reset${randomBytes(3).toString("hex")}`;
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const marcus = await prisma.user.update({
+    where: { email: "operacoes@brandlegacy.com.br" },
+    data: { passwordHash },
+  });
+
+  return NextResponse.json({
+    membershipResults,
+    renzoResult,
+    passwordReset: { email: marcus.email, newPassword },
+  });
 }
