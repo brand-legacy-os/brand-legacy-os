@@ -89,6 +89,26 @@ export function canManageRhFor(
  * mesmo só liderando Financeiro, diferente de qualquer outro líder. */
 const SALARY_FULL_ACCESS_EMAILS = ["willian.tavares@brandlegacy.com.br"];
 
+/** Camila e Alessandra (CS) ajudam no Podcast mas não são membros de
+ * Social — acesso liberado só pra essa subárea, resto de Social continua
+ * fora do alcance delas. */
+const PODCAST_ONLY_EMAILS = [
+  "camila.leite@brandlegacy.com.br",
+  "alessandra.siqueira@brandlegacy.com.br",
+];
+
+/** Ver a subárea Podcast de Social — membro de Social, admin, ou alguém da
+ * lista de acesso restrito ao Podcast. */
+export function canAccessPodcast(user: SessionUser) {
+  return isAdmin(user) || canViewArea(user, "social") || PODCAST_ONLY_EMAILS.includes(user.email);
+}
+
+/** Verdadeiro só pra quem tem acesso ao Podcast SEM ser membro pleno de
+ * Social — usado pra decidir se mostra só o link do Podcast no menu. */
+export function isPodcastOnlyUser(user: SessionUser) {
+  return !isAdmin(user) && !canViewArea(user, "social") && PODCAST_ONLY_EMAILS.includes(user.email);
+}
+
 /**
  * Cargos e Salários: nunca visível pra colaborador comum. Admin e o
  * Financeiro (ver acima) veem tudo; qualquer outro líder só vê quem tem

@@ -3,9 +3,8 @@ import { prisma } from "@/lib/db";
 import { canEditAreaKpis, canViewArea } from "@/lib/permissions";
 import { SocialTabs } from "@/components/social/social-tabs";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
-import { AddProfileReportForm } from "@/components/social/add-profile-report-form";
-import { deleteProfileReportAction } from "@/lib/actions/social";
-import { formatDate } from "@/lib/format";
+import { ProfileReportForm } from "@/components/social/profile-report-form";
+import { ReportRow } from "@/components/social/report-row";
 import { notFound } from "next/navigation";
 
 export default async function SocialRelatorioPage() {
@@ -15,7 +14,12 @@ export default async function SocialRelatorioPage() {
 
   const profiles = await prisma.socialProfile.findMany({
     orderBy: { order: "asc" },
-    include: { reports: { include: { createdBy: true }, orderBy: { createdAt: "desc" } } },
+    include: {
+      reports: {
+        include: { createdBy: true, attachments: { orderBy: { createdAt: "asc" } } },
+        orderBy: { reportMonth: "desc" },
+      },
+    },
   });
 
   return (
@@ -34,7 +38,7 @@ export default async function SocialRelatorioPage() {
           Social
         </h1>
         <p className="max-w-[62ch] text-[13px] text-ink-soft">
-          Relatórios periódicos por perfil — upload de arquivo ou link externo.
+          Relatórios periódicos por perfil — mês de referência, período analisado, análise resumida e anexos.
         </p>
       </div>
 
@@ -48,39 +52,13 @@ export default async function SocialRelatorioPage() {
             </h2>
             <div className="flex flex-col">
               {p.reports.map((r) => (
-                <div key={r.id} className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0">
-                  <div className="flex flex-col">
-                    <span className="text-[13px] text-ink">{r.title}</span>
-                    <span className="text-[11.5px] text-ink-faint">
-                      {r.createdBy.name} · {formatDate(r.createdAt)}
-                      {r.notes ? ` · ${r.notes}` : ""}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {(r.fileUrl || r.externalUrl) && (
-                      <a
-                        href={r.fileUrl ?? r.externalUrl ?? "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11.5px] font-medium text-brand hover:underline"
-                      >
-                        Abrir →
-                      </a>
-                    )}
-                    {canEdit && (
-                      <form action={deleteProfileReportAction}>
-                        <input type="hidden" name="reportId" value={r.id} />
-                        <button className="text-[11.5px] text-ink-faint hover:text-critical">excluir</button>
-                      </form>
-                    )}
-                  </div>
-                </div>
+                <ReportRow key={r.id} profileId={p.id} report={r} canEdit={canEdit} />
               ))}
               {p.reports.length === 0 && (
                 <p className="py-2 text-[12.5px] text-ink-faint">Nenhum relatório ainda.</p>
               )}
             </div>
-            {canEdit && <AddProfileReportForm profileId={p.id} />}
+            {canEdit && <ProfileReportForm profileId={p.id} />}
           </section>
         ))}
         {profiles.length === 0 && (

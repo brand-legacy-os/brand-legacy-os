@@ -16,15 +16,19 @@ export const SOCIAL_TASK_CATEGORIES = [
 ] as const;
 
 export const PODCAST_STATUS_META: Record<PodcastStatus, { label: string }> = {
-  editando: { label: "Editando" },
-  gravacao_disponivel: { label: "Gravação disponível" },
-  agendado: { label: "Agendado" },
-  reagendar: { label: "Reagendar" },
+  entrevista_marcada: { label: "Entrevista marcada" },
+  entrevista_reagendando: { label: "Entrevista sendo reagendada" },
+  esperando_material: { label: "Esperando material" },
+  material_em_edicao: { label: "Material em edição" },
+  episodio_agendado: { label: "Episódio agendado" },
+  episodio_postado: { label: "Episódio postado" },
 };
 
 export const PODCAST_SOURCE_META: Record<PodcastSource, { label: string }> = {
   dom: { label: "Dom" },
-  karina_social_seller: { label: "Karina (Social Seller)" },
+  karina_social_seller: { label: "Social Seller" },
+  carol: { label: "Carol" },
+  outro: { label: "Outros" },
 };
 
 export const SOCIAL_LEAD_STATUS_META: Record<SocialLeadStatus, { label: string }> = {
@@ -75,6 +79,32 @@ export const SOCIAL_REFERENCE_LINKS = {
     { name: "HypeAuditor", url: "https://www.hypeauditor.com/" },
   ],
 };
+
+/** Soma curtidas+comentários+salvamentos+compartilhamentos de um conjunto de
+ * posts (SocialReporteiPost) e calcula engajamento por alcance —
+ * ((interações) / alcance) x 100. Usado nos Indicadores Gerais e na
+ * comparação de períodos do Dashboard Reportei. */
+export function computeReachEngagement(
+  posts: {
+    alcance: number | null;
+    curtidas: number | null;
+    comentarios: number | null;
+    salvamentos: number | null;
+    compartilhamentos: number | null;
+  }[]
+) {
+  const interactions = posts.reduce(
+    (s, p) => s + (p.curtidas ?? 0) + (p.comentarios ?? 0) + (p.salvamentos ?? 0) + (p.compartilhamentos ?? 0),
+    0
+  );
+  const reach = posts.reduce((s, p) => s + (p.alcance ?? 0), 0);
+  return {
+    postCount: posts.length,
+    interactions,
+    reach,
+    engagementPct: reach > 0 ? (interactions / reach) * 100 : null,
+  };
+}
 
 /// Metodologia semanal de conteúdo, preservada literalmente como o time
 /// colou no Notion — não foi decomposta em uma tabela dia-a-dia porque a

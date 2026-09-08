@@ -10,6 +10,8 @@ import { TrendChart } from "@/components/finance/trend-chart";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 import { formatCompactCurrency } from "@/lib/format";
+import { computeReachEngagement } from "@/lib/social";
+import { FollowerSnapshotForm } from "@/components/social/follower-snapshot-form";
 import { notFound } from "next/navigation";
 
 function lastNMonthKeys(n: number, endKey: string) {
@@ -17,13 +19,6 @@ function lastNMonthKeys(n: number, endKey: string) {
   const keys: string[] = [];
   for (let i = n - 1; i >= 0; i--) keys.push(monthKey(new Date(y, m - 1 - i, 1)));
   return keys;
-}
-
-/** Extrai o primeiro número de uma string tipo "12,4%" ou "1.234" — os
- * valores do Reportei vêm como texto livre (ver reportei-scraper.ts). */
-function parseMetricNumber(raw: string): number | null {
-  const cleaned = raw.replace(/\./g, "").replace(",", ".").match(/-?\d+(\.\d+)?/);
-  return cleaned ? Number(cleaned[0]) : null;
 }
 
 export default async function SocialPage({
@@ -46,12 +41,17 @@ export default async function SocialPage({
   const currentMonthKey = monthKey(now);
   const months = lastNMonthKeys(6, currentMonthKey);
 
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
   const [leads, posts, profiles] = await Promise.all([
     prisma.socialSellingLead.findMany(),
-    prisma.contentCalendarPost.findMany({ where: { date: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) } } }),
+    prisma.contentCalendarPost.findMany({ where: { date: { gte: sixMonthsAgo } } }),
     prisma.socialProfile.findMany({
       where: { reporteiUrl: { not: null } },
-      include: { reporteiMetrics: { orderBy: { fetchedAt: "desc" } } },
+      include: {
+        reporteiPosts: true,
+        followerSnapshots: { where: { monthKey: { in: months } } },
+      },
       orderBy: { order: "asc" },
     }),
   ]);
@@ -100,20 +100,37 @@ export default async function SocialPage({
     value: posts.filter((p) => monthKey(p.date) === mk).length,
   }));
 
-  // --- Engajamento médio (Dashboard Reportei) ---
-  const engajamentoByProfile = profiles.map((p) => {
-    const history = p.reporteiMetrics
-      .filter((m) => /engaj/i.test(m.title))
-      .map((m) => ({ ...m, num: parseMetricNumber(m.value) }))
-      .filter((m) => m.num !== null);
-    const latest = history[0] ?? null;
-    return { name: p.name, latest: latest?.num ?? null, historyCount: history.length };
+  // --- Engajamento (Dashboard Reportei) — duas visões, por perfil ---
+  // Por alcance: ((curtidas+comentários+salvamentos+compartilhamentos) / alcance) x 100,
+  // somado sobre os posts de cada mês (postedAt real do post, não da data do fetch).
+  // Por seguidores: mesma soma de interações / total de seguidores do mês (preenchido
+  // manualmente — o Reportei não expõe esse total como card único).
+  const profileEngagement = profiles.map((p) => {
+    const byMonthReach = months.map((mk) => {
+      const postsInMonth = p.reporteiPosts.filter((post) => post.postedAt && monthKey(post.postedAt) === mk);
+      const { engagementPct } = computeReachEngagement(postsInMonth);
+      return { label: periodKeyLabel(mk).slice(0, 3), value: engagementPct ?? 0 };
+    });
+    const byMonthFollowers = months.map((mk) => {
+      const postsInMonth = p.reporteiPosts.filter((post) => post.postedAt && monthKey(post.postedAt) === mk);
+      const { interactions } = computeReachEngagement(postsInMonth);
+      const snapshot = p.followerSnapshots.find((f) => f.monthKey === mk);
+      const pct = snapshot && snapshot.count > 0 ? (interactions / snapshot.count) * 100 : null;
+      return { label: periodKeyLabel(mk).slice(0, 3), value: pct ?? 0 };
+    });
+    const currentReach = byMonthReach[byMonthReach.length - 1]?.value ?? null;
+    const currentFollowerSnapshot = p.followerSnapshots.find((f) => f.monthKey === currentMonthKey);
+    const currentFollowers = byMonthFollowers[byMonthFollowers.length - 1]?.value ?? null;
+    return {
+      id: p.id,
+      name: p.name,
+      byMonthReach,
+      byMonthFollowers,
+      currentReach,
+      currentFollowers,
+      currentFollowerCount: currentFollowerSnapshot?.count ?? null,
+    };
   });
-  const withEngagement = engajamentoByProfile.filter((p) => p.latest !== null);
-  const engajamentoGeral =
-    withEngagement.length > 0
-      ? withEngagement.reduce((s, p) => s + (p.latest ?? 0), 0) / withEngagement.length
-      : null;
 
   return (
     <>
@@ -153,11 +170,10 @@ export default async function SocialPage({
           Indicadores gerais · {period.label.toLowerCase()}
         </h2>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatTile label="Leads gerados via Social (mês)" value={String(leadsThisMonth)} />
           <StatTile label="Receita gerada por Social (mês)" value={formatCompactCurrency(revenueThisMonth)} />
           <StatTile label="Publicações no mês" value={String(postsThisMonth)} />
-          <StatTile label="Engajamento médio geral" value={engajamentoGeral !== null ? `${engajamentoGeral.toFixed(1)}%` : "—"} />
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -191,29 +207,47 @@ export default async function SocialPage({
           </section>
         </div>
 
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h3 className="text-[12.5px] font-medium text-ink-soft">Engajamento por perfil</h3>
-          <div className="flex flex-col">
-            {engajamentoByProfile.map((p) => (
-              <div key={p.name} className="flex items-center justify-between border-t border-border py-2 first:border-t-0">
-                <span className="text-[12.5px] text-ink">{p.name}</span>
-                <span className="tnum text-[12.5px] text-ink-soft">
-                  {p.latest !== null ? `${p.latest.toFixed(1)}%` : "sem dado"}
-                </span>
-              </div>
-            ))}
-            {engajamentoByProfile.length === 0 && (
-              <p className="py-2 text-[12.5px] text-ink-faint">
-                Nenhum perfil com dashboard Reportei vinculado ainda.
-              </p>
-            )}
+        <section className="flex flex-col gap-4 rounded-(--radius-l) border border-border bg-surface p-5">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[12.5px] font-medium text-ink-soft">Engajamento por perfil</h3>
+            <p className="text-[11px] text-ink-faint">
+              Por alcance = (curtidas + comentários + salvamentos + compartilhamentos) / alcance ×
+              100, somado sobre os posts de cada mês (data real do post). Por seguidores = mesma
+              soma de interações / total de seguidores do mês — o Reportei não expõe um total de
+              seguidores como card único, então esse número é preenchido manualmente abaixo.
+            </p>
           </div>
-          <p className="text-[11px] text-ink-faint">
-            Histórico mês a mês / semana a semana vai se acumulando a cada
-            vez que alguém clica em "Atualizar" no Dashboard Reportei — antes
-            desta mudança, cada atualização substituía a leitura anterior, então
-            o histórico começa a contar a partir de agora.
-          </p>
+          {profileEngagement.map((p) => (
+            <div key={p.id} className="flex flex-col gap-3 border-t border-border pt-4 first:border-t-0 first:pt-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[13px] font-medium text-ink">{p.name}</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-[12px] text-ink-soft">
+                    Por alcance: <span className="tnum font-medium text-ink">{p.currentReach !== null ? `${p.currentReach.toFixed(1)}%` : "—"}</span>
+                  </span>
+                  <span className="text-[12px] text-ink-soft">
+                    Por seguidores: <span className="tnum font-medium text-ink">{p.currentFollowers !== null ? `${p.currentFollowers.toFixed(1)}%` : "—"}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[11px] text-ink-faint">Por alcance — 6 meses</span>
+                  <TrendChart points={p.byMonthReach} formatValue={(v) => `${v.toFixed(1)}%`} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[11px] text-ink-faint">Por seguidores — 6 meses</span>
+                  <TrendChart points={p.byMonthFollowers} formatValue={(v) => `${v.toFixed(1)}%`} />
+                </div>
+              </div>
+              <FollowerSnapshotForm profileId={p.id} monthKey={currentMonthKey} currentCount={p.currentFollowerCount} />
+            </div>
+          ))}
+          {profileEngagement.length === 0 && (
+            <p className="py-2 text-[12.5px] text-ink-faint">
+              Nenhum perfil com dashboard Reportei vinculado ainda.
+            </p>
+          )}
         </section>
 
         <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canViewArea } from "@/lib/permissions";
@@ -90,7 +91,10 @@ export default async function SocialColaboradoresPage({
           </h1>
           <p className="max-w-[62ch] text-[13px] text-ink-soft">
             Indicadores por colaborador — planejado × realizado, por
-            cadeira/categoria, calculado direto das tarefas do Workflow.
+            cadeira/categoria, calculado direto das tarefas do Workflow.{" "}
+            <Link href="/social/tarefas" className="text-brand hover:underline">
+              Ver tarefas por colaborador →
+            </Link>
           </p>
         </div>
         <FilterBar areaOptions={[]} responsibleOptions={[]} />

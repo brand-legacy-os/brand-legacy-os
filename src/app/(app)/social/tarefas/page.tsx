@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditAreaKpis, canViewArea, isAdmin } from "@/lib/permissions";
@@ -27,6 +28,18 @@ export default async function SocialTarefasPage() {
 
   const canEdit = canEditAreaKpis(user, "social");
 
+  // Agrupa por colaborador — dentro de cada um, já vem ordenado por prazo
+  // (a query principal já pede orderBy deadline asc).
+  const byPerson = new Map<string, { name: string; tasks: typeof area.tasks }>();
+  for (const m of area.memberships) {
+    byPerson.set(m.userId, { name: m.user.name, tasks: [] });
+  }
+  for (const t of area.tasks) {
+    const entry = byPerson.get(t.assigneeId);
+    if (entry) entry.tasks.push(t);
+  }
+  const groups = [...byPerson.entries()].sort(([, a], [, b]) => b.tasks.length - a.tasks.length);
+
   return (
     <>
       <CultureBanner
@@ -43,44 +56,53 @@ export default async function SocialTarefasPage() {
           Social
         </h1>
         <p className="max-w-[62ch] text-[13px] text-ink-soft">
-          Tarefas e TO-DOs do departamento — categorias reais do controle
-          interno deles (Produto - EAD, Rotina, Produto Mentoria, Produto
-          SAAS).
+          Tarefas por colaborador, ranqueadas por prazo — categorias reais do
+          controle interno deles (Produto - EAD, Rotina, Produto Mentoria,
+          Produto SAAS).{" "}
+          <Link href="/social/colaboradores" className="text-brand hover:underline">
+            Ver indicadores por colaborador →
+          </Link>
         </p>
       </div>
 
       <SocialTabs />
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-[13px] font-medium text-ink-soft">
-          Tarefas ({area.tasks.length})
-        </h2>
-        <div className="rounded-(--radius-l) border border-border bg-surface px-4">
-          {area.tasks.map((t) => (
-            <TaskRow
-              key={t.id}
-              task={t}
-              assigneeName={t.assignee.name}
-              assigneeInitials={t.assignee.avatarInitials}
-              projectName={t.project?.name}
-              canManage={isAdmin(user) || canEdit || t.assigneeId === user.id}
-            />
-          ))}
-          {area.tasks.length === 0 && (
-            <p className="py-4 text-[13px] text-ink-faint">
-              Nenhuma tarefa por aqui ainda.
-            </p>
-          )}
-        </div>
-        {canEdit && (
-          <CreateTaskForm
-            areaId={area.id}
-            members={area.memberships.map((m) => ({ id: m.user.id, name: m.user.name }))}
-            projects={area.projects.map((p) => ({ id: p.id, name: p.name }))}
-            productSuggestions={SOCIAL_TASK_CATEGORIES}
-          />
+      <div className="flex flex-col gap-6">
+        {groups.map(([userId, p]) => (
+          <section key={userId} className="flex flex-col gap-2">
+            <h2 className="text-[13px] font-medium text-ink-soft">
+              {p.name} ({p.tasks.length})
+            </h2>
+            <div className="rounded-(--radius-l) border border-border bg-surface px-4">
+              {p.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  assigneeName={p.name}
+                  assigneeInitials={t.assignee.avatarInitials}
+                  projectName={t.project?.name}
+                  canManage={isAdmin(user) || canEdit || t.assigneeId === user.id}
+                />
+              ))}
+              {p.tasks.length === 0 && (
+                <p className="py-4 text-[13px] text-ink-faint">Nenhuma tarefa por aqui ainda.</p>
+              )}
+            </div>
+          </section>
+        ))}
+        {groups.length === 0 && (
+          <p className="text-[13px] text-ink-faint">Nenhum colaborador na área ainda.</p>
         )}
-      </section>
+      </div>
+
+      {canEdit && (
+        <CreateTaskForm
+          areaId={area.id}
+          members={area.memberships.map((m) => ({ id: m.user.id, name: m.user.name }))}
+          projects={area.projects.map((p) => ({ id: p.id, name: p.name }))}
+          productSuggestions={SOCIAL_TASK_CATEGORIES}
+        />
+      )}
     </>
   );
 }

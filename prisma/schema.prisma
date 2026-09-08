@@ -148,15 +148,19 @@ enum FinanceCategoryKind {
 }
 
 enum PodcastStatus {
-  editando
-  gravacao_disponivel
-  agendado
-  reagendar
+  entrevista_marcada
+  entrevista_reagendando
+  esperando_material
+  material_em_edicao
+  episodio_agendado
+  episodio_postado
 }
 
 enum PodcastSource {
   dom
   karina_social_seller
+  carol
+  outro
 }
 
 enum SocialLeadStatus {
@@ -264,6 +268,10 @@ model User {
   sponsorInteractions  SponsorInteraction[]  @relation("SponsorInteractionAuthor")
   attendeeSales        EventAttendeeSale[]
   socialProfileReports SocialProfileReport[]
+  podcastRecordingFor  PodcastEpisode[]      @relation("PodcastRecordingResponsible")
+  podcastMaterialFor   PodcastEpisode[]      @relation("PodcastMaterialResponsible")
+  podcastPostFor       PodcastEpisode[]      @relation("PodcastPostResponsible")
+  podcastDispatchFor   PodcastEpisode[]      @relation("PodcastDispatchResponsible")
 }
 
 model Area {
@@ -404,9 +412,23 @@ model Task {
   sponsor     Sponsor?             @relation(fields: [sponsorId], references: [id], onDelete: SetNull)
   checklist   TaskChecklistItem[]
   comments    TaskComment[]
+  attachments TaskAttachment[]
 
   @@index([contentPostId])
   @@index([sponsorId])
+}
+
+/// Link ou arquivo anexado a uma tarefa — pode ter mais de um.
+model TaskAttachment {
+  id        String   @id @default(cuid())
+  taskId    String
+  label     String
+  url       String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
 
 model TaskChecklistItem {
@@ -1172,28 +1194,50 @@ model SocialProfile {
   contentScope    String?
   order           Int     @default(0)
 
-  person               User?                   @relation(fields: [personId], references: [id])
+  person               User?                    @relation(fields: [personId], references: [id])
   contentCalendarPosts ContentCalendarPost[]
   reporteiMetrics      SocialReporteiMetric[]
   reporteiInsights     SocialReporteiInsight[]
   reports              SocialProfileReport[]
+  reporteiPosts        SocialReporteiPost[]
+  followerSnapshots    SocialFollowerSnapshot[]
 }
 
 /// Relatório periódico anexado a um perfil (upload de arquivo ou link).
 model SocialProfileReport {
-  id          String   @id @default(cuid())
-  profileId   String
-  title       String
-  fileUrl     String?
-  externalUrl String?
-  notes       String?
-  createdById String
-  createdAt   DateTime @default(now())
+  id             String    @id @default(cuid())
+  profileId      String
+  title          String
+  /// Mês de referência do relatório, "YYYY-MM".
+  reportMonth    String
+  dueDate        DateTime?
+  /// Período efetivamente analisado no relatório (texto livre, ex.: "01/08 a
+  /// 31/08" ou "últimos 30 dias") — pode diferir do mês de referência.
+  periodAnalyzed String?
+  /// Principais pontos de atenção, aprendizados e recomendações do período.
+  summary        String?
+  notes          String?
+  createdById    String
+  createdAt      DateTime  @default(now())
 
-  profile   SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  createdBy User          @relation(fields: [createdById], references: [id])
+  profile     SocialProfile                   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdBy   User                            @relation(fields: [createdById], references: [id])
+  attachments SocialProfileReportAttachment[]
 
   @@index([profileId])
+}
+
+/// Link ou arquivo anexado a um relatório — pode ter mais de um.
+model SocialProfileReportAttachment {
+  id        String   @id @default(cuid())
+  reportId  String
+  label     String
+  url       String
+  createdAt DateTime @default(now())
+
+  report SocialProfileReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
 }
 
 /// Uma linha por card de métrica extraído do dashboard público do Reportei —
@@ -1229,6 +1273,48 @@ model SocialReporteiInsight {
   @@index([profileId])
 }
 
+/// Uma linha por post da tabela "Dados orgânicos de postagens" do Reportei —
+/// tem data real do post (postedAt), então dá pra montar histórico mês a mês
+/// sem depender só de quantas vezes alguém clicou em "Atualizar". Dedupe por
+/// (profileId, postLabel, postedAt) já que o Reportei reexpõe os mesmos
+/// posts em janelas de datas sobrepostas a cada novo pull.
+model SocialReporteiPost {
+  id                String    @id @default(cuid())
+  profileId         String
+  postLabel         String
+  type              String?
+  alcance           Float?
+  visualizacoes     Float?
+  curtidas          Float?
+  comentarios       Float?
+  salvamentos       Float?
+  compartilhamentos Float?
+  postedAt          DateTime?
+  fetchedAt         DateTime  @default(now())
+
+  profile SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, postLabel, postedAt])
+  @@index([profileId])
+}
+
+/// Total de seguidores da conta, preenchido manualmente mês a mês — o
+/// Reportei não expõe um card único com esse total (só variação/crescimento
+/// e ranking por cidade), então usamos isso como denominador do engajamento
+/// por seguidores até o relatório trazer esse dado de forma limpa.
+model SocialFollowerSnapshot {
+  id        String   @id @default(cuid())
+  profileId String
+  /// "YYYY-MM"
+  monthKey  String
+  count     Int
+  updatedAt DateTime @updatedAt
+
+  profile SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, monthKey])
+}
+
 model PodcastEpisode {
   id                     String        @id @default(cuid())
   episodeNumber          Int
@@ -1241,9 +1327,27 @@ model PodcastEpisode {
   postDate               DateTime?
   rawMaterialUrl         String?
   editedMaterialUrl      String?
-  status                 PodcastStatus @default(agendado)
+  status                 PodcastStatus @default(entrevista_marcada)
   source                 PodcastSource
+  /// Preenchido só quando source = outro.
+  sourceOther            String?
   createdAt              DateTime      @default(now())
+
+  /// Responsável por cada etapa — gravação, material e postagem.
+  recordingResponsibleId String?
+  materialResponsibleId  String?
+  postResponsibleId      String?
+  recordingResponsible   User?   @relation("PodcastRecordingResponsible", fields: [recordingResponsibleId], references: [id])
+  materialResponsible    User?   @relation("PodcastMaterialResponsible", fields: [materialResponsibleId], references: [id])
+  postResponsible        User?   @relation("PodcastPostResponsible", fields: [postResponsibleId], references: [id])
+
+  /// Transcrição do episódio e disparo da copy nos grupos.
+  transcript            String?
+  dispatchCopy          String?
+  dispatchDate          DateTime?
+  dispatchResponsibleId String?
+  dispatchResponsible   User?        @relation("PodcastDispatchResponsible", fields: [dispatchResponsibleId], references: [id])
+  dispatchStatus        CommsStatus?
 }
 
 /// Funil de Social Selling — só o pipeline (lead → reunião → status). O

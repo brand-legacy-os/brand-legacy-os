@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { canEditAreaKpis, canManageTask } from "@/lib/permissions";
 import { CONTENT_FORMAT_META, CONTENT_POST_STATUS_META } from "@/lib/social";
 import { formatDate } from "@/lib/format";
-import { TaskRow } from "@/components/area/task-row";
+import { PostTaskRow } from "@/components/social/post-task-row";
 import { AddContentPostLinkForm } from "@/components/social/add-content-post-link-form";
 import { AddContentPostTaskForm } from "@/components/social/add-content-post-task-form";
 import { deleteContentPostLinkAction } from "@/lib/actions/social";
@@ -19,7 +19,10 @@ export async function ContentPostCard({ postId }: { postId: string }) {
       include: {
         profile: true,
         links: { orderBy: { createdAt: "asc" } },
-        tasks: { include: { assignee: true }, orderBy: { deadline: "asc" } },
+        tasks: {
+          include: { assignee: true, attachments: { orderBy: { createdAt: "asc" } } },
+          orderBy: { deadline: "asc" },
+        },
       },
     }),
     prisma.area.findUnique({
@@ -117,7 +120,7 @@ export async function ContentPostCard({ postId }: { postId: string }) {
                 .join("");
               return (
                 <div key={task.id} className="px-3 first:[&>div]:border-t-0">
-                  <TaskRow
+                  <PostTaskRow
                     task={task}
                     assigneeName={task.assignee.name}
                     assigneeInitials={initials || "?"}

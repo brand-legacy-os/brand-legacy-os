@@ -1,5 +1,5 @@
 import type { SessionUser } from "./auth";
-import { isAdmin, isLeaderOf, canAccessSalaryArea } from "./permissions";
+import { isAdmin, isLeaderOf, canAccessSalaryArea, isPodcastOnlyUser } from "./permissions";
 import { hasFinanceRole } from "./finance-auth";
 
 export type NavItem = { label: string; href: string; badge?: number };
@@ -87,6 +87,12 @@ export function buildNav(
   const alreadyHasEventos = visibleAreas.some((a) => a.slug === "eventos");
   if (!admin && !alreadyHasEventos && isLeaderOf(user, "operacoes")) {
     groups[1].items.push({ label: "Patrocínios", href: "/patrocinios" });
+  }
+
+  // Camila e Alessandra (CS) ajudam no Podcast sem serem membros de Social —
+  // só esse link aparece pra elas, não a área inteira.
+  if (isPodcastOnlyUser(user)) {
+    groups[1].items.push({ label: "Podcast (Social)", href: "/social/podcast" });
   }
 
   if (financeRole) {

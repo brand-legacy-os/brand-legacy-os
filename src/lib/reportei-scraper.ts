@@ -8,6 +8,36 @@ export type ScrapedMetric = {
   previousLabel: string | null;
 };
 
+export type ScrapedPost = {
+  postLabel: string;
+  type: string | null;
+  alcance: number | null;
+  visualizacoes: number | null;
+  curtidas: number | null;
+  comentarios: number | null;
+  salvamentos: number | null;
+  compartilhamentos: number | null;
+  postedAt: Date | null;
+};
+
+/** "18.861" → 18861, "1,69%" → 1.69, "-" → null — números em formato pt-BR. */
+function parsePtNumber(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === "-") return null;
+  const cleaned = trimmed.replace("%", "").replace(/\./g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return Number.isNaN(n) ? null : n;
+}
+
+/** "20/07/2026" → Date — datas do Reportei sempre vêm nesse formato. */
+function parseBrDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const m = raw.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), 12, 0, 0);
+}
+
 // Valor principal do card: dígitos puros (ex.: "5.499", "0", "13"), sem
 // sinal — deltas sempre vêm com "+"/"-" explícito, então são mutuamente
 // exclusivos por construção.
@@ -87,7 +117,9 @@ export function parseReporteiText(rawText: string): ScrapedMetric[] {
 // resolve, travado em "Atualizando…" indefinidamente.
 const OVERALL_TIMEOUT_MS = 60000;
 
-export async function scrapeReporteiDashboard(url: string): Promise<ScrapedMetric[]> {
+export type ScrapedReportei = { metrics: ScrapedMetric[]; posts: ScrapedPost[] };
+
+export async function scrapeReporteiDashboard(url: string): Promise<ScrapedReportei> {
   let timer: ReturnType<typeof setTimeout>;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(
@@ -103,7 +135,84 @@ export async function scrapeReporteiDashboard(url: string): Promise<ScrapedMetri
   }
 }
 
-async function scrapeReporteiDashboardInner(url: string): Promise<ScrapedMetric[]> {
+/**
+ * A seção "Dados orgânicos de postagens" é uma tabela real (não cards de
+ * texto) — lê via DOM em vez de heurística de texto, por linha (título +
+ * colunas mapeadas pelo cabeçalho, já que a ordem das colunas pode variar
+ * entre relatórios/plataformas).
+ */
+async function scrapePostsTableRaw(
+  page: import("puppeteer").Page
+): Promise<{ postLabel: string; type: string | null; cells: Record<string, string> }[]> {
+  return page.evaluate(() => {
+    const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, [role='heading']"));
+    const heading = headings.find((h) => (h.textContent || "").includes("Dados orgânicos de postagens"));
+    if (!heading) return [];
+
+    // A tabela é a primeira <table> encontrada depois do heading no DOM.
+    let table: HTMLTableElement | null = null;
+    let node: Element | null = heading;
+    for (let i = 0; i < 40 && node; i++) {
+      const found = node.querySelector?.("table") as HTMLTableElement | null;
+      if (found) {
+        table = found;
+        break;
+      }
+      node = node.nextElementSibling;
+    }
+    if (!table) {
+      // Fallback: procura qualquer tabela irmã mais adiante no container pai.
+      let parent = heading.parentElement;
+      for (let i = 0; i < 5 && parent && !table; i++) {
+        table = parent.querySelector("table");
+        parent = parent.parentElement;
+      }
+    }
+    if (!table) return [];
+
+    const headerCells = Array.from(table.querySelectorAll("thead th, thead td")).map(
+      (c) => (c.textContent || "").trim()
+    );
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    return rows.map((row) => {
+      const tds = Array.from(row.querySelectorAll("td"));
+      const cells: Record<string, string> = {};
+      tds.forEach((td, i) => {
+        const key = headerCells[i] || `col_${i}`;
+        cells[key] = (td.textContent || "").trim();
+      });
+      const postLabel = (tds[0]?.textContent || "").trim();
+      const type = tds[1] ? (tds[1].textContent || "").trim() : null;
+      return { postLabel, type, cells };
+    });
+  });
+}
+
+function findCell(cells: Record<string, string>, ...names: string[]): string | undefined {
+  for (const [key, value] of Object.entries(cells)) {
+    if (names.some((n) => key.toLowerCase().includes(n.toLowerCase()))) return value;
+  }
+  return undefined;
+}
+
+async function scrapePostsTable(page: import("puppeteer").Page): Promise<ScrapedPost[]> {
+  const raw = await scrapePostsTableRaw(page);
+  return raw
+    .filter((r) => r.postLabel)
+    .map((r) => ({
+      postLabel: r.postLabel,
+      type: r.type || null,
+      alcance: parsePtNumber(findCell(r.cells, "alcance")),
+      visualizacoes: parsePtNumber(findCell(r.cells, "visualiza")),
+      curtidas: parsePtNumber(findCell(r.cells, "curtida")),
+      comentarios: parsePtNumber(findCell(r.cells, "comentário", "comentario")),
+      salvamentos: parsePtNumber(findCell(r.cells, "salvo", "salvamento")),
+      compartilhamentos: parsePtNumber(findCell(r.cells, "compartilhamento")),
+      postedAt: parseBrDate(findCell(r.cells, "criado em")),
+    }));
+}
+
+async function scrapeReporteiDashboardInner(url: string): Promise<ScrapedReportei> {
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
   const browser = await puppeteer.launch({
     headless: true,
@@ -127,7 +236,9 @@ async function scrapeReporteiDashboardInner(url: string): Promise<ScrapedMetric[
     await new Promise((r) => setTimeout(r, 2500));
 
     const text = await page.evaluate(() => document.body.innerText);
-    return parseReporteiText(text);
+    const metrics = parseReporteiText(text);
+    const posts = await scrapePostsTable(page).catch(() => []);
+    return { metrics, posts };
   } finally {
     await browser.close();
   }

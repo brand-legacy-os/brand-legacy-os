@@ -1,27 +1,45 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canEditAreaKpis, canViewArea } from "@/lib/permissions";
+import { canEditAreaKpis, canAccessPodcast, isPodcastOnlyUser } from "@/lib/permissions";
+import { resolvePeriod, type PeriodKey } from "@/lib/period";
 import { SocialTabs } from "@/components/social/social-tabs";
+import { FilterBar } from "@/components/dashboard/filter-bar";
+import { StatTile } from "@/components/dashboard/stat-tile";
 import { CreatePodcastEpisodeForm } from "@/components/social/create-podcast-episode-form";
-import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
-import { updatePodcastStatusAction, deletePodcastEpisodeAction } from "@/lib/actions/social";
-import { PODCAST_STATUS_META, PODCAST_SOURCE_META } from "@/lib/social";
-import { formatDate } from "@/lib/format";
+import { PodcastEpisodeRow } from "@/components/social/podcast-episode-row";
 import { notFound } from "next/navigation";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 
-export default async function SocialPodcastPage() {
+export default async function SocialPodcastPage({
+  searchParams,
+}: PageProps<"/social/podcast">) {
   const user = await requireUser();
-  if (!canViewArea(user, "social")) notFound();
-  const canEdit = canEditAreaKpis(user, "social");
+  if (!canAccessPodcast(user)) notFound();
+  const canEdit = canEditAreaKpis(user, "social") || isPodcastOnlyUser(user);
+  const sp = await searchParams;
 
-  const episodes = await prisma.podcastEpisode.findMany({
-    orderBy: { episodeNumber: "desc" },
+  const periodKey = (sp.periodo as PeriodKey) || "mes";
+  const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
+
+  const [episodes, users] = await Promise.all([
+    prisma.podcastEpisode.findMany({ orderBy: { episodeNumber: "desc" } }),
+    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+
+  const episodesInPeriod = episodes.filter((e) => {
+    const anchor = e.recordingDate ?? e.createdAt;
+    return anchor >= period.start && anchor <= period.end;
   });
-  const statusCounts = episodes.reduce<Record<string, number>>((acc, e) => {
-    acc[e.status] = (acc[e.status] ?? 0) + 1;
-    return acc;
-  }, {});
+
+  const marcadas = episodesInPeriod.length;
+  const gravados = episodesInPeriod.filter(
+    (e) => !["entrevista_marcada", "entrevista_reagendando"].includes(e.status)
+  ).length;
+  const postados = episodesInPeriod.filter((e) => e.status === "episodio_postado").length;
+  const emGaveta = episodesInPeriod.filter((e) =>
+    ["esperando_material", "material_em_edicao", "episodio_agendado"].includes(e.status)
+  ).length;
+  const reagendando = episodesInPeriod.filter((e) => e.status === "entrevista_reagendando").length;
 
   return (
     <>
@@ -31,36 +49,32 @@ export default async function SocialPodcastPage() {
         subtitle="Consistência, autenticidade e presença — cada post é um tijolo na autoridade da marca."
       />
 
-      <div className="flex flex-col gap-1">
-        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
-          Área
-        </p>
-        <h1 className="font-(family-name:--font-display) text-[28px] text-ink">
-          Social
-        </h1>
-        <p className="max-w-[62ch] text-[13px] text-ink-soft">
-          Controle de convidados do podcast — grava, edita, agenda, publica.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
+            Área
+          </p>
+          <h1 className="font-(family-name:--font-display) text-[28px] text-ink">
+            Social
+          </h1>
+          <p className="max-w-[62ch] text-[13px] text-ink-soft">
+            Controle de convidados do podcast — grava, edita, agenda, publica.
+          </p>
+        </div>
+        <FilterBar areaOptions={[]} responsibleOptions={[]} />
       </div>
 
       <SocialTabs />
 
-      {episodes.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-(--radius-l) border border-border bg-surface p-4">
-            <p className="text-[11px] text-ink-faint">Episódios</p>
-            <p className="tnum text-[22px] font-medium text-ink">{episodes.length}</p>
-          </div>
-          {(Object.entries(PODCAST_STATUS_META) as [keyof typeof PODCAST_STATUS_META, { label: string }][]).map(([key, meta]) => (
-            <div key={key} className="rounded-(--radius-l) border border-border bg-surface p-4">
-              <p className="text-[11px] text-ink-faint">{meta.label}</p>
-              <p className="tnum text-[22px] font-medium text-ink">{statusCounts[key] ?? 0}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <StatTile label="Entrevistas marcadas" value={String(marcadas)} />
+        <StatTile label="Episódios gravados" value={String(gravados)} />
+        <StatTile label="Episódios postados" value={String(postados)} />
+        <StatTile label="Em gaveta" value={String(emGaveta)} />
+        <StatTile label="Reagendando" value={String(reagendando)} />
+      </div>
 
-      {canEdit && <CreatePodcastEpisodeForm />}
+      {canEdit && <CreatePodcastEpisodeForm users={users} />}
 
       <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
         <table className="w-full min-w-[960px] border-collapse text-[13px]">
@@ -79,46 +93,7 @@ export default async function SocialPodcastPage() {
           </thead>
           <tbody>
             {episodes.map((ep) => (
-              <tr key={ep.id} className="border-b border-border last:border-b-0">
-                <td className="tnum px-4 py-3 text-ink">#{ep.episodeNumber}</td>
-                <td className="px-4 py-3 text-ink">{ep.guestName}</td>
-                <td className="px-4 py-3 text-ink-soft">{ep.guestBrand ?? "—"}</td>
-                <td className="tnum px-4 py-3 text-ink-soft">
-                  {ep.recordingDate ? formatDate(ep.recordingDate) : "—"}
-                </td>
-                <td className="tnum px-4 py-3 text-ink-soft">
-                  {ep.materialDeadline ? formatDate(ep.materialDeadline) : "—"}
-                </td>
-                <td className="tnum px-4 py-3 text-ink-soft">
-                  {ep.postDate ? formatDate(ep.postDate) : "—"}
-                </td>
-                <td className="px-4 py-3 text-ink-soft">{PODCAST_SOURCE_META[ep.source].label}</td>
-                <td className="px-4 py-3">
-                  {canEdit ? (
-                    <AutoSubmitSelect
-                      action={updatePodcastStatusAction}
-                      hiddenName="episodeId"
-                      hiddenValue={ep.id}
-                      name="status"
-                      defaultValue={ep.status}
-                      options={Object.entries(PODCAST_STATUS_META).map(([key, meta]) => ({
-                        value: key,
-                        label: meta.label,
-                      }))}
-                    />
-                  ) : (
-                    <span className="text-ink-soft">{PODCAST_STATUS_META[ep.status].label}</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  {canEdit && (
-                    <form action={deletePodcastEpisodeAction}>
-                      <input type="hidden" name="episodeId" value={ep.id} />
-                      <button className="text-[11.5px] text-critical hover:underline">Excluir</button>
-                    </form>
-                  )}
-                </td>
-              </tr>
+              <PodcastEpisodeRow key={ep.id} episode={ep} users={users} canEdit={canEdit} colSpan={9} />
             ))}
             {episodes.length === 0 && (
               <tr>

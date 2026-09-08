@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canEditAreaKpis } from "@/lib/permissions";
-import { scrapeReporteiDashboard } from "@/lib/reportei-scraper";
-import { generateReporteiInsights } from "@/lib/reportei-insights";
+import { refreshProfileReportei } from "@/lib/reportei-refresh";
 import { saveUpload, validateUpload, UPLOAD_TYPES } from "@/lib/upload";
 import type {
   PodcastStatus,
@@ -88,47 +87,14 @@ export async function refreshSocialReporteiAction(
   const profileId = String(formData.get("profileId") ?? "");
   if (!profileId) return { error: "Perfil não encontrado." };
 
-  const profile = await prisma.socialProfile.findUnique({ where: { id: profileId } });
-  if (!profile || !profile.reporteiUrl) {
-    return { error: "Este perfil não tem link do Reportei vinculado." };
-  }
-
-  let metrics;
-  try {
-    metrics = await scrapeReporteiDashboard(profile.reporteiUrl);
-  } catch {
-    return { error: "Não foi possível carregar o Reportei agora. Tente novamente em instantes." };
-  }
-  if (metrics.length === 0) {
-    return { error: "O Reportei não retornou dados legíveis dessa vez. Tente novamente." };
-  }
-
-  const insights = generateReporteiInsights(metrics);
-
-  // Mantém histórico: cada "Atualizar" acrescenta uma nova leitura por
-  // métrica (com fetchedAt), em vez de apagar as anteriores — é o que
-  // permite montar tendência mês a mês / semana a semana no Dashboard e nos
-  // Indicadores Gerais. Insights são recalculados sempre a partir do pull
-  // mais recente, então esses seguem sendo substituídos.
-  await prisma.$transaction([
-    prisma.socialReporteiInsight.deleteMany({ where: { profileId } }),
-    prisma.socialReporteiMetric.createMany({
-      data: metrics.map((m) => ({ profileId, ...m })),
-    }),
-    prisma.socialReporteiInsight.createMany({
-      data: insights.map((i) => ({ profileId, ...i })),
-    }),
-  ]);
+  const result = await refreshProfileReportei(profileId);
+  if (result.error) return { error: result.error };
 
   revalidateSocial();
-  return { success: true, count: metrics.length };
+  return { success: true, count: result.count };
 }
 
-// ---------------------------------------------------------------------------
-// Podcast
-// ---------------------------------------------------------------------------
-
-export async function createPodcastEpisodeAction(
+export async function upsertFollowerSnapshotAction(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
@@ -138,6 +104,30 @@ export async function createPodcastEpisodeAction(
     return { error: "Sem permissão." };
   }
 
+  const profileId = String(formData.get("profileId") ?? "");
+  const monthKey = String(formData.get("monthKey") ?? "");
+  const countRaw = String(formData.get("count") ?? "");
+  const count = Number(countRaw);
+
+  if (!profileId || !monthKey || !countRaw || Number.isNaN(count) || count < 0) {
+    return { error: "Informe um número de seguidores válido." };
+  }
+
+  await prisma.socialFollowerSnapshot.upsert({
+    where: { profileId_monthKey: { profileId, monthKey } },
+    create: { profileId, monthKey, count },
+    update: { count },
+  });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Podcast
+// ---------------------------------------------------------------------------
+
+function readPodcastFields(formData: FormData) {
   const episodeNumberRaw = String(formData.get("episodeNumber") ?? "");
   const guestName = String(formData.get("guestName") ?? "").trim();
   const guestBrand = String(formData.get("guestBrand") ?? "").trim() || null;
@@ -148,15 +138,26 @@ export async function createPodcastEpisodeAction(
   const postDateRaw = String(formData.get("postDate") ?? "");
   const rawMaterialUrl = String(formData.get("rawMaterialUrl") ?? "").trim() || null;
   const editedMaterialUrl = String(formData.get("editedMaterialUrl") ?? "").trim() || null;
-  const status = (formData.get("status") as PodcastStatus | null) || "agendado";
+  const status = (formData.get("status") as PodcastStatus | null) || "entrevista_marcada";
   const source = formData.get("source") as PodcastSource | null;
+  const sourceOther = source === "outro" ? String(formData.get("sourceOther") ?? "").trim() || null : null;
+  const recordingResponsibleId = String(formData.get("recordingResponsibleId") ?? "") || null;
+  const materialResponsibleId = String(formData.get("materialResponsibleId") ?? "") || null;
+  const postResponsibleId = String(formData.get("postResponsibleId") ?? "") || null;
+  const transcript = String(formData.get("transcript") ?? "").trim() || null;
+  const dispatchCopy = String(formData.get("dispatchCopy") ?? "").trim() || null;
+  const dispatchDateRaw = String(formData.get("dispatchDate") ?? "");
+  const dispatchResponsibleId = String(formData.get("dispatchResponsibleId") ?? "") || null;
+  const dispatchStatus = (formData.get("dispatchStatus") as "planejado" | "enviado" | null) || null;
 
   const episodeNumber = Number(episodeNumberRaw);
-  if (!guestName || !episodeNumberRaw || Number.isNaN(episodeNumber) || !source) {
-    return { error: "Preencha número do episódio, convidado e fonte." };
-  }
+  const error =
+    !guestName || !episodeNumberRaw || Number.isNaN(episodeNumber) || !source
+      ? "Preencha número do episódio, convidado e fonte."
+      : null;
 
-  await prisma.podcastEpisode.create({
+  return {
+    error,
     data: {
       episodeNumber,
       guestName,
@@ -170,7 +171,57 @@ export async function createPodcastEpisodeAction(
       editedMaterialUrl,
       status,
       source,
+      sourceOther,
+      recordingResponsibleId,
+      materialResponsibleId,
+      postResponsibleId,
+      transcript,
+      dispatchCopy,
+      dispatchDate: dispatchDateRaw ? new Date(`${dispatchDateRaw}T12:00:00`) : null,
+      dispatchResponsibleId,
+      dispatchStatus,
     },
+  };
+}
+
+export async function createPodcastEpisodeAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const { error, data } = readPodcastFields(formData);
+  if (error || !data.source) return { error: error ?? "Preencha os campos obrigatórios." };
+
+  await prisma.podcastEpisode.create({ data: { ...data, source: data.source } });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+export async function updatePodcastEpisodeAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const episodeId = String(formData.get("episodeId") ?? "");
+  if (!episodeId) return { error: "Episódio não encontrado." };
+
+  const { error, data } = readPodcastFields(formData);
+  if (error || !data.source) return { error: error ?? "Preencha os campos obrigatórios." };
+
+  await prisma.podcastEpisode.update({
+    where: { id: episodeId },
+    data: { ...data, source: data.source },
   });
 
   revalidateSocial();
@@ -410,6 +461,29 @@ export async function deleteContentPostAction(formData: FormData) {
 // Relatórios por perfil
 // ---------------------------------------------------------------------------
 
+function readProfileReportFields(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const reportMonth = String(formData.get("reportMonth") ?? "").trim();
+  const dueDateRaw = String(formData.get("dueDate") ?? "");
+  const periodAnalyzed = String(formData.get("periodAnalyzed") ?? "").trim() || null;
+  const summary = String(formData.get("summary") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  if (!title || !reportMonth) return { error: "Preencha título e mês do relatório." as string | null, data: null };
+
+  return {
+    error: null as string | null,
+    data: {
+      title,
+      reportMonth,
+      dueDate: dueDateRaw ? new Date(`${dueDateRaw}T12:00:00`) : null,
+      periodAnalyzed,
+      summary,
+      notes,
+    },
+  };
+}
+
 export async function addProfileReportAction(
   _prev: ActionState,
   formData: FormData
@@ -422,30 +496,83 @@ export async function addProfileReportAction(
   }
 
   const profileId = String(formData.get("profileId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  const externalUrl = String(formData.get("externalUrl") ?? "").trim() || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
+  if (!profileId) return { error: "Selecione o perfil." };
 
-  if (!profileId || !title) return { error: "Preencha o perfil e o título do relatório." };
-
-  let fileUrl: string | null = null;
-  const file = formData.get("file");
-  if (file instanceof File && file.size > 0) {
-    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido para o relatório.");
-    if (v.error) return { error: v.error };
-    fileUrl = await saveUpload(file, "social/relatorios");
-  }
-
-  if (!fileUrl && !externalUrl) {
-    return { error: "Anexe um arquivo ou informe um link externo." };
-  }
+  const { error, data } = readProfileReportFields(formData);
+  if (error || !data) return { error: error ?? "Preencha os campos obrigatórios." };
 
   await prisma.socialProfileReport.create({
-    data: { profileId, title, fileUrl, externalUrl, notes, createdById: user.id },
+    data: { profileId, ...data, createdById: user.id },
   });
 
   revalidateSocial();
   return { success: true };
+}
+
+export async function updateProfileReportAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const reportId = String(formData.get("reportId") ?? "");
+  if (!reportId) return { error: "Relatório não encontrado." };
+
+  const { error, data } = readProfileReportFields(formData);
+  if (error || !data) return { error: error ?? "Preencha os campos obrigatórios." };
+
+  await prisma.socialProfileReport.update({ where: { id: reportId }, data });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+export async function addReportAttachmentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const reportId = String(formData.get("reportId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const externalUrl = String(formData.get("externalUrl") ?? "").trim();
+
+  if (!reportId) return { error: "Relatório não encontrado." };
+
+  let url = externalUrl;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido.");
+    if (v.error) return { error: v.error };
+    url = await saveUpload(file, "social/relatorios");
+  }
+  if (!url) return { error: "Anexe um arquivo ou informe um link." };
+  if (!label) return { error: "Dê um nome para o anexo." };
+
+  await prisma.socialProfileReportAttachment.create({ data: { reportId, label, url } });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+export async function deleteReportAttachmentAction(formData: FormData) {
+  try {
+    await requireSocialManager();
+  } catch {
+    return;
+  }
+  const attachmentId = String(formData.get("attachmentId") ?? "");
+  if (!attachmentId) return;
+  await prisma.socialProfileReportAttachment.delete({ where: { id: attachmentId } });
+  revalidateSocial();
 }
 
 export async function deleteProfileReportAction(formData: FormData) {

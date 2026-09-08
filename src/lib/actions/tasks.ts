@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canManageTask, canEditAreaKpis, canViewArea, isAdmin, canManageAnyAreaTask } from "@/lib/permissions";
+import { saveUpload, validateUpload, UPLOAD_TYPES } from "@/lib/upload";
 import type { TaskStatus, TaskPriority } from "@prisma/client";
 
 export type ActionState = { error?: string; success?: boolean };
@@ -170,6 +171,52 @@ export async function addChecklistItemAction(
 
   revalidateTaskViews(task.area.slug, task.id);
   return { success: true };
+}
+
+export async function addTaskAttachmentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  const taskId = String(formData.get("taskId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const url = String(formData.get("url") ?? "").trim();
+
+  const task = await prisma.task.findUnique({ where: { id: taskId }, include: { area: true } });
+  if (!task) return { error: "Tarefa não encontrada." };
+  if (!canManageTask(user, { assigneeId: task.assigneeId, areaSlug: task.area.slug })) {
+    return { error: "Você não tem permissão para editar esta tarefa." };
+  }
+
+  let finalUrl = url;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido.");
+    if (v.error) return { error: v.error };
+    finalUrl = await saveUpload(file, "workflow/tasks");
+  }
+  if (!finalUrl) return { error: "Anexe um arquivo ou informe um link." };
+  if (!label) return { error: "Dê um nome para o anexo." };
+
+  await prisma.taskAttachment.create({ data: { taskId, label, url: finalUrl } });
+
+  revalidateTaskViews(task.area.slug, task.id);
+  return { success: true };
+}
+
+export async function deleteTaskAttachmentAction(formData: FormData) {
+  const user = await requireUser();
+  const attachmentId = String(formData.get("attachmentId") ?? "");
+  const attachment = await prisma.taskAttachment.findUnique({
+    where: { id: attachmentId },
+    include: { task: { include: { area: true } } },
+  });
+  if (!attachment) return;
+  if (!canManageTask(user, { assigneeId: attachment.task.assigneeId, areaSlug: attachment.task.area.slug })) {
+    return;
+  }
+  await prisma.taskAttachment.delete({ where: { id: attachmentId } });
+  revalidateTaskViews(attachment.task.area.slug, attachment.task.id);
 }
 
 export async function addTaskCommentAction(

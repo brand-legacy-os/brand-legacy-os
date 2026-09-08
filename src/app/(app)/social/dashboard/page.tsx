@@ -7,6 +7,8 @@ import { SocialTabs } from "@/components/social/social-tabs";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 import { ReporteiRefreshButton } from "@/components/social/reportei-refresh-button";
 import { StatusPill, type Tone } from "@/components/ui/status-pill";
+import { PeriodComparisonTool } from "@/components/social/period-comparison-tool";
+import { formatDate } from "@/lib/format";
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, warning: 1, info: 2 };
 const SEVERITY_LABEL: Record<string, string> = {
@@ -81,21 +83,30 @@ async function SocialDashboardBody({
 }) {
   const selected = profiles.find((p) => p.id === selectedId) ?? profiles[0];
 
-  const [metrics, rawInsights] = await Promise.all([
+  const [allMetrics, rawInsights, posts] = await Promise.all([
     prisma.socialReporteiMetric.findMany({
       where: { profileId: selected.id },
-      orderBy: { fetchedAt: "asc" },
+      orderBy: { fetchedAt: "desc" },
     }),
     prisma.socialReporteiInsight.findMany({
       where: { profileId: selected.id },
     }),
+    prisma.socialReporteiPost.findMany({
+      where: { profileId: selected.id },
+      orderBy: { postedAt: "desc" },
+    }),
   ]);
+
+  // O histórico completo fica salvo (pra tendência/comparação), mas o grid
+  // principal mostra só a leitura mais recente de cada métrica — senão cada
+  // "Atualizar" acumularia cards duplicados aqui.
+  const metrics = [...new Map(allMetrics.map((m) => [m.title, m])).values()];
 
   const insights = [...rawInsights].sort(
     (a, b) => (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3)
   );
 
-  const lastFetched = metrics[0]?.fetchedAt ?? insights[0]?.fetchedAt;
+  const lastFetched = allMetrics[0]?.fetchedAt ?? insights[0]?.fetchedAt;
 
   return (
     <>
@@ -185,6 +196,51 @@ async function SocialDashboardBody({
           </div>
         )}
       </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-[13px] font-medium text-ink-soft">
+          Dados orgânicos de postagens · {selected.name} ({posts.length})
+        </h2>
+        {posts.length === 0 ? (
+          <p className="text-[12.5px] text-ink-faint">
+            Nenhum post capturado ainda — clique em Atualizar (a tabela de posts do Reportei é lida
+            junto com as métricas).
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
+            <table className="w-full min-w-[820px] border-collapse text-[12.5px]">
+              <thead>
+                <tr className="border-b border-border text-left text-[11px] uppercase tracking-[0.04em] text-ink-faint">
+                  <th className="px-3 py-2.5 font-medium">Postagem</th>
+                  <th className="px-3 py-2.5 font-medium">Tipo</th>
+                  <th className="px-3 py-2.5 font-medium">Data</th>
+                  <th className="px-3 py-2.5 font-medium">Alcance</th>
+                  <th className="px-3 py-2.5 font-medium">Curtidas</th>
+                  <th className="px-3 py-2.5 font-medium">Comentários</th>
+                  <th className="px-3 py-2.5 font-medium">Salvo</th>
+                  <th className="px-3 py-2.5 font-medium">Compart.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {posts.slice(0, 30).map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-b-0">
+                    <td className="max-w-[240px] truncate px-3 py-2 text-ink">{p.postLabel}</td>
+                    <td className="px-3 py-2 text-ink-soft">{p.type ?? "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.postedAt ? formatDate(p.postedAt) : "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.alcance ?? "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.curtidas ?? "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.comentarios ?? "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.salvamentos ?? "—"}</td>
+                    <td className="tnum px-3 py-2 text-ink-soft">{p.compartilhamentos ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <PeriodComparisonTool profileId={selected.id} posts={posts} />
     </>
   );
 }
