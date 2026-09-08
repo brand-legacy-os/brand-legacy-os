@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/events";
 import { COMMS_STATUS_META } from "@/lib/sponsors";
 import { formatDate } from "@/lib/format";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 const initialState: ActionState = {};
 
@@ -101,10 +102,12 @@ export function CommsSection({
   eventId,
   items,
   canManage,
+  exportHref,
 }: {
   eventId: string;
   items: CommsItem[];
   canManage: boolean;
+  exportHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -119,8 +122,16 @@ export function CommsSection({
   }, [state.success]);
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-      <h2 className="text-[13px] font-medium text-ink-soft">Fluxo de comunicação com o grupo ({items.length})</h2>
+    <CollapsibleSection
+      title={`Fluxo de comunicação com o grupo (${items.length})`}
+      right={
+        exportHref ? (
+          <a href={exportHref} className="text-[11.5px] font-medium text-brand hover:underline">
+            Exportar Excel
+          </a>
+        ) : undefined
+      }
+    >
       <div className="flex flex-col">
         {items.map((item) =>
           editingId === item.id ? (
@@ -211,6 +222,6 @@ export function CommsSection({
           )}
         </>
       )}
-    </section>
+    </CollapsibleSection>
   );
 }

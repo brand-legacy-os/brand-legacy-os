@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatCompactCurrency } from "@/lib/format";
 import { SPONSOR_TIER_META, SPONSOR_PAYMENT_METHOD_META } from "@/lib/sponsors";
 import { DonutChart } from "@/components/charts/donut-chart";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 type SponsorRow = {
   id: string;
@@ -23,9 +24,9 @@ type SponsorRow = {
 /** Só leitura — patrocinadores só são criados/editados em Patrocínios. */
 export function EventSponsorsSection({ eventId, sponsors }: { eventId: string; sponsors: SponsorRow[] }) {
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-medium text-ink-soft">Patrocínio</h2>
+    <CollapsibleSection
+      title="Patrocínio"
+      right={
         <div className="flex items-center gap-3">
           <a href={`/api/eventos/${eventId}/export/patrocinios`} className="text-[12px] font-medium text-brand hover:underline">
             Exportar Excel
@@ -34,7 +35,8 @@ export function EventSponsorsSection({ eventId, sponsors }: { eventId: string; s
             Gerenciar em Patrocínios →
           </Link>
         </div>
-      </div>
+      }
+    >
       {sponsors.length > 1 && (
         <DonutChart
           data={sponsors.map((s) => ({ label: s.name, value: s.totalValue }))}
@@ -95,6 +97,6 @@ export function EventSponsorsSection({ eventId, sponsors }: { eventId: string; s
           <p className="text-[12.5px] text-ink-faint">Nenhum patrocinador vinculado ainda.</p>
         )}
       </div>
-    </section>
+    </CollapsibleSection>
   );
 }

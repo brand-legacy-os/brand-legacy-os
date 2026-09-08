@@ -116,8 +116,6 @@ export async function updateEventAction(
   const enpsDay1Url = String(formData.get("enpsDay1Url") ?? "").trim() || null;
   const enpsDay2Url = String(formData.get("enpsDay2Url") ?? "").trim() || null;
   const enpsDay3Url = String(formData.get("enpsDay3Url") ?? "").trim() || null;
-  const mediaScopePlanned = String(formData.get("mediaScopePlanned") ?? "").trim() || null;
-  const mediaScopeActual = String(formData.get("mediaScopeActual") ?? "").trim() || null;
 
   if (!eventId || !name || !type || !startRaw || !endRaw) {
     return { error: "Preencha nome, tipo, início e término." };
@@ -139,8 +137,6 @@ export async function updateEventAction(
       enpsDay1Url,
       enpsDay2Url,
       enpsDay3Url,
-      mediaScopePlanned,
-      mediaScopeActual,
     },
   });
 
@@ -959,6 +955,47 @@ export async function deleteDinnerGuestAction(formData: FormData) {
   const eventId = String(formData.get("eventId") ?? "");
   if (!guestId) return;
   await prisma.eventDinnerGuest.delete({ where: { id: guestId } });
+  revalidateEvent(eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Checklist de foto/vídeo (planejado x realizado)
+// ---------------------------------------------------------------------------
+
+export async function addMediaTaskAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const eventId = String(formData.get("eventId") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  if (!description) return { error: "Descreva a entrega planejada." };
+
+  await prisma.eventMediaTask.create({ data: { eventId, description } });
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function toggleMediaTaskAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const taskId = String(formData.get("taskId") ?? "");
+  const task = await prisma.eventMediaTask.findUnique({ where: { id: taskId } });
+  if (!task) return;
+  await prisma.eventMediaTask.update({ where: { id: taskId }, data: { done: !task.done } });
+  revalidateEvent(task.eventId);
+}
+
+export async function deleteMediaTaskAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const taskId = String(formData.get("taskId") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  if (!taskId) return;
+  await prisma.eventMediaTask.delete({ where: { id: taskId } });
   revalidateEvent(eventId);
 }
 

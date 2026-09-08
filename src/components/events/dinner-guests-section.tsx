@@ -7,6 +7,7 @@ import {
   deleteDinnerGuestAction,
   type ActionState,
 } from "@/lib/actions/events";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 const initialState: ActionState = {};
 
@@ -46,10 +47,12 @@ export function DinnerGuestsSection({
   eventId,
   guests,
   canManage,
+  exportHref,
 }: {
   eventId: string;
   guests: Guest[];
   canManage: boolean;
+  exportHref?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,8 +67,16 @@ export function DinnerGuestsSection({
   }, [state.success]);
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-      <h2 className="text-[13px] font-medium text-ink-soft">Jantar da imersão ({guests.length})</h2>
+    <CollapsibleSection
+      title={`Jantar da imersão (${guests.length})`}
+      right={
+        exportHref ? (
+          <a href={exportHref} className="text-[11.5px] font-medium text-brand hover:underline">
+            Exportar Excel
+          </a>
+        ) : undefined
+      }
+    >
       <div className="flex flex-col">
         {guests.map((g) =>
           editingId === g.id ? (
@@ -134,6 +145,6 @@ export function DinnerGuestsSection({
           )}
         </>
       )}
-    </section>
+    </CollapsibleSection>
   );
 }

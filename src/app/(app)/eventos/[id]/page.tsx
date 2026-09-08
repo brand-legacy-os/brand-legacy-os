@@ -24,10 +24,12 @@ import { NpsExcelForm } from "@/components/events/nps-excel-form";
 import { EventSponsorsSection } from "@/components/events/event-sponsors-section";
 import { DinnerGuestsSection } from "@/components/events/dinner-guests-section";
 import { CommsSection } from "@/components/events/comms-section";
+import { MediaTasksSection } from "@/components/events/media-tasks-section";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 import { StatTile } from "@/components/dashboard/stat-tile";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 
 export default async function EventDetailPage({
   params,
@@ -55,6 +57,7 @@ export default async function EventDetailPage({
       cashMovements: { orderBy: { date: "asc" } },
       dinnerGuests: { orderBy: { createdAt: "asc" } },
       commsItems: { orderBy: { date: "asc" } },
+      mediaTasks: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!event) notFound();
@@ -194,8 +197,6 @@ export default async function EventDetailPage({
           enpsDay1Url={event.enpsDay1Url ?? ""}
           enpsDay2Url={event.enpsDay2Url ?? ""}
           enpsDay3Url={event.enpsDay3Url ?? ""}
-          mediaScopePlanned={event.mediaScopePlanned ?? ""}
-          mediaScopeActual={event.mediaScopeActual ?? ""}
         />
       )}
 
@@ -274,15 +275,14 @@ export default async function EventDetailPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Orçamento */}
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-medium text-ink-soft">
-              Orçamento — previsto x realizado
-            </h2>
+        <CollapsibleSection
+          title="Orçamento — previsto x realizado"
+          right={
             <a href={`/api/eventos/${event.id}/export/orcamento`} className="text-[11.5px] font-medium text-brand hover:underline">
               Exportar Excel
             </a>
-          </div>
+          }
+        >
           <div className="flex flex-col">
             {event.budgetLines.map((b) => (
               <BudgetLineCard key={b.id} line={b} canManage={canManage} />
@@ -294,7 +294,7 @@ export default async function EventDetailPage({
             )}
           </div>
           {canManage && <AddBudgetLineForm eventId={event.id} />}
-        </section>
+        </CollapsibleSection>
 
         <EventSponsorsSection eventId={event.id} sponsors={event.sponsors} />
       </div>
@@ -365,22 +365,23 @@ export default async function EventDetailPage({
       )}
 
       {/* Confirmados */}
-      <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[13px] font-medium text-ink-soft">
-            Confirmados ({event.attendees.length})
-          </h2>
-          <a href={`/api/eventos/${event.id}/export/confirmados`} className="text-[11.5px] font-medium text-brand hover:underline">
-            Exportar Excel
-          </a>
-          {event.attendees.length === 0 && stats.registeredCount !== null && (
-            <span className="text-[11.5px] text-ink-faint">
-              Histórico: {stats.registeredCount} inscritos · {stats.presentCount ?? "—"}{" "}
-              presentes · {stats.mentoradosCount ?? "—"} mentorados ·{" "}
-              {stats.guestCount ?? "—"} convidados · {stats.noShowCount ?? "—"} no-show
-            </span>
-          )}
-        </div>
+      <CollapsibleSection
+        title={`Confirmados (${event.attendees.length})`}
+        right={
+          <div className="flex items-center gap-3">
+            <a href={`/api/eventos/${event.id}/export/confirmados`} className="text-[11.5px] font-medium text-brand hover:underline">
+              Exportar Excel
+            </a>
+            {event.attendees.length === 0 && stats.registeredCount !== null && (
+              <span className="text-[11.5px] text-ink-faint">
+                Histórico: {stats.registeredCount} inscritos · {stats.presentCount ?? "—"}{" "}
+                presentes · {stats.mentoradosCount ?? "—"} mentorados ·{" "}
+                {stats.guestCount ?? "—"} convidados · {stats.noShowCount ?? "—"} no-show
+              </span>
+            )}
+          </div>
+        }
+      >
         {attendeeCategoryPieData.length > 1 && (
           <DonutChart
             data={attendeeCategoryPieData}
@@ -402,16 +403,17 @@ export default async function EventDetailPage({
           </p>
         )}
         {canManage && <AddAttendeeForm eventId={event.id} />}
-      </section>
+      </CollapsibleSection>
 
       {allSales.length > 0 && (
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-medium text-ink-soft">Vendas do evento</h2>
+        <CollapsibleSection
+          title="Vendas do evento"
+          right={
             <a href={`/api/eventos/${event.id}/export/vendas`} className="text-[11.5px] font-medium text-brand hover:underline">
               Exportar Excel
             </a>
-          </div>
+          }
+        >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <StatTile label="Valor geral vendido" value={formatCompactCurrency(salesTotal)} />
             <StatTile label="Vendas registradas" value={String(allSales.length)} />
@@ -438,39 +440,28 @@ export default async function EventDetailPage({
               ))}
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
       )}
 
-      {(event.mediaScopePlanned || event.mediaScopeActual) && (
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h2 className="text-[13px] font-medium text-ink-soft">
-            Entrega de fotos e vídeo — planejado x realizado
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium text-ink-faint">Planejado</span>
-              <p className="text-[12.5px] text-ink-soft">{event.mediaScopePlanned || "—"}</p>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium text-ink-faint">Realizado</span>
-              <p className="text-[12.5px] text-ink-soft">{event.mediaScopeActual || "—"}</p>
-            </div>
-          </div>
-        </section>
-      )}
+      <MediaTasksSection
+        eventId={event.id}
+        tasks={event.mediaTasks}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/foto-video`}
+      />
 
-      <div className="flex flex-col gap-2">
-        <a href={`/api/eventos/${event.id}/export/jantar`} className="w-fit text-[11.5px] font-medium text-brand hover:underline">
-          Exportar jantar (Excel)
-        </a>
-        <DinnerGuestsSection eventId={event.id} guests={event.dinnerGuests} canManage={canManage} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <a href={`/api/eventos/${event.id}/export/comunicacao`} className="w-fit text-[11.5px] font-medium text-brand hover:underline">
-          Exportar comunicação (Excel)
-        </a>
-        <CommsSection eventId={event.id} items={event.commsItems} canManage={canManage} />
-      </div>
+      <DinnerGuestsSection
+        eventId={event.id}
+        guests={event.dinnerGuests}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/jantar`}
+      />
+      <CommsSection
+        eventId={event.id}
+        items={event.commsItems}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/comunicacao`}
+      />
 
       {(event.enpsDay1Url || event.enpsDay2Url || event.enpsDay3Url) && (
         <section className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-5">

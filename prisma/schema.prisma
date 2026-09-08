@@ -527,10 +527,6 @@ model Event {
   enpsDay2Url String?
   enpsDay3Url String?
 
-  /// Escopo de entrega de fotos e vídeo — planejado x realizado (texto livre).
-  mediaScopePlanned String?
-  mediaScopeActual  String?
-
   /// Estatísticas agregadas de eventos já realizados, quando só o resumo
   /// histórico está disponível (sem lista nominal de confirmados). Eventos
   /// novos devem preferir EventAttendee/Sponsor, que dão o mesmo total
@@ -561,6 +557,7 @@ model Event {
   sponsorships   Sponsorship[]
   dinnerGuests   EventDinnerGuest[]
   commsItems     EventCommsItem[]
+  mediaTasks     EventMediaTask[]
 }
 
 model EventDay {
@@ -892,6 +889,20 @@ model EventCommsItem {
   objective String?
   status    CommsStatus @default(planejado)
   createdAt DateTime    @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+/// Checklist de entrega de foto/vídeo do evento — cada item criado já é o
+/// "planejado"; marcar `done` é o "realizado".
+model EventMediaTask {
+  id          String   @id @default(cuid())
+  eventId     String
+  description String
+  done        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 

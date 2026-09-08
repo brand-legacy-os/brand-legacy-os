@@ -13,6 +13,7 @@ const SHEET_NAMES: Record<string, string> = {
   jantar: "Jantar",
   comunicacao: "Comunicação",
   vendas: "Vendas",
+  "foto-video": "Foto e Vídeo",
 };
 
 export async function GET(
@@ -30,6 +31,7 @@ export async function GET(
       sponsors: { orderBy: { createdAt: "asc" } },
       dinnerGuests: { orderBy: { createdAt: "asc" } },
       commsItems: { orderBy: { date: "asc" } },
+      mediaTasks: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!event) return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
@@ -110,6 +112,12 @@ export async function GET(
           Observação: s.notes ?? "",
         }))
       );
+      break;
+    case "foto-video":
+      rows = event.mediaTasks.map((t) => ({
+        Item: t.description,
+        Realizado: t.done ? "Sim" : "Não",
+      }));
       break;
     default:
       return NextResponse.json({ error: "Seção inválida." }, { status: 400 });
