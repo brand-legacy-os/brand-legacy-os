@@ -89,6 +89,13 @@ enum SponsorTier {
   silver
 }
 
+enum AttendeeSalePaymentMethod {
+  pix
+  boleto
+  cartao
+  outro
+}
+
 enum SponsorDealStatus {
   em_negociacao
   assinado
@@ -255,6 +262,7 @@ model User {
   csActions            CsAction[]            @relation("CsActionAuthor")
   sponsorsCreated      Sponsor[]             @relation("SponsorCreatedBy")
   sponsorInteractions  SponsorInteraction[]  @relation("SponsorInteractionAuthor")
+  attendeeSales        EventAttendeeSale[]
 }
 
 model Area {
@@ -519,6 +527,10 @@ model Event {
   enpsDay2Url String?
   enpsDay3Url String?
 
+  /// Escopo de entrega de fotos e vídeo — planejado x realizado (texto livre).
+  mediaScopePlanned String?
+  mediaScopeActual  String?
+
   /// Estatísticas agregadas de eventos já realizados, quando só o resumo
   /// histórico está disponível (sem lista nominal de confirmados). Eventos
   /// novos devem preferir EventAttendee/Sponsor, que dão o mesmo total
@@ -650,36 +662,41 @@ model EventSponsorPayment {
 // ---------------------------------------------------------------------------
 
 model Sponsor {
-  id               String               @id @default(cuid())
-  name             String
-  cnpj             String
-  contactName      String
-  contactPhone     String
-  totalValue       Float
-  paymentPlan      SponsorPaymentPlan
-  paymentMethod    SponsorPaymentMethod
-  paymentLink      String?
-  paymentProofUrl  String?
-  hasStageTime     Boolean              @default(false)
-  stageTimeMinutes Int?
-  eventId          String?
+  id                  String               @id @default(cuid())
+  name                String
+  cnpj                String
+  contactName         String
+  contactPhone        String
+  totalValue          Float
+  paymentPlan         SponsorPaymentPlan
+  paymentMethod       SponsorPaymentMethod
+  paymentLink         String?
+  paymentProofUrl     String?
+  hasStageTime        Boolean              @default(false)
+  stageTimeMinutes    Int?
+  eventId             String?
   /// Patrocínio anual/recorrente sem um Event específico vinculado (ou além
   /// dele) — sinalizado aqui, com o Event ainda podendo apontar a edição
   /// mais próxima quando existir uma.
-  isAnnual         Boolean              @default(false)
-  tier             SponsorTier
-  status           SponsorDealStatus    @default(em_negociacao)
-  statusOther      String?
+  isAnnual            Boolean              @default(false)
+  tier                SponsorTier
+  status              SponsorDealStatus    @default(em_negociacao)
+  statusOther         String?
   /// Campos de perfil, exibidos aqui e na aba "Patrocínio" (só leitura) do
   /// evento vinculado.
-  nfUrl            String?
-  presentationUrl  String?
-  logoUrl          String?
-  videoUrl         String?
-  activation       String?
-  createdById      String
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  nfUrl               String?
+  presentationUrl     String?
+  /// Upload direto do arquivo de apresentação (PDF/PPT/PPTX), alternativa ao
+  /// link em presentationUrl — os dois podem coexistir.
+  presentationFileUrl String?
+  logoUrl             String?
+  videoUrl            String?
+  /// Upload direto do arquivo de vídeo, alternativa ao link em videoUrl.
+  videoFileUrl        String?
+  activation          String?
+  createdById         String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   event        Event?               @relation(fields: [eventId], references: [id], onDelete: SetNull)
   createdBy    User                 @relation("SponsorCreatedBy", fields: [createdById], references: [id])
@@ -736,37 +753,66 @@ model SponsorLeadSale {
 }
 
 model EventAttendee {
-  id            String              @id @default(cuid())
-  eventId       String
-  name          String
-  gender        String?
-  empresa       String?
-  category      AttendeeCategory
+  id                String              @id @default(cuid())
+  eventId           String
+  name              String
+  gender            String?
+  empresa           String?
+  category          AttendeeCategory
   /// "Gold", "VIP" ou null (N/A — não se aplica, ex.: equipe interna)
-  ticketType    String?
-  email         String?
-  phone         String?
-  cpfRg         String?
+  ticketType        String?
+  email             String?
+  phone             String?
+  cpfRg             String?
   /// Faixa de faturamento da empresa do confirmado (texto livre, ex.: "Acima
   /// de 1 milhão por mês") — coletado no formulário de inscrição.
-  revenueRange  String?
-  instagram     String?
+  revenueRange      String?
+  instagram         String?
+  /// Instagram da pessoa física (o campo `instagram` acima é o da marca).
+  instagramPersonal String?
   /// Sinaliza se o confirmado deu okay pra participar de uma dinâmica do
   /// evento (Plano Perfeito, Shark Tank, ou outra — texto livre em
   /// dynamicOther quando "outro").
-  dynamicChoice EventDynamicChoice?
-  dynamicOther  String?
-  confirmed     Boolean             @default(true)
-  checkedIn     Boolean             @default(false)
-  npsScore      Int?
+  dynamicChoice     EventDynamicChoice?
+  dynamicOther      String?
+  confirmed         Boolean             @default(true)
+  checkedIn         Boolean             @default(false)
+  npsScore          Int?
+  /// Pessoa focal do time comercial/CS que deve necessariamente falar com
+  /// esse confirmado — não significa exclusividade de fechamento.
+  focalPerson       String?
+  inWhatsappGroup   Boolean             @default(false)
   /// Link opcional para o mentorado real (Customer), quando o confirmado é
   /// alguém da carteira de CS — evita recadastrar presença/NPS em duplicado.
-  customerId    String?
-  createdAt     DateTime            @default(now())
+  customerId        String?
+  createdAt         DateTime            @default(now())
 
   event    Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   customer Customer?              @relation(fields: [customerId], references: [id], onDelete: SetNull)
   checkins EventAttendeeCheckin[]
+  sales    EventAttendeeSale[]
+}
+
+/// Venda registrada pra um confirmado do evento (curso/mentoria vendido no
+/// contexto do evento) — mirror simplificado de SponsorLeadSale, com
+/// parcelamento e vendedor.
+model EventAttendeeSale {
+  id               String                    @id @default(cuid())
+  attendeeId       String
+  /// Programa vendido (texto livre — ver PRODUCTS em src/lib/products.ts).
+  program          String
+  value            Float
+  paymentPlan      SponsorPaymentPlan
+  installmentCount Int?
+  paymentMethod    AttendeeSalePaymentMethod
+  saleDate         DateTime
+  sellerId         String?
+  createdAt        DateTime                  @default(now())
+
+  attendee EventAttendee @relation(fields: [attendeeId], references: [id], onDelete: Cascade)
+  seller   User?         @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+
+  @@index([attendeeId])
 }
 
 model EventAttendeeCheckin {
@@ -977,8 +1023,8 @@ model RhReview {
   improvements                String?
   actionItems                 String?
   notes                       String?
-  leaderComments               Json?
-  leaderSubmittedAt            DateTime?
+  leaderComments              Json?
+  leaderSubmittedAt           DateTime?
 
   // Só usado em avaliações anuais — preenchido pelo líder junto da
   // formalização, não pelo liderado.

@@ -15,7 +15,7 @@ import type {
   CommsStatus,
 } from "@prisma/client";
 
-export type ActionState = { error?: string; success?: boolean };
+export type ActionState = { error?: string; success?: boolean; message?: string };
 
 function canManageEvents(user: Awaited<ReturnType<typeof requireUser>>) {
   return isAdmin(user) || isLeaderOf(user, "eventos");
