@@ -14,6 +14,9 @@ export function ProjectCard({
   areaName,
   areaHref,
   canEdit,
+  kind,
+  eventName,
+  eventHref,
 }: {
   id?: string;
   name: string;
@@ -24,12 +27,22 @@ export function ProjectCard({
   areaName?: string;
   areaHref?: string;
   canEdit?: boolean;
+  kind?: string;
+  eventName?: string | null;
+  eventHref?: string;
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[13.5px] font-medium text-ink">{name}</span>
+          <div className="flex items-center gap-1.5">
+            {kind && kind !== "Projeto" && (
+              <span className="rounded-full bg-gold-tint px-2 py-0.5 text-[10px] font-medium text-gold-ink">
+                {kind}
+              </span>
+            )}
+            <span className="text-[13.5px] font-medium text-ink">{name}</span>
+          </div>
           <span className="text-[11.5px] text-ink-faint">
             {ownerName} · prazo {formatDate(deadline)}
             {areaName && areaHref && (
@@ -37,6 +50,14 @@ export function ProjectCard({
                 {" · "}
                 <Link href={areaHref} className="hover:underline">
                   {areaName}
+                </Link>
+              </>
+            )}
+            {eventName && eventHref && (
+              <>
+                {" · "}
+                <Link href={eventHref} className="text-brand hover:underline">
+                  {eventName}
                 </Link>
               </>
             )}

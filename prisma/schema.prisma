@@ -350,11 +350,19 @@ model Project {
   deadline    DateTime
   status      ProjectStatus @default(no_ritmo)
   progressPct Int           @default(0)
+  /// Tipo de iniciativa — texto livre (ver PROJECT_KINDS em
+  /// src/lib/projects.ts): Projeto, Evento, Lançamento, Coquetel, Aula,
+  /// Webinar, Hot Seat, Outro.
+  kind        String        @default("Projeto")
+  /// Link opcional pro Evento real (Eventos), quando o projeto é a
+  /// coordenação cross-área de um evento específico.
+  eventId     String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   area  Area   @relation(fields: [areaId], references: [id], onDelete: Cascade)
   owner User   @relation("ProjectOwner", fields: [ownerId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   tasks Task[]
 }
 
@@ -558,6 +566,7 @@ model Event {
   dinnerGuests   EventDinnerGuest[]
   commsItems     EventCommsItem[]
   mediaTasks     EventMediaTask[]
+  linkedProjects Project[]
 }
 
 model EventDay {

@@ -11,6 +11,9 @@ export type ActionState = { error?: string; success?: boolean };
 function revalidateTaskViews(areaSlug: string, taskId?: string) {
   revalidatePath(`/areas/${areaSlug}`);
   revalidatePath("/projetos");
+  revalidatePath("/projetos/workflow");
+  revalidatePath("/projetos/kanban");
+  revalidatePath("/projetos/lista");
   revalidatePath("/dashboard");
   revalidatePath("/workflow");
   // Tarefas abertas a partir do card estilo Asana do calendário de Social

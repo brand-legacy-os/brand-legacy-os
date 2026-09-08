@@ -11,6 +11,8 @@ export type ActionState = { error?: string; success?: boolean };
 function revalidateProjectViews(areaSlug: string) {
   revalidatePath(`/areas/${areaSlug}`);
   revalidatePath("/projetos");
+  revalidatePath("/projetos/lista");
+  revalidatePath("/projetos/kanban");
   revalidatePath("/dashboard");
 }
 
@@ -25,6 +27,8 @@ export async function createProjectAction(
   const ownerId = String(formData.get("ownerId") ?? "");
   const startRaw = String(formData.get("startDate") ?? "");
   const deadlineRaw = String(formData.get("deadline") ?? "");
+  const kind = String(formData.get("kind") ?? "").trim() || "Projeto";
+  const eventId = String(formData.get("eventId") ?? "") || null;
 
   const area = await prisma.area.findUnique({ where: { id: areaId } });
   if (!area) return { error: "Área inválida." };
@@ -47,6 +51,8 @@ export async function createProjectAction(
       deadline: new Date(`${deadlineRaw}T18:00:00`),
       status: "no_ritmo",
       progressPct: 0,
+      kind,
+      eventId,
     },
   });
 

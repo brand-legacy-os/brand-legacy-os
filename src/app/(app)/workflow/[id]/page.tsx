@@ -50,7 +50,7 @@ export default async function WorkflowCardPage({
     <div className="mx-auto flex w-full max-w-[880px] flex-col gap-6">
       <div className="flex items-center justify-between">
         <Link
-          href="/workflow"
+          href="/projetos/workflow"
           className="w-fit text-[12.5px] font-medium text-ink-soft hover:text-brand-deep"
         >
           ← Workflow
@@ -58,7 +58,7 @@ export default async function WorkflowCardPage({
         {canManage && (
           <DeleteTaskButton
             taskId={task.id}
-            redirectTo="/workflow"
+            redirectTo="/projetos/workflow"
             label="Excluir tarefa"
           />
         )}

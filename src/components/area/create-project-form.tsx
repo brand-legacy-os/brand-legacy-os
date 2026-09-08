@@ -2,15 +2,18 @@
 
 import { useActionState, useRef, useEffect, useState } from "react";
 import { createProjectAction, type ActionState } from "@/lib/actions/projects";
+import { PROJECT_KINDS } from "@/lib/projects";
 
 const initialState: ActionState = {};
 
 export function CreateProjectForm({
   areaId,
   members,
+  events = [],
 }: {
   areaId: string;
   members: { id: string; name: string }[];
+  events?: { id: string; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
@@ -57,6 +60,33 @@ export function CreateProjectForm({
         rows={2}
         className="rounded-(--radius-s) border border-border bg-canvas px-2.5 py-2 text-[13px] outline-none focus:border-brand-deep-2"
       />
+      <div className="flex flex-wrap gap-2.5">
+        <select
+          name="kind"
+          defaultValue="Projeto"
+          className="h-9 flex-1 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
+        >
+          {PROJECT_KINDS.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+        {events.length > 0 && (
+          <select
+            name="eventId"
+            defaultValue=""
+            className="h-9 flex-1 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
+          >
+            <option value="">Vincular a um evento (opcional)…</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
       <div className="flex flex-wrap gap-2.5">
         <select
           name="ownerId"

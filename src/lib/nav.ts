@@ -36,7 +36,6 @@ export function buildNav(
       items: [
         { label: "Início", href: "/inicio" },
         { label: "Dashboard", href: "/dashboard" },
-        { label: "Workflow", href: "/workflow" },
         { label: "Projetos e Tarefas", href: "/projetos" },
         { label: "RH", href: "/rh" },
         ...(canAccessSalaryArea(user) ? [{ label: "Cargos e Salários", href: "/rh/cargos-salarios" }] : []),
