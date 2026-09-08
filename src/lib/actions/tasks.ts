@@ -34,6 +34,8 @@ export async function updateTaskAction(
   const priority = formData.get("priority") as TaskPriority | null;
   const deadlineRaw = formData.get("deadline");
   const note = formData.get("note");
+  const title = formData.get("title");
+  const assigneeId = formData.get("assigneeId");
 
   const task = await prisma.task.findUnique({
     where: { id: taskId },
@@ -51,7 +53,60 @@ export async function updateTaskAction(
     note?: string | null;
     deadline?: Date;
     completedAt?: Date | null;
+    title?: string;
+    assigneeId?: string;
   } = {};
+
+  if (title !== null) {
+    const titleValue = String(title).trim();
+    if (titleValue && titleValue !== task.title) {
+      data.title = titleValue;
+      await prisma.auditLog.create({
+        data: {
+          entityType: "Task",
+          entityId: task.id,
+          field: "título",
+          oldValue: task.title,
+          newValue: titleValue,
+          userId: user.id,
+        },
+      });
+    }
+  }
+
+  // Reatribuir responsável é mais sensível que os outros campos — só líder
+  // da área (ou admin/líder de Operações) pode, igual reassignTaskAction.
+  if (
+    assigneeId &&
+    String(assigneeId) !== task.assigneeId &&
+    (isAdmin(user) || canEditAreaKpis(user, task.area.slug) || canManageAnyAreaTask(user))
+  ) {
+    const newAssigneeId = String(assigneeId);
+    const newAssignee = await prisma.user.findUnique({ where: { id: newAssigneeId } });
+    if (newAssignee) {
+      data.assigneeId = newAssigneeId;
+      await prisma.auditLog.create({
+        data: {
+          entityType: "Task",
+          entityId: task.id,
+          field: "responsável",
+          oldValue: task.assigneeId,
+          newValue: newAssigneeId,
+          userId: user.id,
+        },
+      });
+      if (newAssigneeId !== user.id) {
+        await prisma.notification.create({
+          data: {
+            userId: newAssigneeId,
+            type: "tarefa",
+            message: `${user.name} atribuiu a você a tarefa "${task.title}".`,
+            link: `/workflow/${task.id}`,
+          },
+        });
+      }
+    }
+  }
 
   if (status && status !== task.status) {
     data.status = status;

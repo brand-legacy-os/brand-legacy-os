@@ -27,7 +27,6 @@ async function requireSocialManager() {
 function revalidateSocial() {
   revalidatePath("/social");
   revalidatePath("/social/introducao");
-  revalidatePath("/social/colaboradores");
   revalidatePath("/social/calendario");
   revalidatePath("/social/tarefas");
   revalidatePath("/social/crm");
@@ -127,6 +126,16 @@ export async function upsertFollowerSnapshotAction(
 // Podcast
 // ---------------------------------------------------------------------------
 
+/** Lê um select de responsável que pode ter "outro" selecionado, caso em
+ * que o id vai null e o texto livre (nome de `${name}Other`) é usado. */
+function readResponsibleField(formData: FormData, name: string) {
+  const raw = String(formData.get(name) ?? "");
+  if (raw === "outro") {
+    return { id: null, other: String(formData.get(`${name}Other`) ?? "").trim() || null };
+  }
+  return { id: raw || null, other: null };
+}
+
 function readPodcastFields(formData: FormData) {
   const episodeNumberRaw = String(formData.get("episodeNumber") ?? "");
   const guestName = String(formData.get("guestName") ?? "").trim();
@@ -141,13 +150,13 @@ function readPodcastFields(formData: FormData) {
   const status = (formData.get("status") as PodcastStatus | null) || "entrevista_marcada";
   const source = formData.get("source") as PodcastSource | null;
   const sourceOther = source === "outro" ? String(formData.get("sourceOther") ?? "").trim() || null : null;
-  const recordingResponsibleId = String(formData.get("recordingResponsibleId") ?? "") || null;
-  const materialResponsibleId = String(formData.get("materialResponsibleId") ?? "") || null;
-  const postResponsibleId = String(formData.get("postResponsibleId") ?? "") || null;
+  const recording = readResponsibleField(formData, "recordingResponsibleId");
+  const material = readResponsibleField(formData, "materialResponsibleId");
+  const post = readResponsibleField(formData, "postResponsibleId");
   const transcript = String(formData.get("transcript") ?? "").trim() || null;
   const dispatchCopy = String(formData.get("dispatchCopy") ?? "").trim() || null;
   const dispatchDateRaw = String(formData.get("dispatchDate") ?? "");
-  const dispatchResponsibleId = String(formData.get("dispatchResponsibleId") ?? "") || null;
+  const dispatch = readResponsibleField(formData, "dispatchResponsibleId");
   const dispatchStatus = (formData.get("dispatchStatus") as "planejado" | "enviado" | null) || null;
 
   const episodeNumber = Number(episodeNumberRaw);
@@ -172,13 +181,17 @@ function readPodcastFields(formData: FormData) {
       status,
       source,
       sourceOther,
-      recordingResponsibleId,
-      materialResponsibleId,
-      postResponsibleId,
+      recordingResponsibleId: recording.id,
+      recordingResponsibleOther: recording.other,
+      materialResponsibleId: material.id,
+      materialResponsibleOther: material.other,
+      postResponsibleId: post.id,
+      postResponsibleOther: post.other,
       transcript,
       dispatchCopy,
       dispatchDate: dispatchDateRaw ? new Date(`${dispatchDateRaw}T12:00:00`) : null,
-      dispatchResponsibleId,
+      dispatchResponsibleId: dispatch.id,
+      dispatchResponsibleOther: dispatch.other,
       dispatchStatus,
     },
   };
@@ -447,6 +460,35 @@ export async function updateContentPostStatusAction(formData: FormData) {
   revalidateSocial();
 }
 
+export async function updateContentPostAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canEditAreaKpis(user, "social")) return { error: "Sem permissão." };
+
+  const postId = String(formData.get("postId") ?? "");
+  const dateRaw = String(formData.get("date") ?? "");
+  const profileId = String(formData.get("profileId") ?? "");
+  const format = formData.get("format") as ContentFormat | null;
+  const theme = String(formData.get("theme") ?? "").trim();
+  const status = (formData.get("status") as ContentPostStatus | null) || "planejado";
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  if (!postId) return { error: "Post não encontrado." };
+  if (!dateRaw || !profileId || !format || !theme) {
+    return { error: "Preencha data, perfil, formato e tema." };
+  }
+
+  await prisma.contentCalendarPost.update({
+    where: { id: postId },
+    data: { date: new Date(`${dateRaw}T12:00:00`), profileId, format, theme, status, notes },
+  });
+
+  revalidateSocial();
+  return { success: true, postId };
+}
+
 export async function deleteContentPostAction(formData: FormData) {
   const user = await requireUser();
   if (!canEditAreaKpis(user, "social")) return;
@@ -455,6 +497,15 @@ export async function deleteContentPostAction(formData: FormData) {
   if (!postId) return;
   await prisma.contentCalendarPost.delete({ where: { id: postId } });
   revalidateSocial();
+}
+
+export async function deleteContentPostByIdAction(postId: string): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canEditAreaKpis(user, "social")) return { error: "Sem permissão." };
+  if (!postId) return { error: "Post não encontrado." };
+  await prisma.contentCalendarPost.delete({ where: { id: postId } });
+  revalidateSocial();
+  return { success: true };
 }
 
 // ---------------------------------------------------------------------------

@@ -2,9 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canEditAreaKpis, canManageTask } from "@/lib/permissions";
-import { CONTENT_FORMAT_META, CONTENT_POST_STATUS_META } from "@/lib/social";
-import { formatDate } from "@/lib/format";
 import { PostTaskRow } from "@/components/social/post-task-row";
+import { PostCardHeader } from "@/components/social/post-card-header";
 import { AddContentPostLinkForm } from "@/components/social/add-content-post-link-form";
 import { AddContentPostTaskForm } from "@/components/social/add-content-post-task-form";
 import { deleteContentPostLinkAction } from "@/lib/actions/social";
@@ -13,7 +12,7 @@ export async function ContentPostCard({ postId }: { postId: string }) {
   const user = await requireUser();
   const canEdit = canEditAreaKpis(user, "social");
 
-  const [post, socialArea] = await Promise.all([
+  const [post, socialArea, profiles] = await Promise.all([
     prisma.contentCalendarPost.findUnique({
       where: { id: postId },
       include: {
@@ -29,6 +28,7 @@ export async function ContentPostCard({ postId }: { postId: string }) {
       where: { slug: "social" },
       include: { memberships: { include: { user: true } } },
     }),
+    prisma.socialProfile.findMany({ orderBy: { order: "asc" }, select: { id: true, name: true } }),
   ]);
 
   if (!post) return null;
@@ -42,17 +42,20 @@ export async function ContentPostCard({ postId }: { postId: string }) {
       />
       <div className="relative flex h-full w-full max-w-[520px] flex-col gap-5 overflow-y-auto border-l border-border bg-surface p-6 shadow-[-8px_0_32px_-12px_rgba(23,23,15,0.25)]">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1.5">
-            <span className="w-fit rounded-full bg-gold-tint px-2.5 py-1 text-[10.5px] font-medium uppercase tracking-[0.04em] text-gold-ink">
-              {CONTENT_FORMAT_META[post.format].label} · {post.profile.name}
-            </span>
-            <h2 className="font-(family-name:--font-display) text-[20px] leading-tight text-ink">
-              {post.theme}
-            </h2>
-            <p className="text-[12.5px] text-ink-faint">
-              {formatDate(post.date)} · {CONTENT_POST_STATUS_META[post.status].label}
-            </p>
-          </div>
+          <PostCardHeader
+            post={{
+              id: post.id,
+              date: post.date,
+              profileId: post.profileId,
+              profileName: post.profile.name,
+              format: post.format,
+              theme: post.theme,
+              status: post.status,
+              notes: post.notes,
+            }}
+            profiles={profiles}
+            canEdit={canEdit}
+          />
           <Link
             href="/social/calendario"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[16px] text-ink-faint hover:bg-surface-muted hover:text-ink"
@@ -61,12 +64,6 @@ export async function ContentPostCard({ postId }: { postId: string }) {
             ×
           </Link>
         </div>
-
-        {post.notes && (
-          <p className="rounded-(--radius-s) bg-surface-muted p-3 text-[12.5px] leading-relaxed text-ink-soft">
-            {post.notes}
-          </p>
-        )}
 
         <section className="flex flex-col gap-2.5">
           <h3 className="text-[12px] font-medium uppercase tracking-[0.04em] text-ink-faint">
@@ -128,6 +125,8 @@ export async function ContentPostCard({ postId }: { postId: string }) {
                       assigneeId: task.assigneeId,
                       areaSlug: "social",
                     })}
+                    members={socialArea?.memberships.map((m) => ({ id: m.user.id, name: m.user.name })) ?? []}
+                    canReassign={canEdit}
                   />
                 </div>
               );

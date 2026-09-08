@@ -105,22 +105,51 @@ export default async function SocialPage({
   // somado sobre os posts de cada mês (postedAt real do post, não da data do fetch).
   // Por seguidores: mesma soma de interações / total de seguidores do mês (preenchido
   // manualmente — o Reportei não expõe esse total como card único).
+  // Quando o mês corrente ainda não tem posts (ele acabou de começar), o
+  // "atual" cai pra média dos meses anteriores que tiveram post — em vez de
+  // mostrar 0%, que parece um erro de leitura em vez de "ainda sem dado".
+  function averageOfNonEmpty(monthPoints: { value: number; hasData: boolean }[]) {
+    const withData = monthPoints.filter((m) => m.hasData);
+    if (withData.length === 0) return null;
+    return withData.reduce((s, m) => s + m.value, 0) / withData.length;
+  }
+
   const profileEngagement = profiles.map((p) => {
-    const byMonthReach = months.map((mk) => {
+    const reachPoints = months.map((mk) => {
       const postsInMonth = p.reporteiPosts.filter((post) => post.postedAt && monthKey(post.postedAt) === mk);
       const { engagementPct } = computeReachEngagement(postsInMonth);
-      return { label: periodKeyLabel(mk).slice(0, 3), value: engagementPct ?? 0 };
+      return {
+        label: periodKeyLabel(mk).slice(0, 3),
+        value: engagementPct ?? 0,
+        hasData: postsInMonth.length > 0,
+      };
     });
-    const byMonthFollowers = months.map((mk) => {
+    const followerPoints = months.map((mk) => {
       const postsInMonth = p.reporteiPosts.filter((post) => post.postedAt && monthKey(post.postedAt) === mk);
       const { interactions } = computeReachEngagement(postsInMonth);
       const snapshot = p.followerSnapshots.find((f) => f.monthKey === mk);
       const pct = snapshot && snapshot.count > 0 ? (interactions / snapshot.count) * 100 : null;
-      return { label: periodKeyLabel(mk).slice(0, 3), value: pct ?? 0 };
+      return {
+        label: periodKeyLabel(mk).slice(0, 3),
+        value: pct ?? 0,
+        hasData: pct !== null,
+      };
     });
-    const currentReach = byMonthReach[byMonthReach.length - 1]?.value ?? null;
+
+    const byMonthReach = reachPoints.map(({ label, value }) => ({ label, value }));
+    const byMonthFollowers = followerPoints.map(({ label, value }) => ({ label, value }));
+
+    const currentMonthReach = reachPoints[reachPoints.length - 1];
+    const currentReach = currentMonthReach?.hasData
+      ? currentMonthReach.value
+      : averageOfNonEmpty(reachPoints.slice(0, -1));
+
+    const currentMonthFollowers = followerPoints[followerPoints.length - 1];
+    const currentFollowers = currentMonthFollowers?.hasData
+      ? currentMonthFollowers.value
+      : averageOfNonEmpty(followerPoints.slice(0, -1));
+
     const currentFollowerSnapshot = p.followerSnapshots.find((f) => f.monthKey === currentMonthKey);
-    const currentFollowers = byMonthFollowers[byMonthFollowers.length - 1]?.value ?? null;
     return {
       id: p.id,
       name: p.name,
@@ -128,6 +157,7 @@ export default async function SocialPage({
       byMonthFollowers,
       currentReach,
       currentFollowers,
+      currentIsAverage: !currentMonthReach?.hasData,
       currentFollowerCount: currentFollowerSnapshot?.count ?? null,
     };
   });
@@ -224,9 +254,15 @@ export default async function SocialPage({
                 <div className="flex items-center gap-4">
                   <span className="text-[12px] text-ink-soft">
                     Por alcance: <span className="tnum font-medium text-ink">{p.currentReach !== null ? `${p.currentReach.toFixed(1)}%` : "—"}</span>
+                    {p.currentIsAverage && p.currentReach !== null && (
+                      <span className="ml-1 text-[10.5px] text-ink-faint">(média)</span>
+                    )}
                   </span>
                   <span className="text-[12px] text-ink-soft">
                     Por seguidores: <span className="tnum font-medium text-ink">{p.currentFollowers !== null ? `${p.currentFollowers.toFixed(1)}%` : "—"}</span>
+                    {p.currentIsAverage && p.currentFollowers !== null && (
+                      <span className="ml-1 text-[10.5px] text-ink-faint">(média)</span>
+                    )}
                   </span>
                 </div>
               </div>

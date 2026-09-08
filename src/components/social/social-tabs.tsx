@@ -9,7 +9,6 @@ const TABS = [
   { href: "/social/dashboard", label: "Dashboard Reportei" },
   { href: "/social/calendario", label: "Calendário" },
   { href: "/social/tarefas", label: "Tarefas" },
-  { href: "/social/colaboradores", label: "Por colaborador" },
   { href: "/social/podcast", label: "Podcast" },
   { href: "/social/crm", label: "CRM Social Selling" },
   { href: "/social/relatorio", label: "Relatório" },

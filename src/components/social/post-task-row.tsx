@@ -24,10 +24,13 @@ export function PostTaskRow({
   assigneeName,
   assigneeInitials,
   canManage,
+  members = [],
+  canReassign = false,
 }: {
   task: {
     id: string;
     title: string;
+    assigneeId: string;
     status: TaskStatus;
     priority: TaskPriority;
     deadline: Date;
@@ -39,6 +42,8 @@ export function PostTaskRow({
   assigneeName: string;
   assigneeInitials: string;
   canManage: boolean;
+  members?: { id: string; name: string }[];
+  canReassign?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [addingAttachment, setAddingAttachment] = useState(false);
@@ -115,6 +120,30 @@ export function PostTaskRow({
       {open && canManage && (
         <form action={formAction} className="ml-10 mt-2.5 flex flex-col gap-2.5 rounded-(--radius-s) bg-surface-muted p-3">
           <input type="hidden" name="taskId" value={task.id} />
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-ink-faint">O que precisa ser feito</label>
+            <input
+              name="title"
+              defaultValue={task.title}
+              className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[13px] outline-none"
+            />
+          </div>
+          {canReassign && members.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-ink-faint">Responsável</label>
+              <select
+                name="assigneeId"
+                defaultValue={task.assigneeId}
+                className="h-8 w-fit rounded-(--radius-s) border border-border bg-surface px-2.5 text-[13px] outline-none"
+              >
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex flex-wrap gap-1.5">
             {STATUS_ORDER.map((s) => (
               <label key={s} className="cursor-pointer">

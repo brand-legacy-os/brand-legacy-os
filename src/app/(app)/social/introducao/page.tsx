@@ -45,7 +45,7 @@ export default async function SocialIntroducaoPage() {
           <h2 className="text-[13px] font-medium text-ink-soft">
             Perfis geridos ({profiles.length})
           </h2>
-          <Link href="/social/colaboradores" className="text-[12px] font-medium text-brand hover:underline">
+          <Link href="/social/tarefas" className="text-[12px] font-medium text-brand hover:underline">
             Ver por colaborador →
           </Link>
         </div>

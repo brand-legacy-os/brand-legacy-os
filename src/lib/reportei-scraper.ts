@@ -238,6 +238,15 @@ async function scrapeReporteiDashboardInner(url: string): Promise<ScrapedReporte
     const text = await page.evaluate(() => document.body.innerText);
     const metrics = parseReporteiText(text);
     const posts = await scrapePostsTable(page).catch(() => []);
+    if (metrics.length === 0) {
+      // Diagnóstico temporário: quando um perfil específico volta sem dados
+      // de forma consistente (visto com o perfil da Carol), isso aparece nos
+      // logs de deploy do Railway pra entender se é link expirado, relatório
+      // sem esse período configurado, ou algo no meio do carregamento.
+      console.error(
+        `[reportei-scraper] 0 metrics. url=${url} finalUrl=${page.url()} textLen=${text.length} snippet=${JSON.stringify(text.slice(0, 400))}`
+      );
+    }
     return { metrics, posts };
   } finally {
     await browser.close();

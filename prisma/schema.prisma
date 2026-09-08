@@ -1333,21 +1333,26 @@ model PodcastEpisode {
   sourceOther            String?
   createdAt              DateTime      @default(now())
 
-  /// Responsável por cada etapa — gravação, material e postagem.
-  recordingResponsibleId String?
-  materialResponsibleId  String?
-  postResponsibleId      String?
-  recordingResponsible   User?   @relation("PodcastRecordingResponsible", fields: [recordingResponsibleId], references: [id])
-  materialResponsible    User?   @relation("PodcastMaterialResponsible", fields: [materialResponsibleId], references: [id])
-  postResponsible        User?   @relation("PodcastPostResponsible", fields: [postResponsibleId], references: [id])
+  /// Responsável por cada etapa — gravação, material e postagem. *Other é
+  /// preenchido só quando o responsável não é alguém do time (id = null).
+  recordingResponsibleId    String?
+  recordingResponsibleOther String?
+  materialResponsibleId     String?
+  materialResponsibleOther  String?
+  postResponsibleId         String?
+  postResponsibleOther      String?
+  recordingResponsible      User?   @relation("PodcastRecordingResponsible", fields: [recordingResponsibleId], references: [id])
+  materialResponsible       User?   @relation("PodcastMaterialResponsible", fields: [materialResponsibleId], references: [id])
+  postResponsible           User?   @relation("PodcastPostResponsible", fields: [postResponsibleId], references: [id])
 
   /// Transcrição do episódio e disparo da copy nos grupos.
-  transcript            String?
-  dispatchCopy          String?
-  dispatchDate          DateTime?
-  dispatchResponsibleId String?
-  dispatchResponsible   User?        @relation("PodcastDispatchResponsible", fields: [dispatchResponsibleId], references: [id])
-  dispatchStatus        CommsStatus?
+  transcript                 String?
+  dispatchCopy               String?
+  dispatchDate               DateTime?
+  dispatchResponsibleId      String?
+  dispatchResponsibleOther   String?
+  dispatchResponsible        User?        @relation("PodcastDispatchResponsible", fields: [dispatchResponsibleId], references: [id])
+  dispatchStatus              CommsStatus?
 }
 
 /// Funil de Social Selling — só o pipeline (lead → reunião → status). O

@@ -26,10 +26,13 @@ type EpisodeDefaults = {
   sourceOther: string | null;
   recordingDate: Date | string | null;
   recordingResponsibleId: string | null;
+  recordingResponsibleOther: string | null;
   materialDeadline: Date | string | null;
   materialResponsibleId: string | null;
+  materialResponsibleOther: string | null;
   postDate: Date | string | null;
   postResponsibleId: string | null;
+  postResponsibleOther: string | null;
   rawMaterialUrl: string | null;
   editedMaterialUrl: string | null;
   status: string;
@@ -37,8 +40,52 @@ type EpisodeDefaults = {
   dispatchCopy: string | null;
   dispatchDate: Date | string | null;
   dispatchResponsibleId: string | null;
+  dispatchResponsibleOther: string | null;
   dispatchStatus: string | null;
 };
+
+function ResponsibleField({
+  name,
+  users,
+  defaultValue,
+  defaultOther,
+  placeholder,
+}: {
+  name: string;
+  users: { id: string; name: string }[];
+  defaultValue: string | null | undefined;
+  defaultOther: string | null | undefined;
+  placeholder: string;
+}) {
+  const initial = defaultOther ? "outro" : (defaultValue ?? "");
+  const [value, setValue] = useState(initial);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <select
+        name={name}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
+      >
+        <option value="">{placeholder}</option>
+        {users.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+        <option value="outro">Outros…</option>
+      </select>
+      {value === "outro" && (
+        <input
+          name={`${name}Other`}
+          defaultValue={defaultOther ?? ""}
+          placeholder="Quem é o responsável?"
+          className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
+        />
+      )}
+    </div>
+  );
+}
 
 export function CreatePodcastEpisodeForm({
   users,
@@ -76,21 +123,6 @@ export function CreatePodcastEpisodeForm({
       </button>
     );
   }
-
-  const responsibleSelect = (name: string, defaultValue: string | null | undefined, placeholder: string) => (
-    <select
-      name={name}
-      defaultValue={defaultValue ?? ""}
-      className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
-    >
-      <option value="">{placeholder}</option>
-      {users.map((u) => (
-        <option key={u.id} value={u.id}>
-          {u.name}
-        </option>
-      ))}
-    </select>
-  );
 
   return (
     <form
@@ -171,7 +203,13 @@ export function CreatePodcastEpisodeForm({
             defaultValue={toDateInput(defaults?.recordingDate)}
             className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
           />
-          {responsibleSelect("recordingResponsibleId", defaults?.recordingResponsibleId, "Responsável…")}
+          <ResponsibleField
+            name="recordingResponsibleId"
+            users={users}
+            defaultValue={defaults?.recordingResponsibleId}
+            defaultOther={defaults?.recordingResponsibleOther}
+            placeholder="Responsável…"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[11px] text-ink-faint">Prazo do material</label>
@@ -181,7 +219,13 @@ export function CreatePodcastEpisodeForm({
             defaultValue={toDateInput(defaults?.materialDeadline)}
             className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
           />
-          {responsibleSelect("materialResponsibleId", defaults?.materialResponsibleId, "Responsável…")}
+          <ResponsibleField
+            name="materialResponsibleId"
+            users={users}
+            defaultValue={defaults?.materialResponsibleId}
+            defaultOther={defaults?.materialResponsibleOther}
+            placeholder="Responsável…"
+          />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-[11px] text-ink-faint">Data de postagem</label>
@@ -191,7 +235,13 @@ export function CreatePodcastEpisodeForm({
             defaultValue={toDateInput(defaults?.postDate)}
             className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
           />
-          {responsibleSelect("postResponsibleId", defaults?.postResponsibleId, "Responsável…")}
+          <ResponsibleField
+            name="postResponsibleId"
+            users={users}
+            defaultValue={defaults?.postResponsibleId}
+            defaultOther={defaults?.postResponsibleOther}
+            placeholder="Responsável…"
+          />
         </div>
       </div>
 
@@ -245,7 +295,13 @@ export function CreatePodcastEpisodeForm({
             defaultValue={toDateInput(defaults?.dispatchDate)}
             className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
           />
-          {responsibleSelect("dispatchResponsibleId", defaults?.dispatchResponsibleId, "Responsável pelo disparo…")}
+          <ResponsibleField
+            name="dispatchResponsibleId"
+            users={users}
+            defaultValue={defaults?.dispatchResponsibleId}
+            defaultOther={defaults?.dispatchResponsibleOther}
+            placeholder="Responsável pelo disparo…"
+          />
           <select
             name="dispatchStatus"
             defaultValue={defaults?.dispatchStatus ?? ""}

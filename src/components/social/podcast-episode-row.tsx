@@ -18,10 +18,13 @@ type Episode = {
   sourceOther: string | null;
   recordingDate: Date | string | null;
   recordingResponsibleId: string | null;
+  recordingResponsibleOther: string | null;
   materialDeadline: Date | string | null;
   materialResponsibleId: string | null;
+  materialResponsibleOther: string | null;
   postDate: Date | string | null;
   postResponsibleId: string | null;
+  postResponsibleOther: string | null;
   rawMaterialUrl: string | null;
   editedMaterialUrl: string | null;
   status: string;
@@ -29,6 +32,7 @@ type Episode = {
   dispatchCopy: string | null;
   dispatchDate: Date | string | null;
   dispatchResponsibleId: string | null;
+  dispatchResponsibleOther: string | null;
   dispatchStatus: string | null;
 };
 
