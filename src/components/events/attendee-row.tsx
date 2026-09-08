@@ -8,6 +8,7 @@ import {
   updateAttendeeAction,
   deleteAttendeeAction,
   addAttendeeSaleAction,
+  updateAttendeeSaleAction,
   deleteAttendeeSaleAction,
   type ActionState,
 } from "@/lib/actions/events";
@@ -36,6 +37,66 @@ type Sale = {
   saleDate: string | Date;
   seller: { id: string; name: string } | null;
 };
+
+/** Campos compartilhados entre o form de adicionar e o de editar venda. */
+function SaleFormFields({
+  defaults,
+  users,
+}: {
+  defaults?: Sale;
+  users: { id: string; name: string }[];
+}) {
+  const [paymentPlan, setPaymentPlan] = useState(defaults?.paymentPlan ?? "avista");
+  const dateValue = defaults?.saleDate
+    ? new Date(defaults.saleDate).toISOString().slice(0, 10)
+    : undefined;
+
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <select name="program" required defaultValue={defaults?.program ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+        <option value="" disabled>
+          Programa…
+        </option>
+        {PRODUCTS.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
+      <input name="value" type="number" step="0.01" min="0" required placeholder="Valor" defaultValue={defaults?.value} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+      <input name="saleDate" type="date" required defaultValue={dateValue} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+      <select
+        name="paymentPlan"
+        value={paymentPlan}
+        onChange={(e) => setPaymentPlan(e.target.value)}
+        className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+      >
+        <option value="avista">À vista</option>
+        <option value="parcelado">Parcelado</option>
+      </select>
+      {paymentPlan === "parcelado" && (
+        <input name="installmentCount" type="number" min="1" max="24" placeholder="Nº parcelas" defaultValue={defaults?.installmentCount ?? undefined} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+      )}
+      <select name="paymentMethod" required defaultValue={defaults?.paymentMethod ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+        <option value="" disabled>
+          Meio de pagamento…
+        </option>
+        <option value="pix">Pix</option>
+        <option value="boleto">Boleto</option>
+        <option value="cartao">Cartão</option>
+        <option value="outro">Outro</option>
+      </select>
+      <select name="sellerId" defaultValue={defaults?.seller?.id ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+        <option value="">Vendedor (opcional)</option>
+        {users.map((u) => (
+          <option key={u.id} value={u.id}>
+            {u.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export function AttendeeRow({
   attendee,
@@ -70,9 +131,10 @@ export function AttendeeRow({
   const [editing, setEditing] = useState(false);
   const [showSales, setShowSales] = useState(false);
   const [addingSale, setAddingSale] = useState(false);
+  const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
   const [state, formAction, savePending] = useActionState(updateAttendeeAction, initialState);
   const [saleState, saleFormAction, salePending] = useActionState(addAttendeeSaleAction, initialState);
-  const [salePaymentPlan, setSalePaymentPlan] = useState("avista");
+  const [editSaleState, editSaleFormAction, editSalePending] = useActionState(updateAttendeeSaleAction, initialState);
 
   useEffect(() => {
     if (state.success) setEditing(false);
@@ -81,6 +143,10 @@ export function AttendeeRow({
   useEffect(() => {
     if (saleState.success) setAddingSale(false);
   }, [saleState.success]);
+
+  useEffect(() => {
+    if (editSaleState.success) setEditingSaleId(null);
+  }, [editSaleState.success]);
 
   return (
     <div className="border-t border-border py-2 first:border-t-0">
@@ -232,29 +298,54 @@ export function AttendeeRow({
           {attendee.sales.length === 0 && (
             <p className="text-[11.5px] text-ink-faint">Nenhuma venda registrada.</p>
           )}
-          {attendee.sales.map((s) => (
-            <div key={s.id} className="flex items-center justify-between gap-2 text-[11.5px]">
-              <span>
-                {s.program} · {formatCurrency(s.value)} ·{" "}
-                {s.paymentPlan === "parcelado" ? `${s.installmentCount}x` : "à vista"} ·{" "}
-                {PAYMENT_METHOD_LABEL[s.paymentMethod] ?? s.paymentMethod} · {formatDate(new Date(s.saleDate))}
-                {s.seller ? ` · ${s.seller.name}` : ""}
-              </span>
-              {canManage && (
-                <form
-                  action={deleteAttendeeSaleAction}
-                  onSubmit={(e) => {
-                    if (!confirm("Excluir essa venda?")) e.preventDefault();
-                  }}
-                >
-                  <input type="hidden" name="saleId" value={s.id} />
-                  <button type="submit" className="text-ink-faint hover:text-critical">
-                    excluir
+          {attendee.sales.map((s) =>
+            editingSaleId === s.id ? (
+              <form key={s.id} action={editSaleFormAction} className="flex flex-col gap-2 border-t border-border pt-2 first:border-t-0 first:pt-0">
+                <input type="hidden" name="saleId" value={s.id} />
+                <SaleFormFields defaults={s} users={users} />
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="submit"
+                    disabled={editSalePending}
+                    className="h-8 rounded-(--radius-s) bg-brand-deep px-3.5 text-[12px] font-medium text-gold-soft disabled:opacity-60"
+                  >
+                    {editSalePending ? "Salvando…" : "Salvar venda"}
                   </button>
-                </form>
-              )}
-            </div>
-          ))}
+                  <button type="button" onClick={() => setEditingSaleId(null)} className="text-[11.5px] text-ink-faint hover:underline">
+                    cancelar
+                  </button>
+                  {editSaleState.error && <span className="text-[11px] text-critical">{editSaleState.error}</span>}
+                </div>
+              </form>
+            ) : (
+              <div key={s.id} className="flex items-center justify-between gap-2 text-[11.5px]">
+                <span>
+                  {s.program} · {formatCurrency(s.value)} ·{" "}
+                  {s.paymentPlan === "parcelado" ? `${s.installmentCount}x` : "à vista"} ·{" "}
+                  {PAYMENT_METHOD_LABEL[s.paymentMethod] ?? s.paymentMethod} · {formatDate(new Date(s.saleDate))}
+                  {s.seller ? ` · ${s.seller.name}` : ""}
+                </span>
+                {canManage && (
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={() => setEditingSaleId(s.id)} className="text-brand hover:underline">
+                      editar
+                    </button>
+                    <form
+                      action={deleteAttendeeSaleAction}
+                      onSubmit={(e) => {
+                        if (!confirm("Excluir essa venda?")) e.preventDefault();
+                      }}
+                    >
+                      <input type="hidden" name="saleId" value={s.id} />
+                      <button type="submit" className="text-ink-faint hover:text-critical">
+                        excluir
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            )
+          )}
 
           {canManage && !addingSale && (
             <button
@@ -268,49 +359,7 @@ export function AttendeeRow({
           {canManage && addingSale && (
             <form action={saleFormAction} className="flex flex-col gap-2 border-t border-border pt-2">
               <input type="hidden" name="attendeeId" value={attendee.id} />
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <select name="program" required defaultValue="" className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-                  <option value="" disabled>
-                    Programa…
-                  </option>
-                  {PRODUCTS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-                <input name="value" type="number" step="0.01" min="0" required placeholder="Valor" className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
-                <input name="saleDate" type="date" required className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
-                <select
-                  name="paymentPlan"
-                  value={salePaymentPlan}
-                  onChange={(e) => setSalePaymentPlan(e.target.value)}
-                  className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
-                >
-                  <option value="avista">À vista</option>
-                  <option value="parcelado">Parcelado</option>
-                </select>
-                {salePaymentPlan === "parcelado" && (
-                  <input name="installmentCount" type="number" min="1" max="24" placeholder="Nº parcelas" className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
-                )}
-                <select name="paymentMethod" required defaultValue="" className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-                  <option value="" disabled>
-                    Meio de pagamento…
-                  </option>
-                  <option value="pix">Pix</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="cartao">Cartão</option>
-                  <option value="outro">Outro</option>
-                </select>
-                <select name="sellerId" defaultValue="" className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
-                  <option value="">Vendedor (opcional)</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SaleFormFields users={users} />
               <div className="flex items-center gap-2.5">
                 <button
                   type="submit"

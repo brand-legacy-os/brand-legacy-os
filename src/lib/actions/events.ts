@@ -750,6 +750,56 @@ export async function addAttendeeSaleAction(
   return { success: true };
 }
 
+export async function updateAttendeeSaleAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const saleId = String(formData.get("saleId") ?? "");
+  const existing = await prisma.eventAttendeeSale.findUnique({
+    where: { id: saleId },
+    include: { attendee: true },
+  });
+  if (!existing) return { error: "Venda não encontrada." };
+
+  const program = String(formData.get("program") ?? "").trim();
+  const value = Number(formData.get("value") ?? 0);
+  const paymentPlan = formData.get("paymentPlan") as "avista" | "parcelado" | null;
+  const installmentCountRaw = String(formData.get("installmentCount") ?? "");
+  const installmentCount =
+    paymentPlan === "parcelado" && installmentCountRaw ? Number(installmentCountRaw) : null;
+  const paymentMethod = formData.get("paymentMethod") as
+    | "pix"
+    | "boleto"
+    | "cartao"
+    | "outro"
+    | null;
+  const saleDateRaw = String(formData.get("saleDate") ?? "");
+  const sellerId = String(formData.get("sellerId") ?? "") || null;
+
+  if (!program || !value || value <= 0 || !paymentPlan || !paymentMethod || !saleDateRaw) {
+    return { error: "Preencha programa, valor, forma de pagamento e data da venda." };
+  }
+
+  await prisma.eventAttendeeSale.update({
+    where: { id: saleId },
+    data: {
+      program,
+      value,
+      paymentPlan,
+      installmentCount,
+      paymentMethod,
+      saleDate: new Date(`${saleDateRaw}T12:00:00`),
+      sellerId,
+    },
+  });
+
+  revalidateEvent(existing.attendee.eventId);
+  return { success: true };
+}
+
 export async function deleteAttendeeSaleAction(formData: FormData) {
   const user = await requireUser();
   if (!canManageEvents(user)) return;
