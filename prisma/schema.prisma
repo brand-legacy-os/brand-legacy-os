@@ -263,6 +263,7 @@ model User {
   sponsorsCreated      Sponsor[]             @relation("SponsorCreatedBy")
   sponsorInteractions  SponsorInteraction[]  @relation("SponsorInteractionAuthor")
   attendeeSales        EventAttendeeSale[]
+  socialProfileReports SocialProfileReport[]
 }
 
 model Area {
@@ -1175,6 +1176,24 @@ model SocialProfile {
   contentCalendarPosts ContentCalendarPost[]
   reporteiMetrics      SocialReporteiMetric[]
   reporteiInsights     SocialReporteiInsight[]
+  reports              SocialProfileReport[]
+}
+
+/// Relatório periódico anexado a um perfil (upload de arquivo ou link).
+model SocialProfileReport {
+  id          String   @id @default(cuid())
+  profileId   String
+  title       String
+  fileUrl     String?
+  externalUrl String?
+  notes       String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  profile   SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdBy User          @relation(fields: [createdById], references: [id])
+
+  @@index([profileId])
 }
 
 /// Uma linha por card de métrica extraído do dashboard público do Reportei —
@@ -1241,6 +1260,14 @@ model SocialSellingLead {
   status        SocialLeadStatus @default(sem_resposta)
   notes         String?
   createdAt     DateTime         @default(now())
+
+  /// Venda fechada por esse lead — texto livre (ver SOCIAL_SALE_PRODUCTS em
+  /// src/lib/social.ts: Plataforma EAD, Axoly Brand, Cadeiras VIP Imersão,
+  /// Cadeiras Gold, Club, Tração, Master). Preenchido só quando o lead
+  /// converte; alimenta Receita/ticket médio/vendas por produto do CRM.
+  saleProduct String?
+  saleValue   Float?
+  saleDate    DateTime?
 
   salesperson User? @relation(fields: [salespersonId], references: [id])
 }

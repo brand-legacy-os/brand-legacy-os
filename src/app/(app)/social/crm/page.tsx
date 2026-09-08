@@ -2,12 +2,13 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canEditAreaKpis, canViewArea } from "@/lib/permissions";
 import { resolvePeriod } from "@/lib/period";
-import { computeKpiSnapshot } from "@/lib/kpi";
 import { SocialTabs } from "@/components/social/social-tabs";
 import { CreateSocialLeadForm } from "@/components/social/create-social-lead-form";
+import { LeadSaleCell } from "@/components/social/lead-sale-cell";
 import { AutoSubmitSelect } from "@/components/ui/auto-submit-select";
 import { updateSocialLeadStatusAction, deleteSocialLeadAction } from "@/lib/actions/social";
 import { SOCIAL_LEAD_STATUS_META } from "@/lib/social";
+import { StatTile } from "@/components/dashboard/stat-tile";
 import { formatDate, formatCompactCurrency } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -17,22 +18,39 @@ export default async function SocialCrmPage() {
   if (!canViewArea(user, "social")) notFound();
   const canEdit = canEditAreaKpis(user, "social");
 
-  const [leads, allUsers, receitaKpi] = await Promise.all([
+  const [leads, allUsers] = await Promise.all([
     prisma.socialSellingLead.findMany({
       include: { salesperson: true },
       orderBy: { meetingDate: "desc" },
     }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
-    prisma.kpi.findFirst({
-      where: { area: { slug: "comercial" }, name: "Receita" },
-      include: { entries: true, targets: true },
-    }),
   ]);
 
   const period = resolvePeriod("mes");
-  const receitaSnapshot = receitaKpi
-    ? computeKpiSnapshot(receitaKpi, receitaKpi.entries, period, receitaKpi.targets)
-    : null;
+  const closedInPeriod = leads.filter(
+    (l) => l.saleValue && l.saleDate && l.saleDate >= period.start && l.saleDate <= period.end
+  );
+  const revenueTotal = closedInPeriod.reduce((s, l) => s + (l.saleValue ?? 0), 0);
+  const allClosed = leads.filter((l) => l.saleValue);
+  const ticketMedio = allClosed.length > 0 ? allClosed.reduce((s, l) => s + (l.saleValue ?? 0), 0) / allClosed.length : 0;
+
+  // Receita por semana dentro do mês corrente.
+  const weekBuckets = new Map<number, number>();
+  for (const l of closedInPeriod) {
+    const week = Math.ceil(new Date(l.saleDate!).getDate() / 7);
+    weekBuckets.set(week, (weekBuckets.get(week) ?? 0) + (l.saleValue ?? 0));
+  }
+  const revenueByWeek = [...weekBuckets.entries()].sort(([a], [b]) => a - b);
+
+  // Vendas por produto (todo o histórico).
+  const byProduct = new Map<string, { count: number; value: number }>();
+  for (const l of allClosed) {
+    const key = l.saleProduct ?? "Outro";
+    const entry = byProduct.get(key) ?? { count: 0, value: 0 };
+    entry.count += 1;
+    entry.value += l.saleValue ?? 0;
+    byProduct.set(key, entry);
+  }
 
   return (
     <>
@@ -50,22 +68,48 @@ export default async function SocialCrmPage() {
           Social
         </h1>
         <p className="max-w-[62ch] text-[13px] text-ink-soft">
-          Funil de Social Selling — pipeline de leads. O valor de venda
-          fechado não é lançado aqui: vem ao vivo do Comercial, para não
-          duplicar a fonte da receita.
+          Funil de Social Selling — pipeline de leads e vendas fechadas por
+          esse canal.
         </p>
       </div>
 
       <SocialTabs />
 
-      <div className="rounded-(--radius-l) border border-border bg-surface p-4">
-        <p className="text-[12px] text-ink-soft">Receita do mês (Comercial, ao vivo)</p>
-        <p className="tnum font-(family-name:--font-display) text-[22px] text-ink">
-          {receitaSnapshot?.hasData ? formatCompactCurrency(receitaSnapshot.value) : "—"}
-        </p>
-        <p className="text-[11px] text-ink-faint">
-          {period.label} · fonte: KPI Receita do Comercial
-        </p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile label={`Receita do mês (${period.label.toLowerCase()})`} value={formatCompactCurrency(revenueTotal)} />
+        <StatTile label="Ticket médio" value={formatCompactCurrency(ticketMedio)} />
+        <StatTile label="Vendas fechadas (total)" value={String(allClosed.length)} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
+          <h2 className="text-[12.5px] font-medium text-ink-soft">Receita por semana ({period.label.toLowerCase()})</h2>
+          {revenueByWeek.length > 0 ? (
+            revenueByWeek.map(([week, value]) => (
+              <div key={week} className="flex items-center justify-between text-[12.5px]">
+                <span className="text-ink">Semana {week}</span>
+                <span className="tnum text-ink-soft">{formatCompactCurrency(value)}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-[12px] text-ink-faint">Nenhuma venda fechada esse mês ainda.</p>
+          )}
+        </section>
+        <section className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
+          <h2 className="text-[12.5px] font-medium text-ink-soft">Vendas por produto (histórico)</h2>
+          {byProduct.size > 0 ? (
+            [...byProduct.entries()].map(([product, { count, value }]) => (
+              <div key={product} className="flex items-center justify-between text-[12.5px]">
+                <span className="text-ink">
+                  {product} <span className="text-ink-faint">· {count}</span>
+                </span>
+                <span className="tnum text-ink-soft">{formatCompactCurrency(value)}</span>
+              </div>
+            ))
+          ) : (
+            <p className="text-[12px] text-ink-faint">Nenhuma venda registrada ainda.</p>
+          )}
+        </section>
       </div>
 
       {canEdit && (
@@ -75,7 +119,7 @@ export default async function SocialCrmPage() {
       )}
 
       <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
-        <table className="w-full min-w-[820px] border-collapse text-[13px]">
+        <table className="w-full min-w-[960px] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-border text-left text-[11px] uppercase tracking-[0.04em] text-ink-faint">
               <th className="px-4 py-3 font-medium">Lead</th>
@@ -84,6 +128,7 @@ export default async function SocialCrmPage() {
               <th className="px-4 py-3 font-medium">Vendedor</th>
               <th className="px-4 py-3 font-medium">Reunião</th>
               <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Venda</th>
               <th className="px-4 py-3 font-medium"></th>
             </tr>
           </thead>
@@ -115,6 +160,15 @@ export default async function SocialCrmPage() {
                   )}
                 </td>
                 <td className="px-4 py-3">
+                  <LeadSaleCell
+                    leadId={lead.id}
+                    saleProduct={lead.saleProduct}
+                    saleValue={lead.saleValue}
+                    saleDate={lead.saleDate}
+                    canEdit={canEdit}
+                  />
+                </td>
+                <td className="px-4 py-3">
                   {canEdit && (
                     <form action={deleteSocialLeadAction}>
                       <input type="hidden" name="leadId" value={lead.id} />
@@ -126,7 +180,7 @@ export default async function SocialCrmPage() {
             ))}
             {leads.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-ink-faint">
+                <td colSpan={8} className="px-4 py-8 text-center text-ink-faint">
                   Nenhum lead cadastrado ainda.
                 </td>
               </tr>

@@ -9,17 +9,21 @@ const initialState: ActionState = {};
 
 export function CreateContentPostForm({
   profiles,
+  defaultDate,
+  autoOpen,
 }: {
   profiles: { id: string; name: string }[];
+  defaultDate?: string;
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(autoOpen));
   const [state, formAction, pending] = useActionState(
     createContentPostAction,
     initialState
   );
   const ref = useRef<HTMLFormElement>(null);
   const router = useRouter();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = defaultDate || new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
     if (state.success) {

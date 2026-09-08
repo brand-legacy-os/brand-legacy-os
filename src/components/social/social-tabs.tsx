@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
+  { href: "/social/introducao", label: "Introdução" },
   { href: "/social", label: "Indicadores gerais" },
   { href: "/social/dashboard", label: "Dashboard Reportei" },
-  { href: "/social/colaboradores", label: "Por colaborador" },
-  { href: "/social/calendario", label: "Calendário e metodologia" },
+  { href: "/social/calendario", label: "Calendário" },
   { href: "/social/tarefas", label: "Tarefas" },
+  { href: "/social/colaboradores", label: "Por colaborador" },
   { href: "/social/podcast", label: "Podcast" },
   { href: "/social/crm", label: "CRM Social Selling" },
+  { href: "/social/relatorio", label: "Relatório" },
 ];
 
 export function SocialTabs() {

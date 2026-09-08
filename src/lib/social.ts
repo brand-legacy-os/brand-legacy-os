@@ -34,6 +34,18 @@ export const SOCIAL_LEAD_STATUS_META: Record<SocialLeadStatus, { label: string }
   sem_resposta: { label: "Sem resposta" },
 };
 
+/// Produtos vendidos via Social Selling — texto livre no banco (não enum),
+/// mesmo padrão de PRODUCTS em src/lib/products.ts.
+export const SOCIAL_SALE_PRODUCTS = [
+  "Plataforma EAD",
+  "Axoly Brand",
+  "Cadeiras VIP Imersão",
+  "Cadeiras Gold",
+  "Club",
+  "Tração",
+  "Master",
+] as const;
+
 export const CONTENT_FORMAT_META: Record<ContentFormat, { label: string }> = {
   reels: { label: "Reels" },
   stories: { label: "Stories" },

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { canEditAreaKpis } from "@/lib/permissions";
 import { scrapeReporteiDashboard } from "@/lib/reportei-scraper";
 import { generateReporteiInsights } from "@/lib/reportei-insights";
+import { saveUpload, validateUpload, UPLOAD_TYPES } from "@/lib/upload";
 import type {
   PodcastStatus,
   PodcastSource,
@@ -26,12 +27,14 @@ async function requireSocialManager() {
 
 function revalidateSocial() {
   revalidatePath("/social");
+  revalidatePath("/social/introducao");
   revalidatePath("/social/colaboradores");
   revalidatePath("/social/calendario");
   revalidatePath("/social/tarefas");
   revalidatePath("/social/crm");
   revalidatePath("/social/podcast");
   revalidatePath("/social/dashboard");
+  revalidatePath("/social/relatorio");
 }
 
 // ---------------------------------------------------------------------------
@@ -102,8 +105,12 @@ export async function refreshSocialReporteiAction(
 
   const insights = generateReporteiInsights(metrics);
 
+  // Mantém histórico: cada "Atualizar" acrescenta uma nova leitura por
+  // métrica (com fetchedAt), em vez de apagar as anteriores — é o que
+  // permite montar tendência mês a mês / semana a semana no Dashboard e nos
+  // Indicadores Gerais. Insights são recalculados sempre a partir do pull
+  // mais recente, então esses seguem sendo substituídos.
   await prisma.$transaction([
-    prisma.socialReporteiMetric.deleteMany({ where: { profileId } }),
     prisma.socialReporteiInsight.deleteMany({ where: { profileId } }),
     prisma.socialReporteiMetric.createMany({
       data: metrics.map((m) => ({ profileId, ...m })),
@@ -250,6 +257,41 @@ export async function updateSocialLeadStatusAction(formData: FormData) {
   revalidateSocial();
 }
 
+export async function updateSocialLeadSaleAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const leadId = String(formData.get("leadId") ?? "");
+  const saleProduct = String(formData.get("saleProduct") ?? "").trim() || null;
+  const saleValueRaw = String(formData.get("saleValue") ?? "");
+  const saleDateRaw = String(formData.get("saleDate") ?? "");
+
+  if (!leadId) return { error: "Lead não encontrado." };
+
+  const saleValue = saleValueRaw ? Number(saleValueRaw) : null;
+  if (saleValueRaw && (saleValue === null || Number.isNaN(saleValue))) {
+    return { error: "Valor de venda inválido." };
+  }
+
+  await prisma.socialSellingLead.update({
+    where: { id: leadId },
+    data: {
+      saleProduct,
+      saleValue,
+      saleDate: saleDateRaw ? new Date(`${saleDateRaw}T12:00:00`) : null,
+    },
+  });
+
+  revalidateSocial();
+  return { success: true };
+}
+
 export async function deleteSocialLeadAction(formData: FormData) {
   try {
     await requireSocialManager();
@@ -361,5 +403,59 @@ export async function deleteContentPostAction(formData: FormData) {
   const postId = String(formData.get("postId") ?? "");
   if (!postId) return;
   await prisma.contentCalendarPost.delete({ where: { id: postId } });
+  revalidateSocial();
+}
+
+// ---------------------------------------------------------------------------
+// Relatórios por perfil
+// ---------------------------------------------------------------------------
+
+export async function addProfileReportAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  let user;
+  try {
+    user = await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const profileId = String(formData.get("profileId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const externalUrl = String(formData.get("externalUrl") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  if (!profileId || !title) return { error: "Preencha o perfil e o título do relatório." };
+
+  let fileUrl: string | null = null;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido para o relatório.");
+    if (v.error) return { error: v.error };
+    fileUrl = await saveUpload(file, "social/relatorios");
+  }
+
+  if (!fileUrl && !externalUrl) {
+    return { error: "Anexe um arquivo ou informe um link externo." };
+  }
+
+  await prisma.socialProfileReport.create({
+    data: { profileId, title, fileUrl, externalUrl, notes, createdById: user.id },
+  });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+export async function deleteProfileReportAction(formData: FormData) {
+  try {
+    await requireSocialManager();
+  } catch {
+    return;
+  }
+  const reportId = String(formData.get("reportId") ?? "");
+  if (!reportId) return;
+  await prisma.socialProfileReport.delete({ where: { id: reportId } });
   revalidateSocial();
 }
