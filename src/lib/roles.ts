@@ -206,7 +206,6 @@ export const ROLE_BY_EMAIL: Record<string, RoleProfile> = {
     softSkills: ["Comunicação", "Empatia", "Persuasão", "Constância", "Escuta ativa", "Curiosidade", "Resiliência"],
     hardSkills: ["Social Selling", "Prospecção", "Copy de abordagem", "Qualificação", "CRM", "Cadência", "ICP/persona"],
   },
-  "renzo.pagio@brandlegacy.com.br": CLOSER,
   "lucas.carvalho@brandlegacy.com.br": CLOSER,
   "thiago@brandlegacy.com.br": {
     cargo: "SDR",

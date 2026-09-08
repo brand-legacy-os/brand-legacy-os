@@ -128,7 +128,6 @@ async function main() {
     { key: "guilherme", name: "Guilherme Rocha", email: "guilherme.rocha@brandlegacy.com.br", title: "Editor de Vídeo", initials: "GR" },
     { key: "karina", name: "Karina Carvalho", email: "karina.carvalho@brandlegacy.com.br", title: "Líder Comercial", initials: "KC" },
     { key: "karinaMeotti", name: "Karina Meotti", email: "karina.meotti@brandlegacy.com.br", title: "Social Selling", initials: "KM" },
-    { key: "renzo", name: "Renzo Pagio", email: "renzo.pagio@brandlegacy.com.br", title: "Closer", initials: "RP" },
     { key: "lucas", name: "Lucas Carvalho", email: "lucas.carvalho@brandlegacy.com.br", title: "Closer", initials: "LU" },
     { key: "thiago", name: "Thiago", email: "thiago@brandlegacy.com.br", title: "SDR", initials: "TH" },
     { key: "isabella", name: "Isabella", email: "isabella@brandlegacy.com.br", title: "Líder Jurídico", initials: "IS" },
@@ -169,13 +168,17 @@ async function main() {
     { userKey: "guilherme", areaSlug: "social", role: "colaborador", title: "Editor de Vídeo" },
     { userKey: "karina", areaSlug: "comercial", role: "lider", title: "Líder Comercial — Head" },
     { userKey: "karinaMeotti", areaSlug: "comercial", role: "colaborador", title: "Social Selling" },
-    { userKey: "renzo", areaSlug: "comercial", role: "colaborador", title: "Closer" },
     { userKey: "lucas", areaSlug: "comercial", role: "colaborador", title: "Closer" },
     { userKey: "thiago", areaSlug: "comercial", role: "colaborador", title: "SDR" },
     { userKey: "isabella", areaSlug: "juridico", role: "lider", title: "Líder Jurídico" },
     { userKey: "william", areaSlug: "financeiro", role: "lider", title: "Líder Financeiro" },
     { userKey: "camila", areaSlug: "cs", role: "lider", title: "Líder de CS" },
     { userKey: "alessandra", areaSlug: "cs", role: "lider", title: "Líder de CS" },
+    // Acesso extra a Eventos/Patrocínios pra quem participa mas não lidera a área.
+    { userKey: "karina", areaSlug: "eventos", role: "colaborador", title: "Convidado" },
+    { userKey: "camila", areaSlug: "eventos", role: "colaborador", title: "Convidado" },
+    { userKey: "alessandra", areaSlug: "eventos", role: "colaborador", title: "Convidado" },
+    { userKey: "lara", areaSlug: "eventos", role: "colaborador", title: "Convidado" },
     { userKey: "giordana", areaSlug: "cs", role: "colaborador", title: "CS" },
   ];
   for (const m of memberships) {

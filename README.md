@@ -21,7 +21,6 @@ Alguns e-mails para testar diferentes níveis de acesso:
 - `operacoes@brandlegacy.com.br` — Marcus, administrador (visão global)
 - `nubia@brandlegacy.com.br` — Núbia, líder de Gestão de Projetos (visão cross-área de projetos)
 - `karina@brandlegacy.com.br` — Karina, líder Comercial
-- `renzo@brandlegacy.com.br` — Renzo, colaborador Comercial (acesso restrito à própria área)
 - `igor@brandlegacy.com.br` — Igor, com dois vínculos: colaborador em Social e líder de Eventos
 
 ## Stack
