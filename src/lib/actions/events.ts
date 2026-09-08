@@ -115,6 +115,8 @@ export async function updateEventAction(
   const enpsDay1Url = String(formData.get("enpsDay1Url") ?? "").trim() || null;
   const enpsDay2Url = String(formData.get("enpsDay2Url") ?? "").trim() || null;
   const enpsDay3Url = String(formData.get("enpsDay3Url") ?? "").trim() || null;
+  const mediaScopePlanned = String(formData.get("mediaScopePlanned") ?? "").trim() || null;
+  const mediaScopeActual = String(formData.get("mediaScopeActual") ?? "").trim() || null;
 
   if (!eventId || !name || !type || !startRaw || !endRaw) {
     return { error: "Preencha nome, tipo, início e término." };
@@ -136,6 +138,8 @@ export async function updateEventAction(
       enpsDay1Url,
       enpsDay2Url,
       enpsDay3Url,
+      mediaScopePlanned,
+      mediaScopeActual,
     },
   });
 
@@ -534,6 +538,9 @@ export async function addAttendeeAction(
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const cpfRg = String(formData.get("cpfRg") ?? "").trim() || null;
   const instagram = String(formData.get("instagram") ?? "").trim() || null;
+  const instagramPersonal = String(formData.get("instagramPersonal") ?? "").trim() || null;
+  const revenueRange = String(formData.get("revenueRange") ?? "").trim() || null;
+  const focalPerson = String(formData.get("focalPerson") ?? "").trim() || null;
   const dynamicChoice = (String(formData.get("dynamicChoice") ?? "") || null) as EventDynamicChoice | null;
   const dynamicOther = String(formData.get("dynamicOther") ?? "").trim() || null;
   const customerId = String(formData.get("customerId") ?? "") || null;
@@ -551,6 +558,9 @@ export async function addAttendeeAction(
       phone,
       cpfRg,
       instagram,
+      instagramPersonal,
+      revenueRange,
+      focalPerson,
       dynamicChoice,
       dynamicOther,
       customerId,
@@ -581,6 +591,9 @@ export async function updateAttendeeAction(
   const phone = String(formData.get("phone") ?? "").trim() || null;
   const cpfRg = String(formData.get("cpfRg") ?? "").trim() || null;
   const instagram = String(formData.get("instagram") ?? "").trim() || null;
+  const instagramPersonal = String(formData.get("instagramPersonal") ?? "").trim() || null;
+  const revenueRange = String(formData.get("revenueRange") ?? "").trim() || null;
+  const focalPerson = String(formData.get("focalPerson") ?? "").trim() || null;
   const dynamicChoice = (String(formData.get("dynamicChoice") ?? "") || null) as EventDynamicChoice | null;
   const dynamicOther = String(formData.get("dynamicOther") ?? "").trim() || null;
 
@@ -588,7 +601,21 @@ export async function updateAttendeeAction(
 
   await prisma.eventAttendee.update({
     where: { id: attendeeId },
-    data: { name, empresa, category, ticketType, email, phone, cpfRg, instagram, dynamicChoice, dynamicOther },
+    data: {
+      name,
+      empresa,
+      category,
+      ticketType,
+      email,
+      phone,
+      cpfRg,
+      instagram,
+      instagramPersonal,
+      revenueRange,
+      focalPerson,
+      dynamicChoice,
+      dynamicOther,
+    },
   });
 
   revalidateEvent(existing.eventId);
@@ -634,6 +661,83 @@ export async function setAttendeeNpsAction(formData: FormData) {
     data: { npsScore: Math.max(0, Math.min(10, score)) },
   });
   revalidateEvent(attendee.eventId);
+}
+
+export async function toggleAttendeeWhatsappAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return;
+  await prisma.eventAttendee.update({
+    where: { id: attendeeId },
+    data: { inWhatsappGroup: !attendee.inWhatsappGroup },
+  });
+  revalidateEvent(attendee.eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Vendas por confirmado
+// ---------------------------------------------------------------------------
+
+export async function addAttendeeSaleAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return { error: "Confirmado não encontrado." };
+
+  const program = String(formData.get("program") ?? "").trim();
+  const value = Number(formData.get("value") ?? 0);
+  const paymentPlan = formData.get("paymentPlan") as "avista" | "parcelado" | null;
+  const installmentCountRaw = String(formData.get("installmentCount") ?? "");
+  const installmentCount =
+    paymentPlan === "parcelado" && installmentCountRaw ? Number(installmentCountRaw) : null;
+  const paymentMethod = formData.get("paymentMethod") as
+    | "pix"
+    | "boleto"
+    | "cartao"
+    | "outro"
+    | null;
+  const saleDateRaw = String(formData.get("saleDate") ?? "");
+  const sellerId = String(formData.get("sellerId") ?? "") || null;
+
+  if (!program || !value || value <= 0 || !paymentPlan || !paymentMethod || !saleDateRaw) {
+    return { error: "Preencha programa, valor, forma de pagamento e data da venda." };
+  }
+
+  await prisma.eventAttendeeSale.create({
+    data: {
+      attendeeId,
+      program,
+      value,
+      paymentPlan,
+      installmentCount,
+      paymentMethod,
+      saleDate: new Date(`${saleDateRaw}T12:00:00`),
+      sellerId,
+    },
+  });
+
+  revalidateEvent(attendee.eventId);
+  return { success: true };
+}
+
+export async function deleteAttendeeSaleAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const saleId = String(formData.get("saleId") ?? "");
+  const sale = await prisma.eventAttendeeSale.findUnique({
+    where: { id: saleId },
+    include: { attendee: true },
+  });
+  if (!sale) return;
+  await prisma.eventAttendeeSale.delete({ where: { id: saleId } });
+  revalidateEvent(sale.attendee.eventId);
 }
 
 // ---------------------------------------------------------------------------

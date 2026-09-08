@@ -27,6 +27,7 @@ import { CommsSection } from "@/components/events/comms-section";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
+import { StatTile } from "@/components/dashboard/stat-tile";
 
 export default async function EventDetailPage({
   params,
@@ -40,7 +41,13 @@ export default async function EventDetailPage({
       responsible: true,
       budgetLines: { include: { payments: true }, orderBy: { createdAt: "asc" } },
       sponsors: { include: { installments: true }, orderBy: { createdAt: "asc" } },
-      attendees: { orderBy: { name: "asc" } },
+      attendees: {
+        orderBy: { name: "asc" },
+        include: {
+          customer: { select: { product: true, status: true, notes: true } },
+          sales: { include: { seller: true }, orderBy: { saleDate: "desc" } },
+        },
+      },
       notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
       cashMovements: { orderBy: { date: "asc" } },
       dinnerGuests: { orderBy: { createdAt: "asc" } },
@@ -50,6 +57,7 @@ export default async function EventDetailPage({
   if (!event) notFound();
 
   const canManage = isAdmin(user) || isLeaderOf(user, "eventos");
+  const allUsers = await prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
   const canSeeFinance = hasFinanceRole(user) && (await isFinanceUnlocked());
   const stats = computeEventStats(event);
 
@@ -96,6 +104,20 @@ export default async function EventDetailPage({
   );
 
   const npsComments = event.npsExcelComments ? event.npsExcelComments.split("\n").filter(Boolean) : [];
+
+  // Resumo de vendas do evento — por programa e por vendedor.
+  const allSales = event.attendees.flatMap((a) => a.sales);
+  const salesTotal = allSales.reduce((s, sale) => s + sale.value, 0);
+  const salesByProgram = new Map<string, number>();
+  for (const s of allSales) {
+    salesByProgram.set(s.program, (salesByProgram.get(s.program) ?? 0) + s.value);
+  }
+  const salesByProgramData = [...salesByProgram.entries()].map(([label, value]) => ({ label, value }));
+  const salesBySeller = new Map<string, number>();
+  for (const s of allSales) {
+    const label = s.seller?.name ?? "Sem vendedor";
+    salesBySeller.set(label, (salesBySeller.get(label) ?? 0) + s.value);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,6 +191,8 @@ export default async function EventDetailPage({
           enpsDay1Url={event.enpsDay1Url ?? ""}
           enpsDay2Url={event.enpsDay2Url ?? ""}
           enpsDay3Url={event.enpsDay3Url ?? ""}
+          mediaScopePlanned={event.mediaScopePlanned ?? ""}
+          mediaScopeActual={event.mediaScopeActual ?? ""}
         />
       )}
 
@@ -357,7 +381,7 @@ export default async function EventDetailPage({
         {event.attendees.length > 0 ? (
           <div className="flex flex-col">
             {event.attendees.map((a) => (
-              <AttendeeRow key={a.id} attendee={a} canManage={canManage} />
+              <AttendeeRow key={a.id} attendee={a} canManage={canManage} users={allUsers} />
             ))}
           </div>
         ) : (
@@ -368,6 +392,56 @@ export default async function EventDetailPage({
         )}
         {canManage && <AddAttendeeForm eventId={event.id} />}
       </section>
+
+      {allSales.length > 0 && (
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">Vendas do evento</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <StatTile label="Valor geral vendido" value={formatCompactCurrency(salesTotal)} />
+            <StatTile label="Vendas registradas" value={String(allSales.length)} />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {salesByProgramData.length > 1 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[12px] text-ink-faint">Por programa</span>
+                <DonutChart
+                  data={salesByProgramData}
+                  formatValue={(v) => formatCompactCurrency(v)}
+                  centerLabel="vendido"
+                  ariaLabel="Vendas por programa"
+                />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12px] text-ink-faint">Por vendedor</span>
+              {[...salesBySeller.entries()].map(([name, value]) => (
+                <div key={name} className="flex items-center justify-between text-[12.5px]">
+                  <span className="text-ink">{name}</span>
+                  <span className="tnum text-ink-soft">{formatCompactCurrency(value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {(event.mediaScopePlanned || event.mediaScopeActual) && (
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">
+            Entrega de fotos e vídeo — planejado x realizado
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium text-ink-faint">Planejado</span>
+              <p className="text-[12.5px] text-ink-soft">{event.mediaScopePlanned || "—"}</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium text-ink-faint">Realizado</span>
+              <p className="text-[12.5px] text-ink-soft">{event.mediaScopeActual || "—"}</p>
+            </div>
+          </div>
+        </section>
+      )}
 
       <DinnerGuestsSection eventId={event.id} guests={event.dinnerGuests} canManage={canManage} />
       <CommsSection eventId={event.id} items={event.commsItems} canManage={canManage} />

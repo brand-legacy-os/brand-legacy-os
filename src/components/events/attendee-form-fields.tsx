@@ -16,6 +16,9 @@ export type AttendeeDefaults = {
   phone?: string | null;
   cpfRg?: string | null;
   instagram?: string | null;
+  instagramPersonal?: string | null;
+  revenueRange?: string | null;
+  focalPerson?: string | null;
   dynamicChoice?: string | null;
   dynamicOther?: string | null;
 };
@@ -46,6 +49,8 @@ export function AttendeeFormFields({ defaults }: { defaults?: AttendeeDefaults }
       <input name="phone" defaultValue={defaults?.phone ?? ""} placeholder="Telefone" className={inputClass} />
       <input name="cpfRg" defaultValue={defaults?.cpfRg ?? ""} placeholder="CPF/RG" className={inputClass} />
       <input name="instagram" defaultValue={defaults?.instagram ?? ""} placeholder="Instagram da marca" className={inputClass} />
+      <input name="instagramPersonal" defaultValue={defaults?.instagramPersonal ?? ""} placeholder="Instagram pessoa física" className={inputClass} />
+      <input name="revenueRange" defaultValue={defaults?.revenueRange ?? ""} placeholder="Faturamento da marca" className={inputClass} />
       <select
         name="dynamicChoice"
         value={dynamicChoice}
@@ -67,6 +72,13 @@ export function AttendeeFormFields({ defaults }: { defaults?: AttendeeDefaults }
           className={`${inputClass} sm:col-span-2`}
         />
       )}
+      <div className="flex flex-col gap-1 sm:col-span-3">
+        <input name="focalPerson" defaultValue={defaults?.focalPerson ?? ""} placeholder="Pessoa focal" className={inputClass} />
+        <p className="text-[11px] text-ink-faint">
+          Não significa que esse lead só pode ser fechado por essa pessoa —
+          significa que esse confirmado deve necessariamente falar com ela.
+        </p>
+      </div>
     </div>
   );
 }
