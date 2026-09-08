@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -41,6 +41,11 @@ export default async function AreaPage({
   const user = await requireUser();
   const { slug } = await params;
   const sp = await searchParams;
+
+  // Operações não tem mais página própria — a área continua existindo no
+  // banco (tarefas, KPIs, liderança), mas a função dela agora é coberta
+  // pelo hub "Operações" (ex-Projetos e Tarefas, em /projetos).
+  if (slug === "operacoes") redirect("/projetos");
 
   const area = await prisma.area.findUnique({
     where: { slug },

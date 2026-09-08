@@ -36,7 +36,7 @@ export function buildNav(
       items: [
         { label: "Início", href: "/inicio" },
         { label: "Dashboard", href: "/dashboard" },
-        { label: "Projetos e Tarefas", href: "/projetos" },
+        { label: "Operações", href: "/projetos" },
         { label: "RH", href: "/rh" },
         ...(canAccessSalaryArea(user) ? [{ label: "Cargos e Salários", href: "/rh/cargos-salarios" }] : []),
       ],
@@ -49,6 +49,11 @@ export function buildNav(
       // (grupo próprio abaixo, só para quem tem acesso liberado — um
       // colaborador sem esse acesso continua vendo a área genérica).
       items: visibleAreas
+        // Operações não tem mais página própria no menu — a função dela
+        // (tarefas, projetos e cobrança cross-área) já é o hub "Operações"
+        // acima (ex-Projetos e Tarefas, em /projetos). A Area em si
+        // continua existindo no banco (tarefas, KPIs e liderança).
+        .filter((a) => a.slug !== "operacoes")
         .filter((a) => a.slug !== "financeiro" || !financeRole)
         .flatMap((a) => {
           const item = {
