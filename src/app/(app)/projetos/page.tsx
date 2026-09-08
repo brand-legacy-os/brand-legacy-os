@@ -33,14 +33,42 @@ export default async function ProjetosPage() {
 
     const upcomingDeadlines = allTasks
       .filter((t) => t.deadline <= in7d && !["concluida", "cancelada"].includes(t.status))
-      .sort((a, b) => a.deadline.getTime() - b.deadline.getTime())
-      .slice(0, 8);
+      .sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
 
     const overdueTasks = allTasks.filter((t) => t.status === "atrasada");
     const riskTasks = allTasks.filter((t) => t.status === "atencao");
     const staleProjects = allProjects.filter(
       (p) => p.updatedAt < staleThreshold && p.status !== "concluido"
     );
+
+    // Todas as atividades separadas por área — projetos e tarefas sem
+    // projeto (Workflow permite criar tarefa sem vincular a um projeto),
+    // pra nenhuma atividade de área ficar de fora dessa visão.
+    const areaActivity = areas
+      .map((a) => ({
+        slug: a.slug,
+        name: a.name,
+        projects: a.projects,
+        orphanTasks: a.tasks.filter((t) => !t.projectId),
+      }))
+      .filter((a) => a.projects.length > 0 || a.orphanTasks.length > 0);
+
+    /** Agrupa uma lista já achatada (com areaSlug/areaName) de volta por
+     * área, preservando a ordem de Area.order (as listas já vêm nessa
+     * ordem, por virem de areas.flatMap). */
+    function groupByArea<T extends { areaSlug: string; areaName: string }>(items: T[]) {
+      const map = new Map<string, { areaName: string; items: T[] }>();
+      for (const item of items) {
+        const entry = map.get(item.areaSlug) ?? { areaName: item.areaName, items: [] };
+        entry.items.push(item);
+        map.set(item.areaSlug, entry);
+      }
+      return [...map.entries()];
+    }
+
+    const deadlinesByArea = groupByArea(upcomingDeadlines);
+    const overdueByArea = groupByArea(overdueTasks);
+    const riskByArea = groupByArea(riskTasks);
 
     return (
       <>
@@ -65,25 +93,30 @@ export default async function ProjetosPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
             <h2 className="text-[13px] font-medium text-ink-soft">
-              Deadlines próximos (7 dias)
+              Deadlines próximos (7 dias) ({upcomingDeadlines.length})
             </h2>
-            <div className="flex flex-col">
-              {upcomingDeadlines.map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/areas/${t.areaSlug}`}
-                  className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 hover:bg-surface-muted"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-[13px] text-ink">{t.title}</span>
-                    <span className="text-[11.5px] text-ink-faint">
-                      {t.assignee.name} · {t.areaName}
-                    </span>
-                  </div>
-                  <span className="tnum text-[12.5px] text-ink-soft">
-                    {formatDate(t.deadline)}
+            <div className="flex flex-col gap-3">
+              {deadlinesByArea.map(([slug, { areaName, items }]) => (
+                <div key={slug} className="flex flex-col">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                    {areaName}
                   </span>
-                </Link>
+                  {items.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/areas/${t.areaSlug}`}
+                      className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 hover:bg-surface-muted"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-[13px] text-ink">{t.title}</span>
+                        <span className="text-[11.5px] text-ink-faint">{t.assignee.name}</span>
+                      </div>
+                      <span className="tnum text-[12.5px] text-ink-soft">
+                        {formatDate(t.deadline)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               ))}
               {upcomingDeadlines.length === 0 && (
                 <p className="py-3 text-[13px] text-ink-faint">
@@ -129,16 +162,25 @@ export default async function ProjetosPage() {
             <h2 className="text-[13px] font-medium text-ink-soft">
               Tarefas atrasadas ({overdueTasks.length})
             </h2>
-            <div className="rounded-(--radius-l) border border-border bg-surface px-4">
-              {overdueTasks.map((t) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  assigneeName={t.assignee.name}
-                  assigneeInitials={t.assignee.avatarInitials}
-                  projectName={t.project?.name}
-                  canManage={isAdmin(user)}
-                />
+            <div className="flex flex-col gap-3">
+              {overdueByArea.map(([slug, { areaName, items }]) => (
+                <div key={slug} className="flex flex-col gap-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                    {areaName}
+                  </span>
+                  <div className="rounded-(--radius-l) border border-border bg-surface px-4">
+                    {items.map((t) => (
+                      <TaskRow
+                        key={t.id}
+                        task={t}
+                        assigneeName={t.assignee.name}
+                        assigneeInitials={t.assignee.avatarInitials}
+                        projectName={t.project?.name}
+                        canManage={isAdmin(user)}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
               {overdueTasks.length === 0 && (
                 <p className="py-4 text-[13px] text-ink-faint">
@@ -152,16 +194,25 @@ export default async function ProjetosPage() {
             <h2 className="text-[13px] font-medium text-ink-soft">
               Tarefas em risco ({riskTasks.length})
             </h2>
-            <div className="rounded-(--radius-l) border border-border bg-surface px-4">
-              {riskTasks.map((t) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  assigneeName={t.assignee.name}
-                  assigneeInitials={t.assignee.avatarInitials}
-                  projectName={t.project?.name}
-                  canManage={isAdmin(user)}
-                />
+            <div className="flex flex-col gap-3">
+              {riskByArea.map(([slug, { areaName, items }]) => (
+                <div key={slug} className="flex flex-col gap-1.5">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                    {areaName}
+                  </span>
+                  <div className="rounded-(--radius-l) border border-border bg-surface px-4">
+                    {items.map((t) => (
+                      <TaskRow
+                        key={t.id}
+                        task={t}
+                        assigneeName={t.assignee.name}
+                        assigneeInitials={t.assignee.avatarInitials}
+                        projectName={t.project?.name}
+                        canManage={isAdmin(user)}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
               {riskTasks.length === 0 && (
                 <p className="py-4 text-[13px] text-ink-faint">
@@ -172,26 +223,56 @@ export default async function ProjetosPage() {
           </section>
         </div>
 
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-6">
           <h2 className="text-[13px] font-medium text-ink-soft">
-            Todos os projetos ({allProjects.length})
+            Todas as atividades por área
           </h2>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {allProjects.map((p) => (
-              <ProjectCard
-                key={p.id}
-                id={p.id}
-                name={p.name}
-                status={p.status}
-                progressPct={p.progressPct}
-                deadline={p.deadline}
-                ownerName={p.owner.name}
-                areaName={p.areaName}
-                areaHref={`/areas/${p.areaSlug}`}
-                canEdit={isAdmin(user) || p.ownerId === user.id}
-              />
-            ))}
-          </div>
+          {areaActivity.map((a) => (
+            <div key={a.slug} className="flex flex-col gap-3">
+              <Link
+                href={`/areas/${a.slug}`}
+                className="w-fit text-[12.5px] font-medium text-ink hover:text-brand-deep hover:underline"
+              >
+                {a.name} ({a.projects.length + a.orphanTasks.length}) →
+              </Link>
+              {a.projects.length > 0 && (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {a.projects.map((p) => (
+                    <ProjectCard
+                      key={p.id}
+                      id={p.id}
+                      name={p.name}
+                      status={p.status}
+                      progressPct={p.progressPct}
+                      deadline={p.deadline}
+                      ownerName={p.owner.name}
+                      areaName={a.name}
+                      areaHref={`/areas/${a.slug}`}
+                      canEdit={isAdmin(user) || p.ownerId === user.id}
+                    />
+                  ))}
+                </div>
+              )}
+              {a.orphanTasks.length > 0 && (
+                <div className="rounded-(--radius-l) border border-border bg-surface px-4">
+                  {a.orphanTasks.map((t) => (
+                    <TaskRow
+                      key={t.id}
+                      task={t}
+                      assigneeName={t.assignee.name}
+                      assigneeInitials={t.assignee.avatarInitials}
+                      canManage={isAdmin(user)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {areaActivity.length === 0 && (
+            <p className="text-[13px] text-ink-faint">
+              Nenhum projeto ou tarefa cadastrado ainda.
+            </p>
+          )}
         </section>
       </>
     );
