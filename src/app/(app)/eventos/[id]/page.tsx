@@ -272,9 +272,14 @@ export default async function EventDetailPage({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Orçamento */}
         <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h2 className="text-[13px] font-medium text-ink-soft">
-            Orçamento — previsto x realizado
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-[13px] font-medium text-ink-soft">
+              Orçamento — previsto x realizado
+            </h2>
+            <a href={`/api/eventos/${event.id}/export/orcamento`} className="text-[11.5px] font-medium text-brand hover:underline">
+              Exportar Excel
+            </a>
+          </div>
           <div className="flex flex-col">
             {event.budgetLines.map((b) => (
               <BudgetLineCard key={b.id} line={b} canManage={canManage} />
@@ -288,7 +293,7 @@ export default async function EventDetailPage({
           {canManage && <AddBudgetLineForm eventId={event.id} />}
         </section>
 
-        <EventSponsorsSection sponsors={event.sponsors} />
+        <EventSponsorsSection eventId={event.id} sponsors={event.sponsors} />
       </div>
 
       {(pieData.length > 0 || categoriesWithData.length > 0) && (
@@ -362,6 +367,9 @@ export default async function EventDetailPage({
           <h2 className="text-[13px] font-medium text-ink-soft">
             Confirmados ({event.attendees.length})
           </h2>
+          <a href={`/api/eventos/${event.id}/export/confirmados`} className="text-[11.5px] font-medium text-brand hover:underline">
+            Exportar Excel
+          </a>
           {event.attendees.length === 0 && stats.registeredCount !== null && (
             <span className="text-[11.5px] text-ink-faint">
               Histórico: {stats.registeredCount} inscritos · {stats.presentCount ?? "—"}{" "}
@@ -395,7 +403,12 @@ export default async function EventDetailPage({
 
       {allSales.length > 0 && (
         <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h2 className="text-[13px] font-medium text-ink-soft">Vendas do evento</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-[13px] font-medium text-ink-soft">Vendas do evento</h2>
+            <a href={`/api/eventos/${event.id}/export/vendas`} className="text-[11.5px] font-medium text-brand hover:underline">
+              Exportar Excel
+            </a>
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <StatTile label="Valor geral vendido" value={formatCompactCurrency(salesTotal)} />
             <StatTile label="Vendas registradas" value={String(allSales.length)} />
@@ -443,8 +456,18 @@ export default async function EventDetailPage({
         </section>
       )}
 
-      <DinnerGuestsSection eventId={event.id} guests={event.dinnerGuests} canManage={canManage} />
-      <CommsSection eventId={event.id} items={event.commsItems} canManage={canManage} />
+      <div className="flex flex-col gap-2">
+        <a href={`/api/eventos/${event.id}/export/jantar`} className="w-fit text-[11.5px] font-medium text-brand hover:underline">
+          Exportar jantar (Excel)
+        </a>
+        <DinnerGuestsSection eventId={event.id} guests={event.dinnerGuests} canManage={canManage} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <a href={`/api/eventos/${event.id}/export/comunicacao`} className="w-fit text-[11.5px] font-medium text-brand hover:underline">
+          Exportar comunicação (Excel)
+        </a>
+        <CommsSection eventId={event.id} items={event.commsItems} canManage={canManage} />
+      </div>
 
       {(event.enpsDay1Url || event.enpsDay2Url || event.enpsDay3Url) && (
         <section className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-5">

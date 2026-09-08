@@ -21,14 +21,19 @@ type SponsorRow = {
 };
 
 /** Só leitura — patrocinadores só são criados/editados em Patrocínios. */
-export function EventSponsorsSection({ sponsors }: { sponsors: SponsorRow[] }) {
+export function EventSponsorsSection({ eventId, sponsors }: { eventId: string; sponsors: SponsorRow[] }) {
   return (
     <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
       <div className="flex items-center justify-between">
         <h2 className="text-[13px] font-medium text-ink-soft">Patrocínio</h2>
-        <Link href="/patrocinios" className="text-[12px] font-medium text-brand hover:underline">
-          Gerenciar em Patrocínios →
-        </Link>
+        <div className="flex items-center gap-3">
+          <a href={`/api/eventos/${eventId}/export/patrocinios`} className="text-[12px] font-medium text-brand hover:underline">
+            Exportar Excel
+          </a>
+          <Link href="/patrocinios" className="text-[12px] font-medium text-brand hover:underline">
+            Gerenciar em Patrocínios →
+          </Link>
+        </div>
       </div>
       {sponsors.length > 1 && (
         <DonutChart
