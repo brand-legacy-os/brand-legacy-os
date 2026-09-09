@@ -5,6 +5,7 @@ export function CsDetailSection({
   ltv,
   churnMonthly,
   churnAnnualPct,
+  canceladosSemData,
   renewalRatePct,
   renewalMonthly,
   activeTotal,
@@ -14,6 +15,7 @@ export function CsDetailSection({
   ltv: number | null;
   churnMonthly: { label: string; pct: number | null; churned: number; eligible: number }[];
   churnAnnualPct: number | null;
+  canceladosSemData?: number;
   renewalRatePct: number | null;
   renewalMonthly: { label: string; monthKey: string; plannedCount: number; plannedValue: number; realizedCount: number; realizedValue: number }[];
   activeTotal: number;
@@ -26,7 +28,15 @@ export function CsDetailSection({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="LTV (geral)" value={ltv !== null ? formatCompactCurrency(ltv) : "—"} />
-        <StatTile label="Churn anual" value={churnAnnualPct !== null ? `${churnAnnualPct.toFixed(1)}%` : "—"} />
+        <StatTile
+          label="Churn anual"
+          value={churnAnnualPct !== null ? `${churnAnnualPct.toFixed(1)}%` : "—"}
+          targetLabel={
+            canceladosSemData
+              ? `${canceladosSemData} cancelado${canceladosSemData === 1 ? "" : "s"} sem data — não contam aqui`
+              : undefined
+          }
+        />
         <StatTile label="Taxa de renovação" value={renewalRatePct !== null ? `${renewalRatePct.toFixed(0)}%` : "—"} />
         <StatTile
           label="Taxa de entrega da mentoria"

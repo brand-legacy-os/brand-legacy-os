@@ -145,8 +145,12 @@ export function computeAnnualChurn(
   const churned = customers.filter(
     (c) => c.status === "cancelado" && c.endDate && c.endDate >= yearStart && c.endDate <= yearEnd
   ).length;
-  if (avgBase === 0) return { pct: null, churned, avgBase: 0 };
-  return { pct: (churned / avgBase) * 100, churned, avgBase };
+  // Cancelado sem data de saída não entra em nenhum mês/ano — sem isso à
+  // vista, o churn parece menor do que realmente é (confirmado: a
+  // importação real trouxe status=cancelado sem data pra parte da base).
+  const canceladosSemData = customers.filter((c) => c.status === "cancelado" && !c.endDate).length;
+  if (avgBase === 0) return { pct: null, churned, avgBase: 0, canceladosSemData };
+  return { pct: (churned / avgBase) * 100, churned, avgBase, canceladosSemData };
 }
 
 // ---------------------------------------------------------------------------

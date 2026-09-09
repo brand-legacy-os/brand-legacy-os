@@ -365,6 +365,7 @@ export default async function DashboardPage({
           ltv,
           churnMonthly,
           churnAnnualPct: churnAnnual.pct,
+          canceladosSemData: churnAnnual.canceladosSemData,
           renewalRatePct,
           renewalMonthly,
           mentoriaDelivery,
@@ -444,6 +445,7 @@ export default async function DashboardPage({
           ltv={csDashboardData.ltv}
           churnMonthly={csDashboardData.churnMonthly}
           churnAnnualPct={csDashboardData.churnAnnualPct}
+          canceladosSemData={csDashboardData.canceladosSemData}
           renewalRatePct={csDashboardData.renewalRatePct}
           renewalMonthly={csDashboardData.renewalMonthly}
           activeTotal={csSummary?.active ?? 0}

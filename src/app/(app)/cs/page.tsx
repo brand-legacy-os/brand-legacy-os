@@ -251,6 +251,12 @@ export default async function CsDashboardPage({
             {annualChurnStatus} {annualChurn.pct !== null ? `${annualChurn.pct.toFixed(1)}%` : "—"}
           </p>
           <p className="text-[11px] text-ink-faint">{annualChurn.churned} saídas em {YEAR}</p>
+          {annualChurn.canceladosSemData > 0 && (
+            <p className="text-[11px] text-critical">
+              {annualChurn.canceladosSemData} cancelado{annualChurn.canceladosSemData === 1 ? "" : "s"} sem data de
+              saída — não contam aqui até a data ser preenchida
+            </p>
+          )}
         </div>
         <div className="rounded-(--radius-l) border border-border bg-surface p-5">
           <p className="text-[12px] text-ink-soft">eNPS geral</p>
