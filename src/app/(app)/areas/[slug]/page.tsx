@@ -18,7 +18,7 @@ import { TrafficStatGroup } from "@/components/traffic/traffic-stat-group";
 import { summarizeTraffic, campaignsByCategory, loadTrafficPeriodData, prorateMql, TRAFFIC_CATEGORY_META } from "@/lib/traffic";
 import { ComercialRefreshButton } from "@/components/comercial/comercial-refresh-button";
 import { FaturamentoDashboard } from "@/components/comercial/faturamento-dashboard";
-import { CloserBreakdown } from "@/components/comercial/closer-breakdown";
+import { ClosersTable } from "@/components/comercial/closers-table";
 import {
   loadOpportunitiesWonInPeriod,
   loadOpportunitiesInPeriod,
@@ -26,6 +26,8 @@ import {
   loadMeetingsInPeriod,
   loadSponsorshipsClosedInPeriod,
   loadChannelBreakdown,
+  loadSponsorshipsMonthlyTrend,
+  loadCustomersByMonth,
 } from "@/lib/comercial";
 
 const AREA_CULTURE: Record<string, { title: string; subtitle: string }> = {
@@ -111,6 +113,8 @@ export default async function AreaPage({
             sponsorships,
             socialSelling,
             sdr,
+            sponsorshipsMonthly,
+            customersByMonth,
           ] = await Promise.all([
             loadOpportunitiesWonInPeriod(period.start, period.end),
             loadOpportunitiesInPeriod(period.start, period.end),
@@ -123,6 +127,8 @@ export default async function AreaPage({
             loadSponsorshipsClosedInPeriod(period.start, period.end),
             loadChannelBreakdown("social_selling", period.start, period.end),
             loadChannelBreakdown("sdr", period.start, period.end),
+            loadSponsorshipsMonthlyTrend(),
+            loadCustomersByMonth(),
           ]);
 
           const emailToName = new Map(area.memberships.map((m) => [m.user.email, m.user.name]));
@@ -147,6 +153,8 @@ export default async function AreaPage({
             sponsorships,
             socialSelling,
             sdr,
+            sponsorshipsMonthly,
+            customersByMonth,
           };
         })()
       : null;
@@ -168,17 +176,23 @@ export default async function AreaPage({
         })()
       : null;
 
-  const recentEntries = area.kpis
-    .flatMap((k) =>
-      k.entries
-        .filter((e) => e.note)
-        .map((e) => ({
-          at: e.createdAt,
-          text: `${k.name}: registrado ${e.value} — "${e.note}"`,
-        }))
-    )
-    .sort((a, b) => b.at.getTime() - a.at.getTime())
-    .slice(0, 6);
+  // Comercial não usa mais KPI lançado manualmente (tudo é automático, ver
+  // FaturamentoDashboard) — não faz sentido mostrar registros manuais
+  // antigos no feed de atividade dessa área.
+  const recentEntries =
+    area.slug === "comercial"
+      ? []
+      : area.kpis
+          .flatMap((k) =>
+            k.entries
+              .filter((e) => e.note)
+              .map((e) => ({
+                at: e.createdAt,
+                text: `${k.name}: registrado ${e.value} — "${e.note}"`,
+              }))
+          )
+          .sort((a, b) => b.at.getTime() - a.at.getTime())
+          .slice(0, 6);
 
   const auditEntries = await prisma.auditLog.findMany({
     where: { entityId: { in: area.tasks.map((t) => t.id) } },
@@ -242,6 +256,7 @@ export default async function AreaPage({
         />
       </div>
 
+      {area.slug !== "comercial" && (
       <section className="flex flex-col gap-3">
         <h2 className="text-[13px] font-medium text-ink-soft">
           Indicadores · {period.label.toLowerCase()}
@@ -291,6 +306,7 @@ export default async function AreaPage({
           </div>
         )}
       </section>
+      )}
 
       {comercialData && (
         <>
@@ -306,6 +322,8 @@ export default async function AreaPage({
             wonInPeriod={comercialData.wonInPeriod}
             yearRevenue={comercialData.yearRevenue}
             monthlyTrend={comercialData.monthlyTrend}
+            sponsorshipsMonthly={comercialData.sponsorshipsMonthly}
+            customersByMonth={comercialData.customersByMonth}
             meetingsInPeriod={comercialData.meetingsInPeriod}
             sponsorships={comercialData.sponsorships}
             socialSelling={comercialData.socialSelling}
@@ -336,11 +354,12 @@ export default async function AreaPage({
           <div className="flex flex-col gap-1">
             <h2 className="text-[13px] font-medium text-ink-soft">Closers · {period.label.toLowerCase()}</h2>
             <p className="text-[11.5px] text-ink-faint">
-              Origem dos leads mapeada por pipeline no GoHighLevel (Indicação, Referidos e Recuperação
-              Própria não têm pipeline dedicado hoje, então não aparecem). Reuniões via Calendly.
+              Canal mapeado pela tag do contato no GoHighLevel (socialmedia, desqualificado_*) com o
+              pipeline como critério de desempate — Indicação e Referidos não têm sinal próprio no CRM hoje.
+              Reuniões via Calendly.
             </p>
           </div>
-          <CloserBreakdown closers={comercialData.closers} />
+          <ClosersTable closers={comercialData.closers} />
         </section>
       )}
 

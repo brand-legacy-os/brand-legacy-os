@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { StatTile } from "@/components/dashboard/stat-tile";
-import { TrendChart } from "@/components/finance/trend-chart";
 import { DonutChart } from "@/components/charts/donut-chart";
+import { MonthlyRevenueTable } from "@/components/comercial/monthly-revenue-table";
 import { formatCompactCurrency } from "@/lib/format";
 import {
   COMERCIAL_PRODUCTS,
@@ -9,9 +9,15 @@ import {
   weeklyMeetings,
   sumWonRevenue,
   countWon,
+  countScheduled,
+  countRealized,
+  showRate,
   type OpportunityRow,
   type MeetingRow,
   type loadChannelBreakdown,
+  type loadComercialMonthlyTrend,
+  type loadSponsorshipsMonthlyTrend,
+  type loadCustomersByMonth,
 } from "@/lib/comercial";
 
 export function FaturamentoDashboard({
@@ -19,6 +25,8 @@ export function FaturamentoDashboard({
   wonInPeriod,
   yearRevenue,
   monthlyTrend,
+  sponsorshipsMonthly,
+  customersByMonth,
   meetingsInPeriod,
   sponsorships,
   socialSelling,
@@ -27,7 +35,9 @@ export function FaturamentoDashboard({
   periodLabel: string;
   wonInPeriod: OpportunityRow[];
   yearRevenue: number;
-  monthlyTrend: Awaited<ReturnType<typeof import("@/lib/comercial").loadComercialMonthlyTrend>>;
+  monthlyTrend: Awaited<ReturnType<typeof loadComercialMonthlyTrend>>;
+  sponsorshipsMonthly: Awaited<ReturnType<typeof loadSponsorshipsMonthlyTrend>>;
+  customersByMonth: Awaited<ReturnType<typeof loadCustomersByMonth>>;
   meetingsInPeriod: MeetingRow[];
   sponsorships: { count: number; revenue: number };
   socialSelling: Awaited<ReturnType<typeof loadChannelBreakdown>>;
@@ -38,68 +48,118 @@ export function FaturamentoDashboard({
   const dealsThisPeriod = countWon(wonInPeriod) + sponsorships.count;
   const avgTicketThisPeriod = dealsThisPeriod > 0 ? revenueThisPeriod / dealsThisPeriod : 0;
   const products = productSummary(wonInPeriod);
-  const weeks = weeklyMeetings(meetingsInPeriod);
-  const realizedThisPeriod = meetingsInPeriod.filter((m) => m.status === "active" && !m.noShow).length;
 
-  const pieData = products.filter((p) => p.revenue > 0).map((p) => ({ label: p.product, value: p.revenue }));
+  const scheduled = countScheduled(meetingsInPeriod);
+  const realizedThisPeriod = countRealized(meetingsInPeriod);
+  const meetingShowRate = showRate(meetingsInPeriod);
+  const weeks = weeklyMeetings(meetingsInPeriod);
+
+  const annualSponsorshipRevenue = sponsorshipsMonthly.reduce((s, m) => s + m.revenue, 0);
+  const annualProductRevenue = COMERCIAL_PRODUCTS.map((product) => ({
+    product,
+    revenue: monthlyTrend.reduce((s, m) => s + (m.byProduct.find((b) => b.product === product)?.revenue ?? 0), 0),
+  }));
+
+  const periodPieData = [
+    ...products.filter((p) => p.revenue > 0).map((p) => ({ label: p.product, value: p.revenue })),
+    ...(sponsorships.revenue > 0 ? [{ label: "Patrocínios", value: sponsorships.revenue }] : []),
+  ];
+  const annualPieData = [
+    ...annualProductRevenue.filter((p) => p.revenue > 0).map((p) => ({ label: p.product, value: p.revenue })),
+    ...(annualSponsorshipRevenue > 0 ? [{ label: "Patrocínios", value: annualSponsorshipRevenue }] : []),
+  ];
+
+  // Ticket médio por produto no período (pra flagrar desconto exagerado de vendedor).
+  const avgTicketByProduct = products.map((p) => ({
+    product: p.product,
+    avgTicket: p.count > 0 ? p.revenue / p.count : 0,
+  }));
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[13px] font-medium text-ink-soft">Faturamento · {periodLabel.toLowerCase()}</h2>
-      </div>
+      <h2 className="text-[13px] font-medium text-ink-soft">Faturamento · {periodLabel.toLowerCase()}</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Faturamento anual (ano corrente)" value={formatCompactCurrency(yearRevenue)} />
+        <StatTile label="Faturamento anual (ano corrente)" value={formatCompactCurrency(yearRevenue + annualSponsorshipRevenue)} />
         <StatTile label="Faturamento no período" value={formatCompactCurrency(revenueThisPeriod)} />
         <StatTile label="Ticket médio no período" value={formatCompactCurrency(avgTicketThisPeriod)} />
-        <StatTile label="Reuniões realizadas no período" value={String(realizedThisPeriod)} />
+        <StatTile
+          label="Reuniões agendadas / realizadas"
+          value={`${scheduled} / ${realizedThisPeriod}`}
+          targetLabel={meetingShowRate !== null ? `Show rate: ${meetingShowRate.toFixed(0)}%` : null}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h3 className="text-[12px] font-medium text-ink-soft">Ticket médio por produto · {periodLabel.toLowerCase()}</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {avgTicketByProduct.map((p) => (
+            <div key={p.product} className="flex flex-col gap-1 rounded-(--radius-s) bg-surface-muted p-3">
+              <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">{p.product}</span>
+              <span className="tnum text-[13px] font-medium text-ink">
+                {p.avgTicket > 0 ? formatCompactCurrency(p.avgTicket) : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Faturamento mês a mês (ano corrente completo)</h3>
+          <p className="text-[11.5px] text-ink-faint">
+            Clique num mês pra ver quais clientes/patrocinadores compraram, valor e ticket médio.
+          </p>
+        </div>
+        <MonthlyRevenueTable months={customersByMonth} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h3 className="text-[12px] font-medium text-ink-soft">Faturamento mês a mês ({new Date().getFullYear()})</h3>
-          <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.revenue }))} formatValue={formatCompactCurrency} />
-        </div>
-        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h3 className="text-[12px] font-medium text-ink-soft">Ticket médio mês a mês ({new Date().getFullYear()})</h3>
-          <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.avgTicket }))} formatValue={formatCompactCurrency} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h3 className="text-[12px] font-medium text-ink-soft">Vendas por produto no período</h3>
+          <h3 className="text-[12px] font-medium text-ink-soft">Composição do faturamento anual</h3>
           <DonutChart
-            data={pieData}
+            data={annualPieData}
+            formatValue={formatCompactCurrency}
+            centerLabel="faturado (ano)"
+            centerAsCurrency
+            emptyMessage="Nenhuma venda com produto identificado ainda este ano."
+            ariaLabel="Composição do faturamento anual por produto"
+          />
+        </div>
+        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Composição do faturamento — {periodLabel.toLowerCase()}</h3>
+          <DonutChart
+            data={periodPieData}
             formatValue={formatCompactCurrency}
             centerLabel="faturado"
             centerAsCurrency
             emptyMessage="Nenhuma venda com produto identificado no período."
-            ariaLabel="Faturamento por produto"
+            ariaLabel="Composição do faturamento do período por produto"
           />
-        </div>
-        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h3 className="text-[12px] font-medium text-ink-soft">Reuniões por semana no período</h3>
-          {weeks.length === 0 ? (
-            <p className="py-4 text-[12.5px] text-ink-faint">Nenhuma reunião no período.</p>
-          ) : (
-            <div className="flex flex-col">
-              {weeks.map(([week, w]) => (
-                <div key={week} className="flex items-center justify-between border-t border-border py-2 text-[12.5px] first:border-t-0">
-                  <span className="text-ink">Semana {week}</span>
-                  <span className="tnum text-ink-soft">
-                    {w.realized} realizadas / {w.scheduled} agendadas
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
       <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-        <h3 className="text-[12px] font-medium text-ink-soft">Faturamento por produto — mês a mês ({new Date().getFullYear()})</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Reuniões por semana · {periodLabel.toLowerCase()}</h3>
+        {weeks.length === 0 ? (
+          <p className="py-4 text-[12.5px] text-ink-faint">Nenhuma reunião no período.</p>
+        ) : (
+          <div className="flex flex-col">
+            {weeks.map(([week, w]) => (
+              <div key={week} className="flex items-center justify-between border-t border-border py-2 text-[12.5px] first:border-t-0">
+                <span className="text-ink">Semana {week}</span>
+                <span className="tnum text-ink-soft">
+                  {w.realized} realizadas / {w.scheduled} agendadas
+                  {w.scheduled > 0 ? ` · ${((w.realized / w.scheduled) * 100).toFixed(0)}%` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <h3 className="text-[12px] font-medium text-ink-soft">Faturamento por produto — mês a mês (ano corrente completo)</h3>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] border-collapse text-[12px]">
             <thead>
@@ -126,6 +186,14 @@ export function FaturamentoDashboard({
                   })}
                 </tr>
               ))}
+              <tr>
+                <td className="py-2 pr-3 text-ink">Patrocínios</td>
+                {sponsorshipsMonthly.map((m, i) => (
+                  <td key={i} className="tnum px-2 py-2 text-right text-ink-soft">
+                    {m.revenue > 0 ? formatCompactCurrency(m.revenue) : "—"}
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>

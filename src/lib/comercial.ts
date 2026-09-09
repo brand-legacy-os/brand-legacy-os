@@ -115,6 +115,51 @@ export async function loadOpportunitiesWonInPeriod(start: Date, end: Date) {
   });
 }
 
+/** Faturamento, ticket médio e a lista de clientes/patrocinadores por mês —
+ * base do drill-down "clicar no mês e ver quem comprou" no Comercial. Inclui
+ * Patrocínios (mesma fonte de loadSponsorshipsClosedInPeriod), pra bater com
+ * "Faturamento total do mês" e não ficar um mês inteiro "zerado" só porque
+ * as vendas do mês foram todas patrocínio. */
+export async function loadCustomersByMonth() {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const [won, sponsorshipsAll] = await Promise.all([
+    prisma.ghlOpportunity.findMany({
+      where: { status: "won" },
+      select: { name: true, monetaryValue: true, createdAt: true, wonAt: true, product: true },
+    }),
+    prisma.sponsor.findMany({
+      where: { status: { notIn: ["em_negociacao", "cancelado"] } },
+      select: { name: true, totalValue: true, createdAt: true },
+    }),
+  ]);
+
+  const months: string[] = [];
+  const cursor = new Date(yearStart);
+  while (cursor <= now) {
+    months.push(monthKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return months.map((mk) => {
+    const wonInMonth = won.filter((r) => monthKey(closeDate(r)) === mk);
+    const sponsorsInMonth = sponsorshipsAll.filter((s) => monthKey(s.createdAt) === mk);
+    const customers = [
+      ...wonInMonth.map((r) => ({ name: r.name, value: r.monetaryValue, date: closeDate(r), product: r.product ?? "—" })),
+      ...sponsorsInMonth.map((s) => ({ name: s.name, value: s.totalValue, date: s.createdAt, product: "Patrocínio" })),
+    ].sort((a, b) => b.date.getTime() - a.date.getTime());
+    const revenue = customers.reduce((s, c) => s + c.value, 0);
+    return {
+      monthKey: mk,
+      label: periodKeyLabel(mk).slice(0, 3),
+      customers,
+      revenue,
+      count: customers.length,
+      avgTicket: customers.length > 0 ? revenue / customers.length : 0,
+    };
+  });
+}
+
 /** Faturamento e ticket médio mês a mês, desde o início do ano corrente. */
 export async function loadComercialMonthlyTrend() {
   const now = new Date();
@@ -157,8 +202,8 @@ export async function loadSponsorshipsMonthlyTrend() {
   const now = new Date();
   const yearStart = new Date(now.getFullYear(), 0, 1);
   const rows = await prisma.sponsor.findMany({
-    where: { status: { notIn: ["em_negociacao", "cancelado"] }, updatedAt: { gte: yearStart, lte: now } },
-    select: { totalValue: true, updatedAt: true },
+    where: { status: { notIn: ["em_negociacao", "cancelado"] }, createdAt: { gte: yearStart, lte: now } },
+    select: { totalValue: true, createdAt: true },
   });
 
   const months: string[] = [];
@@ -169,7 +214,7 @@ export async function loadSponsorshipsMonthlyTrend() {
   }
 
   return months.map((mk) => {
-    const inMonth = rows.filter((r) => monthKey(r.updatedAt) === mk);
+    const inMonth = rows.filter((r) => monthKey(r.createdAt) === mk);
     return { monthKey: mk, count: inMonth.length, revenue: inMonth.reduce((s, r) => s + r.totalValue, 0) };
   });
 }
@@ -349,13 +394,16 @@ export async function loadChannelBreakdown(channel: LeadChannel, start: Date, en
  * área de Patrocínios (model Sponsor), nunca um valor recalculado à parte,
  * pra não divergir do que aparece lá. "Fechado" = status além de em
  * negociação/cancelado (assinado, pago integral/parcial, atrasado). Usa
- * updatedAt como proxy de data de fechamento — não há campo dedicado de
- * "assinado em" no modelo hoje. */
+ * createdAt como proxy de data de fechamento (não updatedAt — qualquer edição
+ * administrativa, mesmo sem relação com o fechamento em si, mudava updatedAt
+ * e inflava "fechado neste período" com patrocinadores antigos só porque
+ * alguém corrigiu um campo deles) — não há campo dedicado de "assinado em"
+ * no modelo hoje. */
 export async function loadSponsorshipsClosedInPeriod(start: Date, end: Date) {
   const rows = await prisma.sponsor.findMany({
     where: {
       status: { notIn: ["em_negociacao", "cancelado"] },
-      updatedAt: { gte: start, lte: end },
+      createdAt: { gte: start, lte: end },
     },
     select: { id: true, name: true, totalValue: true, status: true },
   });
