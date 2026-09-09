@@ -72,7 +72,7 @@ export async function refreshComercialMetrics(): Promise<{
     [opportunityRows, pipelineRows, userRows] = await Promise.all([
       windsorGet("gohighlevel", {
         fields:
-          "opportunity_id,opportunity_name,opportunity_monetary_value,opportunity_status,opportunity_pipeline_id,opportunity_pipeline_stage_id,opportunity_assigned_to,opportunity_created_at,opportunity_last_status_change_at,opportunity_contact_tags",
+          "opportunity_id,opportunity_name,opportunity_monetary_value,opportunity_status,opportunity_pipeline_id,opportunity_pipeline_stage_id,opportunity_assigned_to,opportunity_created_at,opportunity_last_status_change_at,opportunity_contact_tags,opportunity_source",
         select_accounts: TRAFFIC_GOHIGHLEVEL_ACCOUNT_ID,
         date_from: yearStart,
         date_to: today,
@@ -130,6 +130,7 @@ export async function refreshComercialMetrics(): Promise<{
       const status = (windsorText(row, "opportunity_status") || "open") as GhlOpportunityStatus;
       const assignedToId = windsorText(row, "opportunity_assigned_to");
       const contactTags = windsorText(row, "opportunity_contact_tags");
+      const source = windsorText(row, "opportunity_source");
       return {
         externalId,
         name,
@@ -139,7 +140,7 @@ export async function refreshComercialMetrics(): Promise<{
         pipelineName,
         stageId,
         stageName: stageNameById.get(stageId) ?? null,
-        channel: classifyChannel(pipelineName, contactTags),
+        channel: classifyChannel(pipelineName, contactTags, source),
         product: parseProduct(name, pipelineName),
         assignedToEmail: assignedToId ? emailByUserId.get(assignedToId) ?? null : null,
         createdAt: createdAtRaw ? new Date(createdAtRaw) : null,

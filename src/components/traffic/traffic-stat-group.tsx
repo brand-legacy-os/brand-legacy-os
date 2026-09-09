@@ -22,10 +22,10 @@ export function TrafficStatGroup({
         </div>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Número de leads gerados" value={summary.leads.toLocaleString("pt-BR")} />
+        <StatTile label="Leads gerados (Facebook Ads)" value={summary.leads.toLocaleString("pt-BR")} />
         <StatTile label="CPL (custo por lead)" value={summary.cpl !== null ? formatCompactCurrency(summary.cpl) : "—"} />
         <StatTile
-          label={`Leads MQL${mqlIsEstimate ? " (estimado)" : ""}`}
+          label={`Contatos no CRM (MQL)${mqlIsEstimate ? " (estimado)" : ""}`}
           value={summary.mqlCount.toLocaleString("pt-BR")}
         />
         <StatTile
@@ -33,6 +33,11 @@ export function TrafficStatGroup({
           value={summary.costPerMql !== null ? formatCompactCurrency(summary.costPerMql) : "—"}
         />
       </div>
+      <p className="text-[11px] text-ink-faint">
+        &quot;Leads gerados&quot; é só o que o Facebook Ads reporta (pixel de conversão da própria campanha).
+        &quot;Contatos no CRM (MQL)&quot; conta todo mundo que chega no GoHighLevel, de qualquer origem — por
+        isso pode ser maior que os leads gerados, não são a mesma população nem um funil direto entre si.
+      </p>
     </section>
   );
 }

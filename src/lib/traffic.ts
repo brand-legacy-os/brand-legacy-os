@@ -126,13 +126,24 @@ export function prorateMql(totalMql: number, categorySpend: number, totalSpend: 
  * contagem de MQL do período, usados por Tráfego e por Comercial pra montar
  * seus respectivos recortes (total, Aquisição, Eventos, Distribuição). */
 export async function loadTrafficPeriodData(start: Date, end: Date) {
-  const [campaigns, mqlCount, sqlCount, lastFetched] = await Promise.all([
+  const [campaigns, mqlCount, sqlCount, lastFetched, latestSpendDate] = await Promise.all([
     prisma.trafficCampaignMetric.findMany({ where: { date: { gte: start, lte: end } } }),
     prisma.trafficMqlLead.count({ where: { dateAdded: { gte: start, lte: end } } }),
     prisma.trafficSqlLead.count({ where: { isAdvanced: true, createdAt: { gte: start, lte: end } } }),
     prisma.trafficCampaignMetric.findFirst({ orderBy: { fetchedAt: "desc" }, select: { fetchedAt: true } }),
+    // O Facebook/Meta tem um atraso natural de alguns dias pra fechar os
+    // dados de gasto/leads mais recentes (atribuição de conversão) — não é
+    // bug nosso, é como a API deles funciona. Sem isso fica parecendo que o
+    // investimento "sumiu" quando na verdade só ainda não foi reportado.
+    prisma.trafficCampaignMetric.findFirst({ where: { spend: { gt: 0 } }, orderBy: { date: "desc" }, select: { date: true } }),
   ]);
-  return { campaigns, mqlCount, sqlCount, lastFetched: lastFetched?.fetchedAt ?? null };
+  return {
+    campaigns,
+    mqlCount,
+    sqlCount,
+    lastFetched: lastFetched?.fetchedAt ?? null,
+    latestSpendDate: latestSpendDate?.date ?? null,
+  };
 }
 
 export function campaignsByCategory(

@@ -9,8 +9,7 @@ import { TrafficRefreshButton } from "@/components/traffic/traffic-refresh-butto
 import { TrafficStatGroup } from "@/components/traffic/traffic-stat-group";
 import { TrafficLeaderboard } from "@/components/traffic/traffic-leaderboard";
 import { StatTile } from "@/components/dashboard/stat-tile";
-import { TrendChart } from "@/components/finance/trend-chart";
-import { formatCompactCurrency } from "@/lib/format";
+import { formatCompactCurrency, formatDateFull } from "@/lib/format";
 import {
   summarizeTraffic,
   campaignsByCategory,
@@ -31,7 +30,7 @@ export default async function TrafegoPage({
   const periodKey = (sp.periodo as PeriodKey) || "mes";
   const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
 
-  const [{ campaigns, mqlCount, sqlCount, lastFetched }, { topCampaigns, topAds }, monthlyTrend] = await Promise.all([
+  const [{ campaigns, mqlCount, sqlCount, lastFetched, latestSpendDate }, { topCampaigns, topAds }, monthlyTrend] = await Promise.all([
     loadTrafficPeriodData(period.start, period.end),
     loadTrafficLeaderboards(period.start, period.end),
     loadTrafficMonthlyTrend(),
@@ -71,6 +70,15 @@ export default async function TrafegoPage({
         {canEdit && <TrafficRefreshButton lastUpdatedLabel={lastFetched ? formatDateTime(lastFetched) : null} />}
       </div>
 
+      {latestSpendDate && (
+        <p className="rounded-(--radius-s) border border-dashed border-border bg-surface-muted px-3 py-2 text-[11.5px] text-ink-faint">
+          O Facebook/Meta leva alguns dias para fechar os dados de gasto e leads mais recentes (atraso de
+          atribuição da própria plataforma, não é falha nossa) — os números abaixo têm gasto real registrado
+          até <span className="font-medium text-ink-soft">{formatDateFull(latestSpendDate)}</span>. Dias mais
+          recentes tendem a aparecer completos só depois.
+        </p>
+      )}
+
       <TrafficStatGroup
         title={`Aquisição via tráfego pago · ${period.label.toLowerCase()}`}
         description="Direto do Facebook Ads (Windsor.ai) + leads MQL validados no CRM."
@@ -103,19 +111,45 @@ export default async function TrafegoPage({
         <h3 className="text-[12.5px] font-medium text-ink-soft">
           Verba, CPL e MQL mês a mês · {new Date().getFullYear()}
         </h3>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-            <h4 className="text-[12px] font-medium text-ink-soft">Verba investida</h4>
-            <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.spend }))} formatValue={formatCompactCurrency} />
-          </div>
-          <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-            <h4 className="text-[12px] font-medium text-ink-soft">CPL (custo por lead)</h4>
-            <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.cpl }))} formatValue={formatCompactCurrency} />
-          </div>
-          <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-            <h4 className="text-[12px] font-medium text-ink-soft">Leads MQL</h4>
-            <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.mqlCount }))} formatValue={(v) => String(Math.round(v))} />
-          </div>
+        <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
+          <table className="w-full min-w-[700px] border-collapse text-[12px]">
+            <thead>
+              <tr className="border-b border-border text-left text-ink-faint">
+                <th className="py-2 pl-3 pr-3 font-medium">Métrica</th>
+                {monthlyTrend.map((m, i) => (
+                  <th key={i} className="px-2 py-2 text-right font-medium">
+                    {m.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-border">
+                <td className="py-2 pl-3 pr-3 text-ink">Verba investida</td>
+                {monthlyTrend.map((m, i) => (
+                  <td key={i} className="tnum px-2 py-2 text-right text-ink-soft">
+                    {formatCompactCurrency(m.spend)}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-border">
+                <td className="py-2 pl-3 pr-3 text-ink">CPL (custo por lead)</td>
+                {monthlyTrend.map((m, i) => (
+                  <td key={i} className="tnum px-2 py-2 text-right text-ink-soft">
+                    {formatCompactCurrency(m.cpl)}
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className="py-2 pl-3 pr-3 text-ink">Leads MQL</td>
+                {monthlyTrend.map((m, i) => (
+                  <td key={i} className="tnum px-2 py-2 text-right text-ink-soft">
+                    {Math.round(m.mqlCount)}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 

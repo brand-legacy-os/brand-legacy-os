@@ -27,12 +27,18 @@ export const LEAD_CHANNEL_META: Record<LeadChannel, { label: string }> = {
  * já ter saído do pipeline de Recuperação/Reativação SDR. Pipeline continua
  * sendo o critério de desempate pros demais canais.
  */
-export function classifyChannel(pipelineName: string, contactTags?: string): LeadChannel {
+export function classifyChannel(pipelineName: string, contactTags?: string, source?: string): LeadChannel {
   const tags = (contactTags ?? "").toLowerCase();
-  if (tags.includes("socialmedia")) return "social_selling";
+  const src = (source ?? "").toLowerCase();
+  // "SS novo seguidor" (opportunity_source) é outro sinal real de Social
+  // Selling, além da tag "socialmedia" — confirmado nos dados reais.
+  if (tags.includes("socialmedia") || src.startsWith("ss ")) return "social_selling";
   const n = pipelineName.toLowerCase();
   if (n.includes("sdr")) return "sdr";
-  if (tags.includes("desqualificado")) return "sdr";
+  // "Abordagem fria" (opportunity_source) = outbound do SDR — confirmado nos
+  // dados reais, junto com qualquer tag de desqualificação (o lead pode já
+  // ter sido requalificado e movido de pipeline, a tag persiste).
+  if (tags.includes("desqualificado") || src.includes("abordagem fria")) return "sdr";
   if (n.includes("social seller")) return "social_selling";
   if (n.includes("sessão estratégica") || n.includes("sessao estrategica")) return "trafego";
   if (n.includes("imersão") || n.includes("imersao") || n.includes("scale") || n.includes("club")) return "eventos";

@@ -69,8 +69,11 @@ export function buildNav(
           };
           // Tráfego não é uma Area própria (ainda) — vive junto do Comercial,
           // já que é a camada de aquisição que alimenta o funil comercial.
+          // SDR não tem item próprio no menu — vive dentro da área Comercial
+          // (link "Ver em SDR →" no quadro resumo), não como destino
+          // separado na barra lateral.
           if (a.slug === "comercial") {
-            return [item, { label: "Tráfego", href: "/trafego" }, { label: "SDR", href: "/sdr" }];
+            return [item, { label: "Tráfego", href: "/trafego" }];
           }
           // Patrocínios não é uma Area própria — vive junto de Eventos, já
           // que cada patrocínio é sempre em função de um evento.
