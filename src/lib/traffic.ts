@@ -160,6 +160,7 @@ export async function loadTrafficMonthlyTrend() {
     const mqlCount = mqlLeads.filter((m) => monthKey(m.dateAdded) === mk).length;
     return {
       label: periodKeyLabel(mk).slice(0, 3),
+      spend,
       cpl: leads > 0 ? spend / leads : 0,
       mqlCount,
     };

@@ -77,6 +77,8 @@ export default async function TrafegoPage({
         summary={totalSummary}
       />
 
+      <StatTile label={`Verba investida · ${period.label.toLowerCase()}`} value={formatCompactCurrency(totalSummary.spend)} />
+
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-[12.5px] font-medium text-ink-soft">Funil comercial</h3>
@@ -99,9 +101,13 @@ export default async function TrafegoPage({
 
       <section className="flex flex-col gap-3">
         <h3 className="text-[12.5px] font-medium text-ink-soft">
-          CPL e MQL mês a mês · {new Date().getFullYear()}
+          Verba, CPL e MQL mês a mês · {new Date().getFullYear()}
         </h3>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+            <h4 className="text-[12px] font-medium text-ink-soft">Verba investida</h4>
+            <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.spend }))} formatValue={formatCompactCurrency} />
+          </div>
           <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
             <h4 className="text-[12px] font-medium text-ink-soft">CPL (custo por lead)</h4>
             <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.cpl }))} formatValue={formatCompactCurrency} />
