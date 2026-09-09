@@ -30,6 +30,8 @@ export function parseContentPlanCell(content: string): ContentPlanLine[] {
     .filter((line) => line.trim() !== "")
     .map((line) => ({
       indent: /^\s{2,}/.test(line),
-      segments: parseInline(line.trim()),
+      // Uma sub-linha guardada como "  - texto" já vira sub-item pelo
+      // indent acima — o "- " marcador em si não deve aparecer no texto.
+      segments: parseInline(line.trim().replace(/^-\s+/, "")),
     }));
 }
