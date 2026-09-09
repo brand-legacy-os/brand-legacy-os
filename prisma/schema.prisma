@@ -604,6 +604,11 @@ model Event {
   enpsDay2Url String?
   enpsDay3Url String?
 
+  /// Escopo de entrega de fotos e vídeo — planejado (combinado antes do
+  /// evento) x realizado (o que de fato foi entregue).
+  mediaScopePlanned String?
+  mediaScopeActual  String?
+
   /// Estatísticas agregadas de eventos já realizados, quando só o resumo
   /// histórico está disponível (sem lista nominal de confirmados). Eventos
   /// novos devem preferir EventAttendee/Sponsor, que dão o mesmo total

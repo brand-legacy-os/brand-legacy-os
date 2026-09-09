@@ -197,6 +197,8 @@ export default async function EventDetailPage({
           enpsDay1Url={event.enpsDay1Url ?? ""}
           enpsDay2Url={event.enpsDay2Url ?? ""}
           enpsDay3Url={event.enpsDay3Url ?? ""}
+          mediaScopePlanned={event.mediaScopePlanned ?? ""}
+          mediaScopeActual={event.mediaScopeActual ?? ""}
         />
       )}
 
@@ -475,6 +477,30 @@ export default async function EventDetailPage({
                   </a>
                 )
             )}
+          </div>
+        </section>
+      )}
+
+      {(event.mediaScopePlanned || event.mediaScopeActual) && (
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h2 className="text-[13px] font-medium text-ink-soft">Entrega de fotos e vídeo</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                Planejado
+              </span>
+              <p className="whitespace-pre-line text-[13px] text-ink-soft">
+                {event.mediaScopePlanned || "Nada combinado ainda."}
+              </p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                Realizado
+              </span>
+              <p className="whitespace-pre-line text-[13px] text-ink-soft">
+                {event.mediaScopeActual || "Ainda não entregue."}
+              </p>
+            </div>
           </div>
         </section>
       )}

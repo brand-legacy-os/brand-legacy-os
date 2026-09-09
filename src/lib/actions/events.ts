@@ -116,6 +116,8 @@ export async function updateEventAction(
   const enpsDay1Url = String(formData.get("enpsDay1Url") ?? "").trim() || null;
   const enpsDay2Url = String(formData.get("enpsDay2Url") ?? "").trim() || null;
   const enpsDay3Url = String(formData.get("enpsDay3Url") ?? "").trim() || null;
+  const mediaScopePlanned = String(formData.get("mediaScopePlanned") ?? "").trim() || null;
+  const mediaScopeActual = String(formData.get("mediaScopeActual") ?? "").trim() || null;
 
   if (!eventId || !name || !type || !startRaw || !endRaw) {
     return { error: "Preencha nome, tipo, início e término." };
@@ -137,6 +139,8 @@ export async function updateEventAction(
       enpsDay1Url,
       enpsDay2Url,
       enpsDay3Url,
+      mediaScopePlanned,
+      mediaScopeActual,
     },
   });
 
