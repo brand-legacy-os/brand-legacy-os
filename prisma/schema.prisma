@@ -240,6 +240,7 @@ model User {
   kpiEntries           KpiEntry[]
   ownedProjects        Project[]             @relation("ProjectOwner")
   assignedTasks        Task[]                @relation("TaskAssignee")
+  assignedSubtasks     TaskSubtask[]         @relation("TaskSubtaskAssignee")
   taskComments         TaskComment[]         @relation("TaskCommentAuthor")
   libraryAdded         LibraryItem[]         @relation("LibraryAddedBy")
   libraryAuthored      LibraryItem[]         @relation("LibraryAuthor")
@@ -413,22 +414,65 @@ model Task {
   checklist   TaskChecklistItem[]
   comments    TaskComment[]
   attachments TaskAttachment[]
+  /// Subtarefas — mesmo conjunto de campos da tarefa principal (título,
+  /// responsável, prazo, prioridade, anexos), pra dividir entre pessoas
+  /// diferentes sem virar uma segunda Task de verdade no Workflow.
+  subtasks    TaskSubtask[]
 
   @@index([contentPostId])
   @@index([sponsorId])
 }
 
-/// Link ou arquivo anexado a uma tarefa — pode ter mais de um.
+/// Link ou arquivo anexado a uma tarefa — pode ter mais de um. `kind`
+/// distingue link de referência (briefing, drive...) de arquivo de entrega
+/// (o resultado final do trabalho) — mesmo texto livre usado em vez de enum
+/// pra não travar categorias futuras numa migration.
 model TaskAttachment {
   id        String   @id @default(cuid())
   taskId    String
   label     String
   url       String
+  kind      String   @default("referencia")
   createdAt DateTime @default(now())
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
+}
+
+/// Subtarefa de uma Task — não aparece no Workflow/Kanban geral (só dentro do
+/// card da tarefa principal), mas carrega o mesmo conjunto de campos porque
+/// pode ser de um colaborador diferente do responsável pela tarefa-mãe.
+model TaskSubtask {
+  id          String       @id @default(cuid())
+  taskId      String
+  title       String
+  assigneeId  String
+  priority    TaskPriority @default(media)
+  status      TaskStatus   @default(no_ritmo)
+  deadline    DateTime
+  completedAt DateTime?
+  note        String?
+  createdAt   DateTime     @default(now())
+
+  task        Task                    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  assignee    User                    @relation("TaskSubtaskAssignee", fields: [assigneeId], references: [id])
+  attachments TaskSubtaskAttachment[]
+
+  @@index([taskId])
+}
+
+model TaskSubtaskAttachment {
+  id        String   @id @default(cuid())
+  subtaskId String
+  label     String
+  url       String
+  kind      String   @default("referencia")
+  createdAt DateTime @default(now())
+
+  subtask TaskSubtask @relation(fields: [subtaskId], references: [id], onDelete: Cascade)
+
+  @@index([subtaskId])
 }
 
 model TaskChecklistItem {

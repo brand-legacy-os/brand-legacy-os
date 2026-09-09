@@ -33,6 +33,7 @@ export async function updateTaskAction(
   const status = formData.get("status") as TaskStatus | null;
   const priority = formData.get("priority") as TaskPriority | null;
   const deadlineRaw = formData.get("deadline");
+  const completedAtRaw = formData.get("completedAt");
   const note = formData.get("note");
   const title = formData.get("title");
   const assigneeId = formData.get("assigneeId");
@@ -108,9 +109,10 @@ export async function updateTaskAction(
     }
   }
 
+  let completedAt: Date | null | undefined;
   if (status && status !== task.status) {
     data.status = status;
-    data.completedAt = status === "concluida" ? new Date() : null;
+    completedAt = status === "concluida" ? new Date() : null;
     await prisma.auditLog.create({
       data: {
         entityType: "Task",
@@ -122,6 +124,11 @@ export async function updateTaskAction(
       },
     });
   }
+  if (completedAtRaw !== null) {
+    const raw = String(completedAtRaw).trim();
+    if (raw) completedAt = new Date(`${raw}T18:00:00`);
+  }
+  if (completedAt !== undefined) data.completedAt = completedAt;
   if (priority && priority !== task.priority) {
     data.priority = priority;
     await prisma.auditLog.create({
@@ -236,6 +243,7 @@ export async function addTaskAttachmentAction(
   const taskId = String(formData.get("taskId") ?? "");
   const label = String(formData.get("label") ?? "").trim();
   const url = String(formData.get("url") ?? "").trim();
+  const kind = String(formData.get("kind") ?? "referencia") === "entrega" ? "entrega" : "referencia";
 
   const task = await prisma.task.findUnique({ where: { id: taskId }, include: { area: true } });
   if (!task) return { error: "Tarefa não encontrada." };
@@ -246,14 +254,14 @@ export async function addTaskAttachmentAction(
   let finalUrl = url;
   const file = formData.get("file");
   if (file instanceof File && file.size > 0) {
-    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido.");
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie uma imagem, PDF ou PPT válido.");
     if (v.error) return { error: v.error };
     finalUrl = await saveUpload(file, "workflow/tasks");
   }
   if (!finalUrl) return { error: "Anexe um arquivo ou informe um link." };
   if (!label) return { error: "Dê um nome para o anexo." };
 
-  await prisma.taskAttachment.create({ data: { taskId, label, url: finalUrl } });
+  await prisma.taskAttachment.create({ data: { taskId, label, url: finalUrl, kind } });
 
   revalidateTaskViews(task.area.slug, task.id);
   return { success: true };
@@ -431,4 +439,204 @@ export async function createTaskAction(
   if (sponsorId) revalidatePath(`/patrocinios/${sponsorId}`);
 
   return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Subtarefas — mesmo conjunto de campos da tarefa principal (responsável,
+// prazo, prioridade, anexos), mas não viram Task de verdade: não aparecem no
+// Workflow/Kanban geral, só dentro do card da tarefa-mãe. Existem pra dividir
+// uma tarefa entre pessoas diferentes sem inflar as métricas gerais de tarefa.
+// ---------------------------------------------------------------------------
+
+function canManageSubtask(
+  user: Awaited<ReturnType<typeof requireUser>>,
+  subtask: { assigneeId: string },
+  task: { assigneeId: string; area: { slug: string } }
+) {
+  return (
+    canManageTask(user, { assigneeId: subtask.assigneeId, areaSlug: task.area.slug }) ||
+    canManageTask(user, { assigneeId: task.assigneeId, areaSlug: task.area.slug })
+  );
+}
+
+export async function createSubtaskAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  const taskId = String(formData.get("taskId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const assigneeId = String(formData.get("assigneeId") ?? "");
+  const deadlineRaw = String(formData.get("deadline") ?? "");
+  const priority = (String(formData.get("priority") ?? "media") || "media") as TaskPriority;
+
+  const task = await prisma.task.findUnique({ where: { id: taskId }, include: { area: true } });
+  if (!task) return { error: "Tarefa não encontrada." };
+  if (!canManageTask(user, { assigneeId: task.assigneeId, areaSlug: task.area.slug })) {
+    return { error: "Você não tem permissão para editar esta tarefa." };
+  }
+  if (!title || !assigneeId || !deadlineRaw) {
+    return { error: "Preencha o que precisa ser feito, responsável e prazo." };
+  }
+
+  await prisma.taskSubtask.create({
+    data: { taskId, title, assigneeId, priority, deadline: new Date(`${deadlineRaw}T18:00:00`) },
+  });
+
+  if (assigneeId !== user.id) {
+    await prisma.notification.create({
+      data: {
+        userId: assigneeId,
+        type: "tarefa",
+        message: `${user.name} atribuiu a você a subtarefa "${title}".`,
+        link: `/workflow/${task.id}`,
+      },
+    });
+  }
+
+  revalidateTaskViews(task.area.slug, task.id);
+  return { success: true };
+}
+
+export async function updateSubtaskAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  const subtaskId = String(formData.get("subtaskId") ?? "");
+  const title = formData.get("title");
+  const assigneeId = formData.get("assigneeId");
+  const status = formData.get("status") as TaskStatus | null;
+  const priority = formData.get("priority") as TaskPriority | null;
+  const deadlineRaw = formData.get("deadline");
+  const completedAtRaw = formData.get("completedAt");
+  const note = formData.get("note");
+
+  const subtask = await prisma.taskSubtask.findUnique({
+    where: { id: subtaskId },
+    include: { task: { include: { area: true } } },
+  });
+  if (!subtask) return { error: "Subtarefa não encontrada." };
+  if (!canManageSubtask(user, subtask, subtask.task)) {
+    return { error: "Você não tem permissão para atualizar esta subtarefa." };
+  }
+
+  const data: {
+    title?: string;
+    assigneeId?: string;
+    status?: TaskStatus;
+    priority?: TaskPriority;
+    deadline?: Date;
+    completedAt?: Date | null;
+    note?: string | null;
+  } = {};
+
+  if (title !== null) {
+    const v = String(title).trim();
+    if (v) data.title = v;
+  }
+  if (assigneeId && String(assigneeId) !== subtask.assigneeId) {
+    const newAssignee = await prisma.user.findUnique({ where: { id: String(assigneeId) } });
+    if (newAssignee) {
+      data.assigneeId = String(assigneeId);
+      if (String(assigneeId) !== user.id) {
+        await prisma.notification.create({
+          data: {
+            userId: String(assigneeId),
+            type: "tarefa",
+            message: `${user.name} atribuiu a você a subtarefa "${subtask.title}".`,
+            link: `/workflow/${subtask.taskId}`,
+          },
+        });
+      }
+    }
+  }
+
+  let completedAt: Date | null | undefined;
+  if (status && status !== subtask.status) {
+    data.status = status;
+    completedAt = status === "concluida" ? new Date() : null;
+  }
+  if (completedAtRaw !== null) {
+    const raw = String(completedAtRaw).trim();
+    if (raw) completedAt = new Date(`${raw}T18:00:00`);
+  }
+  if (completedAt !== undefined) data.completedAt = completedAt;
+
+  if (priority) data.priority = priority;
+  if (deadlineRaw) {
+    const d = new Date(`${String(deadlineRaw)}T18:00:00`);
+    if (!Number.isNaN(d.getTime())) data.deadline = d;
+  }
+  if (note !== null) data.note = String(note).trim() || null;
+
+  if (Object.keys(data).length > 0) {
+    await prisma.taskSubtask.update({ where: { id: subtaskId }, data });
+  }
+
+  revalidateTaskViews(subtask.task.area.slug, subtask.taskId);
+  return { success: true };
+}
+
+export async function deleteSubtaskAction(formData: FormData) {
+  const user = await requireUser();
+  const subtaskId = String(formData.get("subtaskId") ?? "");
+  const subtask = await prisma.taskSubtask.findUnique({
+    where: { id: subtaskId },
+    include: { task: { include: { area: true } } },
+  });
+  if (!subtask) return;
+  if (!canManageSubtask(user, subtask, subtask.task)) return;
+
+  await prisma.taskSubtask.delete({ where: { id: subtaskId } });
+  revalidateTaskViews(subtask.task.area.slug, subtask.taskId);
+}
+
+export async function addSubtaskAttachmentAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  const subtaskId = String(formData.get("subtaskId") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+  const url = String(formData.get("url") ?? "").trim();
+  const kind = String(formData.get("kind") ?? "referencia") === "entrega" ? "entrega" : "referencia";
+
+  const subtask = await prisma.taskSubtask.findUnique({
+    where: { id: subtaskId },
+    include: { task: { include: { area: true } } },
+  });
+  if (!subtask) return { error: "Subtarefa não encontrada." };
+  if (!canManageSubtask(user, subtask, subtask.task)) {
+    return { error: "Você não tem permissão para editar esta subtarefa." };
+  }
+
+  let finalUrl = url;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie uma imagem, PDF ou PPT válido.");
+    if (v.error) return { error: v.error };
+    finalUrl = await saveUpload(file, "workflow/subtasks");
+  }
+  if (!finalUrl) return { error: "Anexe um arquivo ou informe um link." };
+  if (!label) return { error: "Dê um nome para o anexo." };
+
+  await prisma.taskSubtaskAttachment.create({ data: { subtaskId, label, url: finalUrl, kind } });
+
+  revalidateTaskViews(subtask.task.area.slug, subtask.taskId);
+  return { success: true };
+}
+
+export async function deleteSubtaskAttachmentAction(formData: FormData) {
+  const user = await requireUser();
+  const attachmentId = String(formData.get("attachmentId") ?? "");
+  const attachment = await prisma.taskSubtaskAttachment.findUnique({
+    where: { id: attachmentId },
+    include: { subtask: { include: { task: { include: { area: true } } } } },
+  });
+  if (!attachment) return;
+  if (!canManageSubtask(user, attachment.subtask, attachment.subtask.task)) return;
+
+  await prisma.taskSubtaskAttachment.delete({ where: { id: attachmentId } });
+  revalidateTaskViews(attachment.subtask.task.area.slug, attachment.subtask.taskId);
 }

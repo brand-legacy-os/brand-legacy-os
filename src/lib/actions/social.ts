@@ -422,11 +422,19 @@ export async function createContentPostLinkAction(
 
   const postId = String(formData.get("postId") ?? "");
   const label = String(formData.get("label") ?? "").trim();
-  const url = String(formData.get("url") ?? "").trim();
+  let url = String(formData.get("url") ?? "").trim();
 
   if (!postId) return { error: "Post não encontrado." };
-  if (!label || !url) return { error: "Preencha o nome e o link." };
-  if (!/^https:\/\//i.test(url)) {
+  if (!label) return { error: "Dê um nome para o link/arquivo." };
+
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie uma imagem, PDF ou PPT válido.");
+    if (v.error) return { error: v.error };
+    url = await saveUpload(file, "social/calendario-links");
+  } else if (!url) {
+    return { error: "Anexe um arquivo ou informe um link." };
+  } else if (!/^https:\/\//i.test(url)) {
     return { error: "O link precisa começar com https://" };
   }
 

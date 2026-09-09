@@ -8,6 +8,9 @@ import {
   type ActionState,
 } from "@/lib/actions/tasks";
 import { DeleteTaskButton } from "@/components/workflow/delete-task-button";
+import { TaskAttachmentGroup } from "@/components/social/task-attachment-group";
+import { SubtaskRow } from "@/components/social/subtask-row";
+import { AddSubtaskForm } from "@/components/social/add-subtask-form";
 import { StatusPill, taskStatusTone, priorityTone } from "@/components/ui/status-pill";
 import { TASK_STATUS_META, TASK_PRIORITY_META, formatDate } from "@/lib/format";
 import type { TaskStatus, TaskPriority } from "@prisma/client";
@@ -17,7 +20,20 @@ const initialState: ActionState = {};
 const STATUS_ORDER: TaskStatus[] = ["no_ritmo", "atencao", "atrasada", "pausada", "concluida", "cancelada"];
 const PRIORITY_ORDER: TaskPriority[] = ["baixa", "media", "alta", "urgente"];
 
-type Attachment = { id: string; label: string; url: string };
+type Attachment = { id: string; label: string; url: string; kind: string };
+type Subtask = {
+  id: string;
+  title: string;
+  assigneeId: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  deadline: Date;
+  createdAt: Date;
+  completedAt: Date | null;
+  note: string | null;
+  attachments: Attachment[];
+  assignee: { name: string };
+};
 
 export function PostTaskRow({
   task,
@@ -38,6 +54,7 @@ export function PostTaskRow({
     completedAt: Date | null;
     note: string | null;
     attachments: Attachment[];
+    subtasks: Subtask[];
   };
   assigneeName: string;
   assigneeInitials: string;
@@ -46,9 +63,7 @@ export function PostTaskRow({
   canReassign?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [addingAttachment, setAddingAttachment] = useState(false);
   const [state, formAction, pending] = useActionState(updateTaskAction, initialState);
-  const [attState, attFormAction, attPending] = useActionState(addTaskAttachmentAction, initialState);
 
   return (
     <div className="border-t border-border py-3 first:border-t-0">
@@ -76,46 +91,30 @@ export function PostTaskRow({
         <p className="ml-10 mt-1.5 text-[12.5px] italic text-ink-soft">&ldquo;{task.note}&rdquo;</p>
       )}
 
-      <div className="ml-10 mt-1.5 flex flex-wrap items-center gap-2">
-        {task.attachments.map((a) => (
-          <span key={a.id} className="flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px]">
-            <a href={a.url} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">
-              🔗 {a.label}
-            </a>
-            {canManage && (
-              <form action={deleteTaskAttachmentAction}>
-                <input type="hidden" name="attachmentId" value={a.id} />
-                <button className="text-ink-faint hover:text-critical">×</button>
-              </form>
-            )}
-          </span>
-        ))}
-        {canManage && !addingAttachment && (
-          <button onClick={() => setAddingAttachment(true)} className="text-[11px] font-medium text-brand hover:underline">
-            + link/arquivo
-          </button>
-        )}
+      <div className="ml-10 mt-1.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <TaskAttachmentGroup
+          attachments={task.attachments}
+          kind="referencia"
+          label="Links importantes"
+          addAction={addTaskAttachmentAction}
+          deleteAction={deleteTaskAttachmentAction}
+          hiddenFieldName="taskId"
+          hiddenFieldValue={task.id}
+          canManage={canManage}
+          allowUpload={false}
+        />
+        <TaskAttachmentGroup
+          attachments={task.attachments}
+          kind="entrega"
+          label="Arquivo de entrega"
+          addAction={addTaskAttachmentAction}
+          deleteAction={deleteTaskAttachmentAction}
+          hiddenFieldName="taskId"
+          hiddenFieldValue={task.id}
+          canManage={canManage}
+          allowUpload={true}
+        />
       </div>
-
-      {addingAttachment && canManage && (
-        <form
-          action={attFormAction}
-          className="ml-10 mt-1.5 flex flex-wrap items-center gap-2 rounded-(--radius-s) bg-surface-muted p-2"
-        >
-          <input type="hidden" name="taskId" value={task.id} />
-          <input name="label" required placeholder="Nome" className="h-7 rounded-(--radius-s) border border-border bg-surface px-2 text-[11.5px] outline-none" />
-          <input name="url" placeholder="Link…" className="h-7 rounded-(--radius-s) border border-border bg-surface px-2 text-[11.5px] outline-none" />
-          <span className="text-[11px] text-ink-faint">ou</span>
-          <input name="file" type="file" className="text-[11px]" />
-          <button type="submit" disabled={attPending} className="h-7 rounded-(--radius-s) bg-brand-deep px-2.5 text-[11px] font-medium text-gold-soft disabled:opacity-60">
-            {attPending ? "…" : "Adicionar"}
-          </button>
-          <button type="button" onClick={() => setAddingAttachment(false)} className="text-[11px] text-ink-faint hover:underline">
-            cancelar
-          </button>
-          {attState.error && <span className="text-[11px] text-critical">{attState.error}</span>}
-        </form>
-      )}
 
       {open && canManage && (
         <form action={formAction} className="ml-10 mt-2.5 flex flex-col gap-2.5 rounded-(--radius-s) bg-surface-muted p-3">
@@ -164,12 +163,26 @@ export function PostTaskRow({
               </label>
             ))}
           </div>
-          <input
-            name="deadline"
-            type="date"
-            defaultValue={new Date(task.deadline).toISOString().slice(0, 10)}
-            className="h-8 w-44 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[13px] outline-none"
-          />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-ink-faint">Prazo de conclusão</label>
+              <input
+                name="deadline"
+                type="date"
+                defaultValue={new Date(task.deadline).toISOString().slice(0, 10)}
+                className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[13px] outline-none"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-ink-faint">Data de conclusão</label>
+              <input
+                name="completedAt"
+                type="date"
+                defaultValue={task.completedAt ? new Date(task.completedAt).toISOString().slice(0, 10) : ""}
+                className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[13px] outline-none"
+              />
+            </div>
+          </div>
           <textarea
             name="note"
             defaultValue={task.note ?? ""}
@@ -186,6 +199,33 @@ export function PostTaskRow({
           </div>
         </form>
       )}
+
+      <div className="ml-10 mt-2.5 flex flex-col gap-1 border-t border-border pt-2.5">
+        <span className="text-[10.5px] font-medium uppercase tracking-[0.03em] text-ink-faint">
+          Subtarefas ({task.subtasks.length})
+        </span>
+        <div className="flex flex-col">
+          {task.subtasks.map((s) => {
+            const initials = s.assignee.name
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase())
+              .join("");
+            return (
+              <SubtaskRow
+                key={s.id}
+                subtask={s}
+                assigneeName={s.assignee.name}
+                assigneeInitials={initials || "?"}
+                canManage={canManage}
+                members={members}
+              />
+            );
+          })}
+        </div>
+        {canManage && members.length > 0 && <AddSubtaskForm taskId={task.id} members={members} />}
+      </div>
     </div>
   );
 }

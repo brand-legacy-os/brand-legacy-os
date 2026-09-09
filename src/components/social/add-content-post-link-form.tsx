@@ -46,10 +46,11 @@ export function AddContentPostLinkForm({ postId }: { postId: string }) {
       />
       <input
         name="url"
-        required
         placeholder="https://…"
         className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
       />
+      <span className="text-[11px] text-ink-faint">ou envie um arquivo (imagem, PDF ou PPT)</span>
+      <input name="file" type="file" accept="image/*,application/pdf,.ppt,.pptx" className="text-[11.5px]" />
       <div className="flex items-center gap-2.5">
         <button
           type="submit"

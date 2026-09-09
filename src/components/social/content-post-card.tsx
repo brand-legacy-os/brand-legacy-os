@@ -19,7 +19,14 @@ export async function ContentPostCard({ postId }: { postId: string }) {
         profile: true,
         links: { orderBy: { createdAt: "asc" } },
         tasks: {
-          include: { assignee: true, attachments: { orderBy: { createdAt: "asc" } } },
+          include: {
+            assignee: true,
+            attachments: { orderBy: { createdAt: "asc" } },
+            subtasks: {
+              include: { assignee: true, attachments: { orderBy: { createdAt: "asc" } } },
+              orderBy: { deadline: "asc" },
+            },
+          },
           orderBy: { deadline: "asc" },
         },
       },

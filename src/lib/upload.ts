@@ -42,6 +42,8 @@ export const UPLOAD_TYPES = {
   imageOrPdf: /^(image\/|application\/pdf)/,
   spreadsheet: /^(application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|text\/csv)/,
   presentation: /^(application\/pdf|application\/vnd\.ms-powerpoint|application\/vnd\.openxmlformats-officedocument\.presentationml\.presentation)/,
+  /** Imagem, PDF ou PPT — anexo de links/tarefas do calendário de conteúdo. */
+  imagePdfOrPresentation: /^(image\/|application\/pdf|application\/vnd\.ms-powerpoint|application\/vnd\.openxmlformats-officedocument\.presentationml\.presentation)/,
   video: /^video\//,
 };
 
