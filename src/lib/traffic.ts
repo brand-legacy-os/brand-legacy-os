@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { monthKey, periodKeyLabel } from "@/lib/finance";
 import type { TrafficCategory } from "@prisma/client";
 
 /// Única conta do Facebook Ads com investimento real hoje (as outras 4
@@ -124,4 +125,42 @@ export async function loadTrafficLeaderboards(start: Date, end: Date, limit = 5)
     .slice(0, limit);
 
   return { topCampaigns, topAds };
+}
+
+/** CPL e contagem de MQL mês a mês, desde o início do ano corrente — pra
+ * enxergar a evolução ao longo do ano, não só o recorte do período
+ * selecionado no FilterBar. */
+export async function loadTrafficMonthlyTrend() {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+
+  const [campaigns, mqlLeads] = await Promise.all([
+    prisma.trafficCampaignMetric.findMany({
+      where: { date: { gte: yearStart, lte: now } },
+      select: { date: true, spend: true, leads: true },
+    }),
+    prisma.trafficMqlLead.findMany({
+      where: { dateAdded: { gte: yearStart, lte: now } },
+      select: { dateAdded: true },
+    }),
+  ]);
+
+  const months: string[] = [];
+  const cursor = new Date(yearStart);
+  while (cursor <= now) {
+    months.push(monthKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return months.map((mk) => {
+    const inMonth = campaigns.filter((c) => monthKey(c.date) === mk);
+    const spend = inMonth.reduce((s, c) => s + c.spend, 0);
+    const leads = inMonth.reduce((s, c) => s + c.leads, 0);
+    const mqlCount = mqlLeads.filter((m) => monthKey(m.dateAdded) === mk).length;
+    return {
+      label: periodKeyLabel(mk).slice(0, 3),
+      cpl: leads > 0 ? spend / leads : 0,
+      mqlCount,
+    };
+  });
 }

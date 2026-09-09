@@ -3,24 +3,30 @@ import { windsorGet, windsorNumber, windsorText } from "@/lib/windsor";
 import { classifyCampaign, TRAFFIC_FACEBOOK_ACCOUNT_ID, TRAFFIC_GOHIGHLEVEL_ACCOUNT_ID } from "@/lib/traffic";
 import type { TrafficCategory } from "@prisma/client";
 
-/** Puxa campanhas (90d, pra tendência), anúncios/criativos (30d, pra
- * ranking "o que está funcionando agora") e leads com a tag "mql" no
- * GoHighLevel (sem limite de data — são raros) do Windsor.ai. Mesmo
- * mecanismo usado pelo botão "Atualizar" e pelo cron diário das 7h. Não
- * lança: erros viram { error } pro chamador decidir como reportar. */
+/** Puxa campanhas (desde o início do ano corrente, pra tendência mês a mês),
+ * anúncios/criativos (30d, pra ranking "o que está funcionando agora") e
+ * leads com a tag "mql" no GoHighLevel (sem limite de data — são raros) do
+ * Windsor.ai. Mesmo mecanismo usado pelo botão "Atualizar" e pelo cron
+ * diário das 7h. Não lança: erros viram { error } pro chamador decidir como
+ * reportar. */
 export async function refreshTrafficMetrics(): Promise<{
   error?: string;
   campaigns?: number;
   ads?: number;
   mqlLeads?: number;
 }> {
+  const now = new Date();
+  const yearStart = `${now.getFullYear()}-01-01`;
+  const today = now.toISOString().slice(0, 10);
+
   let campaignRows, adRows, mqlRows;
   try {
     [campaignRows, adRows, mqlRows] = await Promise.all([
       windsorGet("facebook", {
         fields: "account_id,account_name,campaign_id,campaign,campaign_objective,date,spend,actions_lead",
         select_accounts: TRAFFIC_FACEBOOK_ACCOUNT_ID,
-        date_preset: "last_90dT",
+        date_from: yearStart,
+        date_to: today,
       }),
       windsorGet("facebook", {
         fields: "account_id,campaign_id,campaign,ad_id,ad_name,date,spend,actions_lead",
