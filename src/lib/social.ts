@@ -74,6 +74,7 @@ export const SOCIAL_REFERENCE_LINKS = {
   materialVisual: "https://drive.google.com/drive/folders/1A8N1YIlUaSq8Y8diIVWF2LnGxRXwIfjl?usp=sharing",
   metricasSpreadsheet: "https://docs.google.com/spreadsheets/d/1E1dkReLqtMm6e_40SsyjzoNsmTdu2xj_avjC6qHy88Y/edit?gid=645714597#gid=645714597",
   agendaAnual: "https://docs.google.com/spreadsheets/d/1synMgfT43M9T93tWx_9HLfmyVido_tTK4PWhFvmAYO8/edit?gid=0#gid=0",
+  driveAlphaville: "https://drive.google.com/drive/folders/10_kXnXxGiviXmS_1IAUJX-Ot5O3D0AR8",
   estilosEdicao: "https://app.notion.com/p/3c09d21c36c680b78406d5332346c11c?v=3c09d21c36c680239ad3000c9c50121d",
   jornalLegado: "https://brandlegacy-journal.vercel.app/",
   ferramentas: [

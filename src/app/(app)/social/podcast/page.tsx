@@ -9,7 +9,7 @@ import { StatTile } from "@/components/dashboard/stat-tile";
 import { CreatePodcastEpisodeForm } from "@/components/social/create-podcast-episode-form";
 import { PodcastEpisodeRow } from "@/components/social/podcast-episode-row";
 import { CalendarMonthNav } from "@/components/social/calendar-month-nav";
-import { PODCAST_STATUS_META } from "@/lib/social";
+import { PODCAST_STATUS_META, SOCIAL_REFERENCE_LINKS } from "@/lib/social";
 import { formatDate } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -75,6 +75,13 @@ export default async function SocialPodcastPage({
           <p className="max-w-[62ch] text-[13px] text-ink-soft">
             Controle de convidados do podcast — grava, edita, agenda, publica.
           </p>
+          <Link
+            href={SOCIAL_REFERENCE_LINKS.driveAlphaville}
+            target="_blank"
+            className="flex w-fit items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11.5px] font-medium text-brand hover:bg-surface-muted"
+          >
+            📁 Drive de Alphaville
+          </Link>
         </div>
         <FilterBar areaOptions={[]} responsibleOptions={[]} />
       </div>
