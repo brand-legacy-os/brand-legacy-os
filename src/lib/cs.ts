@@ -83,12 +83,17 @@ export function computeMrrArr(customers: Pick<Customer, "status" | "mrr">[]) {
   return { mrr, arr: mrr * 12 };
 }
 
-/** ARPU = MRR total ÷ nº de clientes ativos. */
+/** ARPU = MRR total ÷ nº de clientes ativos com MRR informado. MRR só é
+ * preenchido no cadastro/edição manual do mentorado (a importação da
+ * planilha real trouxe contractValue, não MRR) — por isso, se nenhum
+ * ativo tiver MRR informado, retorna null em vez de 0, pra não parecer
+ * que a carteira não gera receita recorrente nenhuma. */
 export function computeArpu(customers: Pick<Customer, "status" | "mrr">[]) {
   const active = customers.filter((c) => c.status === "ativo");
-  if (active.length === 0) return null;
-  const mrr = active.reduce((s, c) => s + (c.mrr ?? 0), 0);
-  return mrr / active.length;
+  const withMrr = active.filter((c) => c.mrr !== null);
+  if (withMrr.length === 0) return null;
+  const mrr = withMrr.reduce((s, c) => s + (c.mrr ?? 0), 0);
+  return mrr / withMrr.length;
 }
 
 /** Ticket médio = valor contratado total ÷ nº de contratos com valor informado. */
