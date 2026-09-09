@@ -7,7 +7,6 @@ import { resolvePeriod, type PeriodKey } from "@/lib/period";
 import { formatCompactCurrency, formatCurrency } from "@/lib/format";
 import { sponsorPaidValue, sponsorshipGoalFor } from "@/lib/sponsors";
 import { FilterBar } from "@/components/dashboard/filter-bar";
-import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { PatrociniosTabs } from "@/components/patrocinios/patrocinios-tabs";
 import { CreateSponsorForm } from "@/components/patrocinios/create-sponsor-form";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -149,27 +148,81 @@ export default async function PatrociniosPage({
             ))}
           </div>
         </div>
-        <GroupedBarChart
-          categories={MONTH_LABELS}
-          series={[
-            { label: "Recebido", values: recebidoPorMes },
-            { label: "Aberto", values: abertoPorMes },
-          ]}
-          formatValue={formatCompactCurrency}
-        />
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-[12.5px]">
+            <thead>
+              <tr className="border-b border-border text-left text-ink-faint">
+                <th className="py-2 pr-3 font-medium">Mês</th>
+                <th className="px-2 py-2 text-right font-medium">Recebido</th>
+                <th className="px-2 py-2 text-right font-medium">Aberto</th>
+                <th className="px-2 py-2 text-right font-medium">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MONTH_LABELS.map((label, i) => (
+                <tr key={label} className="border-b border-border last:border-b-0">
+                  <td className="py-2 pr-3 text-ink">{label}</td>
+                  <td className="tnum px-2 py-2 text-right text-positive">
+                    {recebidoPorMes[i] > 0 ? formatCompactCurrency(recebidoPorMes[i]) : "—"}
+                  </td>
+                  <td className="tnum px-2 py-2 text-right text-ink-soft">
+                    {abertoPorMes[i] > 0 ? formatCompactCurrency(abertoPorMes[i]) : "—"}
+                  </td>
+                  <td className="tnum px-2 py-2 text-right font-medium text-ink">
+                    {recebidoPorMes[i] + abertoPorMes[i] > 0
+                      ? formatCompactCurrency(recebidoPorMes[i] + abertoPorMes[i])
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+              <tr className="border-t-2 border-border font-medium">
+                <td className="py-2 pr-3 text-ink">Total {year}</td>
+                <td className="tnum px-2 py-2 text-right text-positive">
+                  {formatCompactCurrency(recebidoPorMes.reduce((s, v) => s + v, 0))}
+                </td>
+                <td className="tnum px-2 py-2 text-right text-ink-soft">
+                  {formatCompactCurrency(abertoPorMes.reduce((s, v) => s + v, 0))}
+                </td>
+                <td className="tnum px-2 py-2 text-right text-ink">
+                  {formatCompactCurrency(
+                    recebidoPorMes.reduce((s, v) => s + v, 0) + abertoPorMes.reduce((s, v) => s + v, 0)
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
         <h2 className="text-[13px] font-medium text-ink-soft">Patrocínio por imersão — contratado × meta</h2>
         {imersaoChart.length > 0 ? (
-          <GroupedBarChart
-            categories={imersaoChart.map((e) => e.name)}
-            series={[
-              { label: "Contratado", values: imersaoChart.map((e) => e.contratado) },
-              { label: "Meta", values: imersaoChart.map((e) => e.meta) },
-            ]}
-            formatValue={formatCompactCurrency}
-          />
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
+              <thead>
+                <tr className="border-b border-border text-left text-ink-faint">
+                  <th className="py-2 pr-3 font-medium">Imersão</th>
+                  <th className="px-2 py-2 text-right font-medium">Contratado</th>
+                  <th className="px-2 py-2 text-right font-medium">Meta</th>
+                  <th className="px-2 py-2 text-right font-medium">% da meta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {imersaoChart.map((e) => (
+                  <tr key={e.name} className="border-b border-border last:border-b-0">
+                    <td className="py-2 pr-3 text-ink">{e.name}</td>
+                    <td className="tnum px-2 py-2 text-right text-ink">{formatCompactCurrency(e.contratado)}</td>
+                    <td className="tnum px-2 py-2 text-right text-ink-soft">
+                      {e.meta > 0 ? formatCompactCurrency(e.meta) : "—"}
+                    </td>
+                    <td className="tnum px-2 py-2 text-right font-medium text-ink">
+                      {e.meta > 0 ? `${((e.contratado / e.meta) * 100).toFixed(0)}%` : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p className="text-[12.5px] text-ink-faint">Nenhuma Imersão cadastrada ainda.</p>
         )}
