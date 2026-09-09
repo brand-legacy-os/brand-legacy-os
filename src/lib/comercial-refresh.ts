@@ -140,7 +140,7 @@ export async function refreshComercialMetrics(): Promise<{
         pipelineName,
         stageId,
         stageName: stageNameById.get(stageId) ?? null,
-        channel: classifyChannel(pipelineName, contactTags, source),
+        channel: classifyChannel(pipelineName, contactTags, source, name),
         product: parseProduct(name, pipelineName),
         assignedToEmail: assignedToId ? emailByUserId.get(assignedToId) ?? null : null,
         createdAt: createdAtRaw ? new Date(createdAtRaw) : null,

@@ -27,7 +27,21 @@ export const LEAD_CHANNEL_META: Record<LeadChannel, { label: string }> = {
  * já ter saído do pipeline de Recuperação/Reativação SDR. Pipeline continua
  * sendo o critério de desempate pros demais canais.
  */
-export function classifyChannel(pipelineName: string, contactTags?: string, source?: string): LeadChannel {
+/** Nome de oportunidade de teste/debug (ex.: "TESTE IFRAME", "ZZ APAGAR
+ * DEPOIS") — confirmado nos dados reais que essas oportunidades poluem a
+ * contagem de Social Selling (tag "socialmedia" usada em teste de
+ * integração). Vão para "outros" em vez de contar em qualquer canal real. */
+export function isTestLikeOpportunityName(name: string) {
+  return /teste|apagar|^zz /i.test(name);
+}
+
+export function classifyChannel(
+  pipelineName: string,
+  contactTags?: string,
+  source?: string,
+  name?: string
+): LeadChannel {
+  if (name && isTestLikeOpportunityName(name)) return "outros";
   const tags = (contactTags ?? "").toLowerCase();
   const src = (source ?? "").toLowerCase();
   // "SS novo seguidor" (opportunity_source) é outro sinal real de Social
@@ -381,11 +395,23 @@ export async function loadChannelBreakdown(channel: LeadChannel, start: Date, en
     wonCount: wonInPeriod.length,
     revenue: wonInPeriod.reduce((s, r) => s + r.monetaryValue, 0),
     conversionRate: inPeriod.length > 0 ? (wonInPeriod.length / inPeriod.length) * 100 : null,
-    byProduct: COMERCIAL_PRODUCTS.map((p) => ({
-      product: p,
-      leads: inPeriod.filter((r) => r.product === p).length,
-      revenue: wonInPeriod.filter((r) => r.product === p).reduce((s, r) => s + r.monetaryValue, 0),
-    })),
+    // "Sem produto identificado" cobre oportunidades sem o sufixo de produto
+    // no nome (comum em Social Selling/SDR, onde o negócio não nasce com
+    // "- CLUB"/"- TRAÇÃO" no título) — sem essa linha, a receita desses
+    // negócios ganhos simplesmente desaparecia da quebra por produto,
+    // parecendo que não houve venda nenhuma.
+    byProduct: [
+      ...COMERCIAL_PRODUCTS.map((p) => ({
+        product: p as string,
+        leads: inPeriod.filter((r) => r.product === p).length,
+        revenue: wonInPeriod.filter((r) => r.product === p).reduce((s, r) => s + r.monetaryValue, 0),
+      })),
+      {
+        product: "Sem produto identificado",
+        leads: inPeriod.filter((r) => r.product === null).length,
+        revenue: wonInPeriod.filter((r) => r.product === null).reduce((s, r) => s + r.monetaryValue, 0),
+      },
+    ],
     byVendor: byVendor.sort((a, b) => b.revenue - a.revenue),
   };
 }
