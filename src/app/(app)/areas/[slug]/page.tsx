@@ -25,6 +25,7 @@ import {
   loadComercialMonthlyTrend,
   loadMeetingsInPeriod,
   loadSponsorshipsClosedInPeriod,
+  loadChannelBreakdown,
 } from "@/lib/comercial";
 
 const AREA_CULTURE: Record<string, { title: string; subtitle: string }> = {
@@ -100,18 +101,29 @@ export default async function AreaPage({
       ? await (async () => {
           const now = new Date();
           const yearStart = new Date(now.getFullYear(), 0, 1);
-          const [wonInPeriod, allInPeriod, monthlyTrend, meetingsInPeriod, yearWon, lastFetched, sponsorships] =
-            await Promise.all([
-              loadOpportunitiesWonInPeriod(period.start, period.end),
-              loadOpportunitiesInPeriod(period.start, period.end),
-              loadComercialMonthlyTrend(),
-              loadMeetingsInPeriod(period.start, period.end),
-              prisma.ghlOpportunity.findMany({ where: { status: "won" } }).then((rows) =>
-                rows.filter((r) => (r.wonAt ?? r.createdAt) >= yearStart && (r.wonAt ?? r.createdAt) <= now)
-              ),
-              prisma.ghlOpportunity.findFirst({ orderBy: { fetchedAt: "desc" }, select: { fetchedAt: true } }),
-              loadSponsorshipsClosedInPeriod(period.start, period.end),
-            ]);
+          const [
+            wonInPeriod,
+            allInPeriod,
+            monthlyTrend,
+            meetingsInPeriod,
+            yearWon,
+            lastFetched,
+            sponsorships,
+            socialSelling,
+            sdr,
+          ] = await Promise.all([
+            loadOpportunitiesWonInPeriod(period.start, period.end),
+            loadOpportunitiesInPeriod(period.start, period.end),
+            loadComercialMonthlyTrend(),
+            loadMeetingsInPeriod(period.start, period.end),
+            prisma.ghlOpportunity.findMany({ where: { status: "won" } }).then((rows) =>
+              rows.filter((r) => (r.wonAt ?? r.createdAt) >= yearStart && (r.wonAt ?? r.createdAt) <= now)
+            ),
+            prisma.ghlOpportunity.findFirst({ orderBy: { fetchedAt: "desc" }, select: { fetchedAt: true } }),
+            loadSponsorshipsClosedInPeriod(period.start, period.end),
+            loadChannelBreakdown("social_selling", period.start, period.end),
+            loadChannelBreakdown("sdr", period.start, period.end),
+          ]);
 
           const emailToName = new Map(area.memberships.map((m) => [m.user.email, m.user.name]));
           const closerEmails = new Set<string>();
@@ -133,6 +145,8 @@ export default async function AreaPage({
             closers,
             lastFetched: lastFetched?.fetchedAt ?? null,
             sponsorships,
+            socialSelling,
+            sdr,
           };
         })()
       : null;
@@ -294,6 +308,8 @@ export default async function AreaPage({
             monthlyTrend={comercialData.monthlyTrend}
             meetingsInPeriod={comercialData.meetingsInPeriod}
             sponsorships={comercialData.sponsorships}
+            socialSelling={comercialData.socialSelling}
+            sdr={comercialData.sdr}
           />
         </>
       )}

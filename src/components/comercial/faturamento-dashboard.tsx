@@ -11,6 +11,7 @@ import {
   countWon,
   type OpportunityRow,
   type MeetingRow,
+  type loadChannelBreakdown,
 } from "@/lib/comercial";
 
 export function FaturamentoDashboard({
@@ -20,6 +21,8 @@ export function FaturamentoDashboard({
   monthlyTrend,
   meetingsInPeriod,
   sponsorships,
+  socialSelling,
+  sdr,
 }: {
   periodLabel: string;
   wonInPeriod: OpportunityRow[];
@@ -27,6 +30,8 @@ export function FaturamentoDashboard({
   monthlyTrend: Awaited<ReturnType<typeof import("@/lib/comercial").loadComercialMonthlyTrend>>;
   meetingsInPeriod: MeetingRow[];
   sponsorships: { count: number; revenue: number };
+  socialSelling: Awaited<ReturnType<typeof loadChannelBreakdown>>;
+  sdr: Awaited<ReturnType<typeof loadChannelBreakdown>>;
 }) {
   const crmRevenue = sumWonRevenue(wonInPeriod);
   const revenueThisPeriod = crmRevenue + sponsorships.revenue;
@@ -154,6 +159,42 @@ export function FaturamentoDashboard({
             <span className="tnum text-[13px] font-medium text-gold-ink">
               {formatCompactCurrency(revenueThisPeriod)} · tíquete {formatCompactCurrency(avgTicketThisPeriod)}
             </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">
+              Por canal (Social Selling / SDR)
+            </h4>
+            <span className="text-[11px] text-ink-faint">já incluso no total acima, por produto</span>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">Social Selling</span>
+                <Link href="/social/crm" className="text-[11px] font-medium text-brand hover:underline">
+                  Ver em Social →
+                </Link>
+              </div>
+              <span className="tnum text-[13px] text-ink">
+                {socialSelling.leadCount} lead{socialSelling.leadCount === 1 ? "" : "s"} · {socialSelling.wonCount} venda
+                {socialSelling.wonCount === 1 ? "" : "s"}
+              </span>
+              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(socialSelling.revenue)}</span>
+            </div>
+            <div className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">SDR</span>
+                <Link href="/sdr" className="text-[11px] font-medium text-brand hover:underline">
+                  Ver em SDR →
+                </Link>
+              </div>
+              <span className="tnum text-[13px] text-ink">
+                {sdr.leadCount} lead{sdr.leadCount === 1 ? "" : "s"} · {sdr.wonCount} venda{sdr.wonCount === 1 ? "" : "s"}
+              </span>
+              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(sdr.revenue)}</span>
+            </div>
           </div>
         </div>
       </div>
