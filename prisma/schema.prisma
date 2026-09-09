@@ -1670,6 +1670,78 @@ model PerformanceMetric {
   @@index([sectionId])
 }
 
+// ---------------------------------------------------------------------------
+// Tráfego — dados reais puxados do Windsor.ai (Facebook Ads + GoHighLevel).
+// Não tem Area própria (Tráfego vive junto do Comercial, ver nav.ts) — a
+// permissão de leitura/edição reaproveita canViewArea/canEditAreaKpis(user,
+// "comercial"). Uma linha por dia x campanha (ou dia x anúncio); agregação
+// por período é feita em memória na hora de renderizar, nunca pré-calculada.
+// ---------------------------------------------------------------------------
+
+/// Categoria de investimento, derivada automaticamente do nome/objetivo da
+/// campanha no Facebook (ver lib/traffic.ts classifyCampaign) — pode ser
+/// sobrescrita campanha a campanha via TrafficCampaignCategoryOverride.
+enum TrafficCategory {
+  aquisicao
+  eventos
+  distribuicao
+}
+
+model TrafficCampaignMetric {
+  id             String          @id @default(cuid())
+  date           DateTime
+  accountId      String
+  accountName    String
+  campaignId     String
+  campaignName   String
+  objective      String?
+  category       TrafficCategory
+  spend          Float
+  leads          Float
+  fetchedAt      DateTime        @default(now())
+
+  @@unique([campaignId, date])
+  @@index([date])
+  @@index([category])
+}
+
+/// Override manual de categoria por campanha — checado antes da
+/// classificação automática a cada "Atualizar".
+model TrafficCampaignCategoryOverride {
+  campaignId String          @id
+  category   TrafficCategory
+}
+
+model TrafficAdMetric {
+  id           String   @id @default(cuid())
+  date         DateTime
+  accountId    String
+  campaignId   String
+  campaignName String
+  adId         String
+  adName       String
+  spend        Float
+  leads        Float
+  fetchedAt    DateTime @default(now())
+
+  @@unique([adId, date])
+  @@index([date])
+}
+
+/// Um contato do GoHighLevel com a tag "mql" — validado manualmente pelo
+/// time Comercial (não há atribuição de campanha confiável hoje, ver
+/// discussão na sessão que criou este modelo). dateAdded é a data de
+/// criação do contato no CRM, usada para filtrar por período.
+model TrafficMqlLead {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  contactName String?
+  dateAdded  DateTime
+  fetchedAt  DateTime @default(now())
+
+  @@index([dateAdded])
+}
+
 /// Histórico real de patrocínios (planilha do time) — cada linha é uma
 /// competência mensal de um contrato de patrocínio. eventId é opcional:
 /// só é preenchido quando dá para casar com segurança a um Event real

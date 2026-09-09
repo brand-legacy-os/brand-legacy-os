@@ -14,6 +14,8 @@ import { TaskRow } from "@/components/area/task-row";
 import { CreateTaskForm } from "@/components/area/create-task-form";
 import { CreateProjectForm } from "@/components/area/create-project-form";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
+import { TrafficStatGroup } from "@/components/traffic/traffic-stat-group";
+import { summarizeTraffic, campaignsByCategory, loadTrafficPeriodData, prorateMql, TRAFFIC_CATEGORY_META } from "@/lib/traffic";
 
 const AREA_CULTURE: Record<string, { title: string; subtitle: string }> = {
   operacoes: {
@@ -95,6 +97,23 @@ export default async function AreaPage({
           where: { name: "Resumo Geral" },
           include: { metrics: true },
         })
+      : null;
+
+  // Investimento em Captação de Leads para Eventos e em Distribuição de
+  // Conteúdo — as outras duas categorias do Windsor.ai além de Aquisição,
+  // que fica em Tráfego (ver src/lib/traffic.ts).
+  const trafficByCategory =
+    slug === "comercial"
+      ? await (async () => {
+          const { campaigns, mqlCount } = await loadTrafficPeriodData(period.start, period.end);
+          const totalSpend = campaigns.reduce((s, c) => s + c.spend, 0);
+          const build = (category: "eventos" | "distribuicao") => {
+            const rows = campaignsByCategory(campaigns, category);
+            const spend = rows.reduce((s, r) => s + r.spend, 0);
+            return summarizeTraffic(rows, prorateMql(mqlCount, spend, totalSpend));
+          };
+          return { eventos: build("eventos"), distribuicao: build("distribuicao") };
+        })()
       : null;
 
   const recentEntries = area.kpis
@@ -239,6 +258,23 @@ export default async function AreaPage({
             ))}
           </div>
         </section>
+      )}
+
+      {trafficByCategory && (
+        <>
+          <TrafficStatGroup
+            title={TRAFFIC_CATEGORY_META.eventos.label}
+            description={`Campanhas de Imersão · ${period.label.toLowerCase()} · direto do Facebook Ads (Windsor.ai).`}
+            summary={trafficByCategory.eventos}
+            mqlIsEstimate
+          />
+          <TrafficStatGroup
+            title={TRAFFIC_CATEGORY_META.distribuicao.label}
+            description={`Posts impulsionados · ${period.label.toLowerCase()} · direto do Facebook Ads (Windsor.ai).`}
+            summary={trafficByCategory.distribuicao}
+            mqlIsEstimate
+          />
+        </>
       )}
 
       {closerSections.length > 0 && (
