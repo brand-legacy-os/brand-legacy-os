@@ -363,7 +363,7 @@ export default async function AreaPage({
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div id="tarefas" className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_0.85fr] scroll-mt-20">
         <section className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-ink-soft">
             Tarefas ({area.tasks.length})

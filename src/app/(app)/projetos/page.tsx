@@ -69,6 +69,42 @@ export default async function ProjetosDashboardPage() {
   const deadlinesByArea = groupByArea(upcomingDeadlines);
   const staleByArea = groupByArea(staleProjects);
 
+  // Clientes sem atualização — carteira ativa (inclui em risco/pausado, não
+  // cancelado) sem contato registrado há mais de 5 dias e/ou sem nenhuma
+  // interação lançada ainda. Mesmo limiar de 5 dias já usado pra projetos
+  // parados nesta página, pra manter o critério consistente.
+  const canSeeCsSection = visible === "all" || visible.includes("cs");
+  const staleCustomers = canSeeCsSection
+    ? await prisma.customer
+        .findMany({
+          where: { status: { in: ["ativo", "em_risco", "pausado"] } },
+          include: { cs: true, _count: { select: { interactions: true } } },
+        })
+        .then((rows) =>
+          rows
+            .filter((c) => c._count.interactions === 0 || !c.lastContactAt || c.lastContactAt < staleThreshold)
+            .sort((a, b) => (a.lastContactAt?.getTime() ?? 0) - (b.lastContactAt?.getTime() ?? 0))
+        )
+    : [];
+  const staleCustomersByCs = (() => {
+    const map = new Map<string, { csName: string; items: typeof staleCustomers }>();
+    for (const c of staleCustomers) {
+      const entry = map.get(c.csId) ?? { csName: c.cs.name, items: [] };
+      entry.items.push(c);
+      map.set(c.csId, entry);
+    }
+    return [...map.entries()];
+  })();
+
+  // Áreas com módulo próprio têm sua própria página de tarefas; as demais
+  // usam a seção "Tarefas" embutida na página genérica da área (com âncora,
+  // pra já abrir direto nela em vez do topo da página).
+  function areaTasksHref(slug: string) {
+    if (slug === "social") return "/social/tarefas";
+    if (slug === "cs") return "/cs/tarefas";
+    return `/areas/${slug}#tarefas`;
+  }
+
   return (
     <>
       <CultureBanner
@@ -104,7 +140,7 @@ export default async function ProjetosDashboardPage() {
             {areaStats.map((a) => (
               <Link
                 key={a.slug}
-                href={`/areas/${a.slug}`}
+                href={areaTasksHref(a.slug)}
                 className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 hover:bg-surface-muted"
               >
                 <span className="text-[13px] text-ink">{a.name}</span>
@@ -148,7 +184,7 @@ export default async function ProjetosDashboardPage() {
                 {items.map((t) => (
                   <Link
                     key={t.id}
-                    href={`/areas/${t.areaSlug}`}
+                    href={areaTasksHref(t.areaSlug)}
                     className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 hover:bg-surface-muted"
                   >
                     <div className="flex flex-col">
@@ -205,6 +241,44 @@ export default async function ProjetosDashboardPage() {
           </div>
         </section>
       </div>
+
+      {canSeeCsSection && (
+        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-[13px] font-medium text-ink-soft">
+              Clientes sem atualização ({staleCustomers.length})
+            </h2>
+            <p className="text-[11.5px] text-ink-faint">
+              Carteira ativa sem contato há mais de 5 dias e/ou sem nenhuma interação registrada ainda.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            {staleCustomersByCs.map(([csId, { csName, items }]) => (
+              <div key={csId} className="flex flex-col">
+                <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">{csName}</span>
+                {items.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/cs/mentorados/${c.id}`}
+                    className="flex items-center justify-between gap-3 border-t border-border py-2.5 first:border-t-0 hover:bg-surface-muted"
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-[13px] text-ink">{c.name}</span>
+                      <span className="text-[11.5px] text-ink-faint">{c.company ?? "—"}</span>
+                    </div>
+                    <span className="tnum text-[12.5px] text-critical">
+                      {c.lastContactAt ? `desde ${formatDate(c.lastContactAt)}` : "nunca contatado"}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ))}
+            {staleCustomers.length === 0 && (
+              <p className="py-3 text-[13px] text-ink-faint">Toda a carteira ativa está com contato em dia.</p>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
