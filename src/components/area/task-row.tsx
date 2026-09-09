@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { updateTaskAction, type ActionState } from "@/lib/actions/tasks";
+import { DeleteTaskButton } from "@/components/workflow/delete-task-button";
 import { StatusPill, taskStatusTone } from "@/components/ui/status-pill";
 import { TASK_STATUS_META, formatDate } from "@/lib/format";
 import type { TaskStatus } from "@prisma/client";
@@ -131,6 +132,7 @@ export function TaskRow({
             >
               {pending ? "Salvando…" : "Salvar"}
             </button>
+            <DeleteTaskButton taskId={task.id} />
             {state.error && (
               <span className="text-[12px] text-critical">{state.error}</span>
             )}
