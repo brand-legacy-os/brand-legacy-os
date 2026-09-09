@@ -55,15 +55,19 @@ export function ComercialDetailSection({
 
   return (
     <section className="flex flex-col gap-5">
-      <h2 className="text-[13px] font-medium text-ink-soft">Comercial · {periodLabel.toLowerCase()}</h2>
+      <h2 className="text-[13px] font-medium text-ink-soft">Comercial</h2>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <StatTile label="Número de vendas do mês" value={vendasDoMes.toLocaleString("pt-BR")} />
-        <StatTile label="Faturamento total do mês" value={formatCompactCurrency(faturamentoDoMes)} />
+        <StatTile label="Número de vendas do mês (calendário atual)" value={vendasDoMes.toLocaleString("pt-BR")} />
+        <StatTile label="Faturamento total do mês (calendário atual)" value={formatCompactCurrency(faturamentoDoMes)} />
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">Vendas mês a mês</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Vendas mês a mês (ano corrente completo, Jan–{monthlyTrend[monthlyTrend.length - 1]?.label ?? ""})</h3>
+        <p className="text-[11.5px] text-ink-faint">
+          Histórico completo do ano — não muda com o filtro de período acima. Inclui Patrocínios; o total de
+          setembro aqui bate com &quot;Número de vendas do mês&quot; acima.
+        </p>
         <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
           <table className="w-full min-w-[700px] border-collapse text-[12px]">
             <thead>
@@ -81,7 +85,7 @@ export function ComercialDetailSection({
                 <td className="py-2 pl-3 pr-3 text-ink">Vendas (qtd.)</td>
                 {monthlyTrend.map((m) => (
                   <td key={m.monthKey} className="tnum px-2 py-2 text-right text-ink-soft">
-                    {m.count}
+                    {m.count + (sponsorshipsMonthly.find((s) => s.monthKey === m.monthKey)?.count ?? 0)}
                   </td>
                 ))}
               </tr>
@@ -89,7 +93,9 @@ export function ComercialDetailSection({
                 <td className="py-2 pl-3 pr-3 text-ink">Faturamento</td>
                 {monthlyTrend.map((m) => (
                   <td key={m.monthKey} className="tnum px-2 py-2 text-right text-ink-soft">
-                    {formatCompactCurrency(m.revenue)}
+                    {formatCompactCurrency(
+                      m.revenue + (sponsorshipsMonthly.find((s) => s.monthKey === m.monthKey)?.revenue ?? 0)
+                    )}
                   </td>
                 ))}
               </tr>
@@ -99,7 +105,7 @@ export function ComercialDetailSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">Vendas mês a mês por produto (qtd.)</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Vendas mês a mês por produto (qtd.) — ano corrente completo</h3>
         <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
           <table className="w-full min-w-[820px] border-collapse text-[12px]">
             <thead>
@@ -129,7 +135,7 @@ export function ComercialDetailSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">Faturamento mês a mês por produto</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Faturamento mês a mês por produto — ano corrente completo</h3>
         <div className="overflow-x-auto rounded-(--radius-l) border border-border bg-surface">
           <table className="w-full min-w-[820px] border-collapse text-[12px]">
             <thead>
@@ -162,7 +168,7 @@ export function ComercialDetailSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">Clientes que compraram cada produto</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Clientes que compraram cada produto (histórico completo)</h3>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {customersByProduct.map((p) => (
             <div key={p.product} className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
@@ -187,7 +193,7 @@ export function ComercialDetailSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">Pipeline em negociação</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">Pipeline em negociação (estado atual — não muda com o filtro)</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <StatTile label="Pipeline total (aberto)" value={formatCompactCurrency(pipeline.total)} />
           <StatTile label="Oportunidades em aberto" value={pipeline.count.toLocaleString("pt-BR")} />
@@ -222,7 +228,7 @@ export function ComercialDetailSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="text-[12px] font-medium text-ink-soft">KPIs por closer</h3>
+        <h3 className="text-[12px] font-medium text-ink-soft">KPIs por closer · {periodLabel.toLowerCase()}</h3>
         <ClosersTable closers={closers} />
       </div>
 
