@@ -502,3 +502,51 @@ export async function createCsActionAction(
   revalidatePath("/cs/calendario");
   return { success: true };
 }
+
+export async function updateCsActionAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!isAdmin(user) && !canEditAreaKpis(user, "cs")) {
+    return { error: "Sem permissão." };
+  }
+
+  const actionId = String(formData.get("actionId") ?? "");
+  if (!actionId) return { error: "Ação não encontrada." };
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const location = String(formData.get("location") ?? "").trim() || null;
+  const link = String(formData.get("link") ?? "").trim() || null;
+  const materialsUrl = String(formData.get("materialsUrl") ?? "").trim() || null;
+  const dateRaw = String(formData.get("date") ?? "");
+
+  if (!title || !dateRaw) return { error: "Preencha o que será feito e a data." };
+
+  await prisma.csAction.update({
+    where: { id: actionId },
+    data: {
+      title,
+      description,
+      location,
+      link,
+      materialsUrl,
+      date: new Date(`${dateRaw}T12:00:00`),
+    },
+  });
+
+  revalidatePath("/cs/calendario");
+  return { success: true };
+}
+
+export async function deleteCsActionAction(formData: FormData) {
+  const user = await requireUser();
+  if (!isAdmin(user) && !canEditAreaKpis(user, "cs")) return;
+
+  const actionId = String(formData.get("actionId") ?? "");
+  if (!actionId) return;
+
+  await prisma.csAction.delete({ where: { id: actionId } });
+  revalidatePath("/cs/calendario");
+}

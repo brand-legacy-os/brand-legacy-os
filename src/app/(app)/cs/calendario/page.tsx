@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { canViewCsDepartment, canEditAreaKpis, isAdmin } from "@/lib/permissions";
 import { CsTabs } from "@/components/cs/cs-tabs";
 import { CreateCsActionForm } from "@/components/cs/create-cs-action-form";
+import { CsActionRow } from "@/components/cs/cs-action-row";
 import { MONTH_LABELS } from "@/lib/finance";
 import { formatDate } from "@/lib/format";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -199,18 +200,7 @@ export default async function CsCalendarioPage({
         </div>
         <div className="flex flex-col gap-2">
           {csActions.map((a) => (
-            <div key={a.id} className="rounded-(--radius-l) border border-border bg-surface p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-medium text-ink">{a.title}</span>
-                <span className="text-[11.5px] text-ink-faint">{formatDate(a.date)} · {a.createdBy.name}</span>
-              </div>
-              {a.description && <p className="mt-1 text-[12.5px] text-ink-soft">{a.description}</p>}
-              <div className="mt-2 flex flex-wrap gap-3 text-[12px]">
-                {a.location && <span className="text-ink-faint">📍 {a.location}</span>}
-                {a.link && <a href={a.link} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">Link →</a>}
-                {a.materialsUrl && <a href={a.materialsUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-brand hover:underline">Materiais →</a>}
-              </div>
-            </div>
+            <CsActionRow key={a.id} action={a} createdByName={a.createdBy.name} canManage={canManageActions} />
           ))}
           {csActions.length === 0 && (
             <p className="rounded-(--radius-l) border border-dashed border-border p-6 text-center text-[13px] text-ink-faint">
