@@ -1,0 +1,162 @@
+import Link from "next/link";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { TrendChart } from "@/components/finance/trend-chart";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { formatCompactCurrency } from "@/lib/format";
+import {
+  COMERCIAL_PRODUCTS,
+  productSummary,
+  weeklyMeetings,
+  sumWonRevenue,
+  countWon,
+  type OpportunityRow,
+  type MeetingRow,
+} from "@/lib/comercial";
+
+export function FaturamentoDashboard({
+  periodLabel,
+  wonInPeriod,
+  yearRevenue,
+  monthlyTrend,
+  meetingsInPeriod,
+  sponsorships,
+}: {
+  periodLabel: string;
+  wonInPeriod: OpportunityRow[];
+  yearRevenue: number;
+  monthlyTrend: Awaited<ReturnType<typeof import("@/lib/comercial").loadComercialMonthlyTrend>>;
+  meetingsInPeriod: MeetingRow[];
+  sponsorships: { count: number; revenue: number };
+}) {
+  const crmRevenue = sumWonRevenue(wonInPeriod);
+  const revenueThisPeriod = crmRevenue + sponsorships.revenue;
+  const dealsThisPeriod = countWon(wonInPeriod) + sponsorships.count;
+  const avgTicketThisPeriod = dealsThisPeriod > 0 ? revenueThisPeriod / dealsThisPeriod : 0;
+  const products = productSummary(wonInPeriod);
+  const weeks = weeklyMeetings(meetingsInPeriod);
+  const realizedThisPeriod = meetingsInPeriod.filter((m) => m.status === "active" && !m.noShow).length;
+
+  const pieData = products.filter((p) => p.revenue > 0).map((p) => ({ label: p.product, value: p.revenue }));
+
+  return (
+    <section className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[13px] font-medium text-ink-soft">Faturamento · {periodLabel.toLowerCase()}</h2>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Faturamento anual (ano corrente)" value={formatCompactCurrency(yearRevenue)} />
+        <StatTile label="Faturamento no período" value={formatCompactCurrency(revenueThisPeriod)} />
+        <StatTile label="Ticket médio no período" value={formatCompactCurrency(avgTicketThisPeriod)} />
+        <StatTile label="Reuniões realizadas no período" value={String(realizedThisPeriod)} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Faturamento mês a mês ({new Date().getFullYear()})</h3>
+          <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.revenue }))} formatValue={formatCompactCurrency} />
+        </div>
+        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Ticket médio mês a mês ({new Date().getFullYear()})</h3>
+          <TrendChart points={monthlyTrend.map((m) => ({ label: m.label, value: m.avgTicket }))} formatValue={formatCompactCurrency} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Vendas por produto no período</h3>
+          <DonutChart
+            data={pieData}
+            formatValue={formatCompactCurrency}
+            centerLabel="faturado"
+            centerAsCurrency
+            emptyMessage="Nenhuma venda com produto identificado no período."
+            ariaLabel="Faturamento por produto"
+          />
+        </div>
+        <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+          <h3 className="text-[12px] font-medium text-ink-soft">Reuniões por semana no período</h3>
+          {weeks.length === 0 ? (
+            <p className="py-4 text-[12.5px] text-ink-faint">Nenhuma reunião no período.</p>
+          ) : (
+            <div className="flex flex-col">
+              {weeks.map(([week, w]) => (
+                <div key={week} className="flex items-center justify-between border-t border-border py-2 text-[12.5px] first:border-t-0">
+                  <span className="text-ink">Semana {week}</span>
+                  <span className="tnum text-ink-soft">
+                    {w.realized} realizadas / {w.scheduled} agendadas
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <h3 className="text-[12px] font-medium text-ink-soft">Faturamento por produto — mês a mês ({new Date().getFullYear()})</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-[12px]">
+            <thead>
+              <tr className="border-b border-border text-left text-ink-faint">
+                <th className="py-2 pr-3 font-medium">Produto</th>
+                {monthlyTrend.map((m, i) => (
+                  <th key={i} className="px-2 py-2 text-right font-medium">
+                    {m.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMERCIAL_PRODUCTS.map((product) => (
+                <tr key={product} className="border-b border-border last:border-b-0">
+                  <td className="py-2 pr-3 text-ink">{product}</td>
+                  {monthlyTrend.map((m, i) => {
+                    const v = m.byProduct.find((b) => b.product === product)?.revenue ?? 0;
+                    return (
+                      <td key={i} className="tnum px-2 py-2 text-right text-ink-soft">
+                        {v > 0 ? formatCompactCurrency(v) : "—"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[12px] font-medium text-ink-soft">Quadro resumo · {periodLabel.toLowerCase()}</h3>
+          <Link href="/patrocinios" className="text-[11.5px] font-medium text-brand hover:underline">
+            Ver detalhado em Patrocínios →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {products.map((p) => (
+            <div key={p.product} className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+              <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">{p.product}</span>
+              <span className="tnum text-[13px] text-ink">{p.count} venda{p.count === 1 ? "" : "s"}</span>
+              <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(p.revenue)}</span>
+            </div>
+          ))}
+          <div className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+            <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-ink-faint">Patrocínios</span>
+            <span className="tnum text-[13px] text-ink">
+              {sponsorships.count} fechado{sponsorships.count === 1 ? "" : "s"}
+            </span>
+            <span className="tnum text-[13px] font-medium text-ink">{formatCompactCurrency(sponsorships.revenue)}</span>
+          </div>
+          <div className="flex flex-col gap-2 rounded-(--radius-s) bg-gold-tint p-3">
+            <span className="text-[11px] font-medium uppercase tracking-[0.03em] text-gold-ink">Total do período</span>
+            <span className="tnum text-[13px] text-gold-ink">{dealsThisPeriod} fechamentos</span>
+            <span className="tnum text-[13px] font-medium text-gold-ink">
+              {formatCompactCurrency(revenueThisPeriod)} · tíquete {formatCompactCurrency(avgTicketThisPeriod)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

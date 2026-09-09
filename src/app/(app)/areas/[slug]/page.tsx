@@ -16,6 +16,16 @@ import { CreateProjectForm } from "@/components/area/create-project-form";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 import { TrafficStatGroup } from "@/components/traffic/traffic-stat-group";
 import { summarizeTraffic, campaignsByCategory, loadTrafficPeriodData, prorateMql, TRAFFIC_CATEGORY_META } from "@/lib/traffic";
+import { ComercialRefreshButton } from "@/components/comercial/comercial-refresh-button";
+import { FaturamentoDashboard } from "@/components/comercial/faturamento-dashboard";
+import { CloserBreakdown } from "@/components/comercial/closer-breakdown";
+import {
+  loadOpportunitiesWonInPeriod,
+  loadOpportunitiesInPeriod,
+  loadComercialMonthlyTrend,
+  loadMeetingsInPeriod,
+  loadSponsorshipsClosedInPeriod,
+} from "@/lib/comercial";
 
 const AREA_CULTURE: Record<string, { title: string; subtitle: string }> = {
   operacoes: {
@@ -83,20 +93,48 @@ export default async function AreaPage({
       ? computeOperationsStats(await prisma.task.findMany(), period)
       : null;
 
-  const closerSections =
+  // Faturamento/pipeline/reuniões reais (GoHighLevel + Calendly) — substitui
+  // os antigos closerSections/resumoGeral da planilha estática.
+  const comercialData =
     slug === "comercial"
-      ? await prisma.performanceSection.findMany({
-          where: { name: { contains: "CLOSER" } },
-          include: { metrics: true },
-          orderBy: { order: "asc" },
-        })
-      : [];
-  const resumoGeral =
-    slug === "comercial"
-      ? await prisma.performanceSection.findFirst({
-          where: { name: "Resumo Geral" },
-          include: { metrics: true },
-        })
+      ? await (async () => {
+          const now = new Date();
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          const [wonInPeriod, allInPeriod, monthlyTrend, meetingsInPeriod, yearWon, lastFetched, sponsorships] =
+            await Promise.all([
+              loadOpportunitiesWonInPeriod(period.start, period.end),
+              loadOpportunitiesInPeriod(period.start, period.end),
+              loadComercialMonthlyTrend(),
+              loadMeetingsInPeriod(period.start, period.end),
+              prisma.ghlOpportunity.findMany({ where: { status: "won" } }).then((rows) =>
+                rows.filter((r) => (r.wonAt ?? r.createdAt) >= yearStart && (r.wonAt ?? r.createdAt) <= now)
+              ),
+              prisma.ghlOpportunity.findFirst({ orderBy: { fetchedAt: "desc" }, select: { fetchedAt: true } }),
+              loadSponsorshipsClosedInPeriod(period.start, period.end),
+            ]);
+
+          const emailToName = new Map(area.memberships.map((m) => [m.user.email, m.user.name]));
+          const closerEmails = new Set<string>();
+          for (const o of allInPeriod) if (o.assignedToEmail) closerEmails.add(o.assignedToEmail);
+          for (const m of meetingsInPeriod) if (m.assigneeEmail) closerEmails.add(m.assigneeEmail);
+
+          const closers = [...closerEmails].map((email) => ({
+            email,
+            name: emailToName.get(email) ?? email,
+            opportunities: allInPeriod.filter((o) => o.assignedToEmail === email),
+            meetings: meetingsInPeriod.filter((m) => m.assigneeEmail === email),
+          }));
+
+          return {
+            wonInPeriod,
+            yearRevenue: yearWon.reduce((s, r) => s + r.monetaryValue, 0),
+            monthlyTrend,
+            meetingsInPeriod,
+            closers,
+            lastFetched: lastFetched?.fetchedAt ?? null,
+            sponsorships,
+          };
+        })()
       : null;
 
   // Investimento em Captação de Leads para Eventos e em Distribuição de
@@ -240,24 +278,24 @@ export default async function AreaPage({
         )}
       </section>
 
-      {resumoGeral && resumoGeral.metrics.length > 0 && (
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-medium text-ink-soft">Resumo geral do mês (Tráfego &amp; Performance)</h2>
-            <Link href="/trafego" className="text-[12px] font-medium text-brand hover:underline">
-              Ver detalhado →
-            </Link>
+      {comercialData && (
+        <>
+          <div className="flex items-center justify-end">
+            {canEdit && (
+              <ComercialRefreshButton
+                lastUpdatedLabel={comercialData.lastFetched ? formatDateTime(comercialData.lastFetched) : null}
+              />
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {resumoGeral.metrics.map((m) => (
-              <div key={m.id} className="flex flex-col gap-0.5 rounded-(--radius-s) bg-surface-muted p-3">
-                <span className="text-[11px] text-ink-faint">{m.label}</span>
-                <span className="tnum text-[15px] font-medium text-ink">{m.realized ?? "—"}</span>
-                <span className="tnum text-[10.5px] text-ink-faint">meta {m.target ?? "—"}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+          <FaturamentoDashboard
+            periodLabel={period.label}
+            wonInPeriod={comercialData.wonInPeriod}
+            yearRevenue={comercialData.yearRevenue}
+            monthlyTrend={comercialData.monthlyTrend}
+            meetingsInPeriod={comercialData.meetingsInPeriod}
+            sponsorships={comercialData.sponsorships}
+          />
+        </>
       )}
 
       {trafficByCategory && (
@@ -277,35 +315,16 @@ export default async function AreaPage({
         </>
       )}
 
-      {closerSections.length > 0 && (
+      {comercialData && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[13px] font-medium text-ink-soft">Closers</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {closerSections.map((c) => {
-              const faturamentoCG = c.metrics.find((m) => m.label === "Faturamento CG");
-              const vendasCG = c.metrics.find((m) => m.label === "Vendas CG");
-              const conversaoCG = c.metrics.find((m) => m.label === "Taxa de conversão CG");
-              return (
-                <div key={c.id} className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
-                  <h3 className="text-[13px] font-medium text-ink">{c.name.replace(" - CLOSER", "").trim()}</h3>
-                  <div className="flex flex-col gap-1.5 text-[12.5px]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-ink-soft">Faturamento (CG)</span>
-                      <span className="tnum font-medium text-ink">{faturamentoCG?.realized ?? "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-ink-soft">Vendas (CG)</span>
-                      <span className="tnum font-medium text-ink">{vendasCG?.realized ?? "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-ink-soft">Conversão (CG)</span>
-                      <span className="tnum font-medium text-ink">{conversaoCG?.realized ?? "—"}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-[13px] font-medium text-ink-soft">Closers · {period.label.toLowerCase()}</h2>
+            <p className="text-[11.5px] text-ink-faint">
+              Origem dos leads mapeada por pipeline no GoHighLevel (Indicação, Referidos e Recuperação
+              Própria não têm pipeline dedicado hoje, então não aparecem). Reuniões via Calendly.
+            </p>
           </div>
+          <CloserBreakdown closers={comercialData.closers} />
         </section>
       )}
 

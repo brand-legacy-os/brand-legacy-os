@@ -1760,6 +1760,76 @@ model TrafficSqlLead {
   @@index([createdAt])
 }
 
+// ---------------------------------------------------------------------------
+// Comercial — faturamento, pipeline e reuniões reais, extraídos do
+// GoHighLevel (Opportunities/Pipelines/Users) e do Calendly (reuniões +
+// no-show). Não tem Area própria de verdade pro CRM em si — reaproveita
+// canViewArea/canEditAreaKpis(user, "comercial"), mesmo padrão de Tráfego.
+// ---------------------------------------------------------------------------
+
+enum GhlOpportunityStatus {
+  open
+  won
+  lost
+}
+
+/// Canal de origem derivado do pipeline do GoHighLevel — não há campo de
+/// atribuição de canal confiável no CRM (contact_source e opportunity_source
+/// estão vazios em ~98% das linhas reais, verificado na sessão que criou
+/// este modelo). Indicação, Referidos e Recuperação Própria não têm pipeline
+/// correspondente hoje, então não aparecem — mostrar 0 seria inventar dado.
+enum LeadChannel {
+  trafego
+  social_selling
+  sdr
+  eventos
+  outros
+}
+
+model GhlOpportunity {
+  id              String               @id @default(cuid())
+  externalId      String               @unique
+  name            String
+  monetaryValue   Float
+  status          GhlOpportunityStatus
+  pipelineId      String
+  pipelineName    String
+  stageId         String
+  stageName       String?
+  channel         LeadChannel
+  /// "Tração" | "Club" | "Master" | "Evento" | null — parseado do nome da
+  /// oportunidade (sufixo "- CLUB"/"- TRAÇÃO"/"- MASTER") quando presente;
+  /// nem toda oportunidade tem o sufixo, então fica null em parte dos casos.
+  product         String?
+  assignedToEmail String?
+  createdAt       DateTime
+  /// Data da última mudança de status — usada como proxy de "data do
+  /// fechamento" pra bucketizar faturamento por mês quando status = won.
+  wonAt           DateTime?
+  fetchedAt       DateTime             @default(now())
+
+  @@index([createdAt])
+  @@index([wonAt])
+  @@index([status])
+  @@index([assignedToEmail])
+  @@index([channel])
+}
+
+model CalendlyMeeting {
+  id            String   @id @default(cuid())
+  externalId    String   @unique
+  eventTypeName String
+  assigneeEmail String?
+  startTime     DateTime
+  status        String
+  noShow        Boolean  @default(false)
+  utmSource     String?
+  fetchedAt     DateTime @default(now())
+
+  @@index([startTime])
+  @@index([assigneeEmail])
+}
+
 /// Histórico real de patrocínios (planilha do time) — cada linha é uma
 /// competência mensal de um contrato de patrocínio. eventId é opcional:
 /// só é preenchido quando dá para casar com segurança a um Event real
