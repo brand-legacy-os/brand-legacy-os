@@ -12,19 +12,29 @@ export async function GET() {
     select: { name: true, pipelineName: true, product: true, status: true, monetaryValue: true },
   });
 
+  const testLike = rows.filter((r) => /teste|apagar|^zz /i.test(r.name));
+  const real = rows.filter((r) => !testLike.includes(r));
+
   const byProduct = new Map<string, number>();
-  for (const r of rows) {
+  for (const r of real) {
     const key = r.product ?? "null";
     byProduct.set(key, (byProduct.get(key) ?? 0) + 1);
   }
 
-  const testLike = rows.filter((r) => /teste|apagar|^zz /i.test(r.name));
+  const wonNullProduct = real.filter((r) => r.status === "won" && r.product === null);
+  const statusBreakdown = new Map<string, number>();
+  for (const r of real.filter((r) => r.product === null)) {
+    statusBreakdown.set(r.status, (statusBreakdown.get(r.status) ?? 0) + 1);
+  }
 
   return NextResponse.json({
     total: rows.length,
+    realTotal: real.length,
     byProduct: Object.fromEntries(byProduct),
     testLikeCount: testLike.length,
     testLikeNames: testLike.map((r) => r.name),
-    nullProductSample: rows.filter((r) => r.product === null).slice(0, 20),
+    nullProductStatusBreakdown: Object.fromEntries(statusBreakdown),
+    wonNullProductCount: wonNullProduct.length,
+    wonNullProductSample: wonNullProduct.slice(0, 20).map((r) => ({ name: r.name, pipelineName: r.pipelineName, monetaryValue: r.monetaryValue })),
   });
 }
