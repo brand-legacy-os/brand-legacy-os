@@ -1742,6 +1742,24 @@ model TrafficMqlLead {
   @@index([dateAdded])
 }
 
+/// Oportunidade do GoHighLevel que avançou além do primeiro estágio do seu
+/// funil — "o comercial avança nas tratativas" (confirmado pelo usuário na
+/// sessão que criou este modelo). isAdvanced é calculado no refresh a partir
+/// da posição do estágio dentro do pipeline (position > 0); só as
+/// avançadas contam como SQL — as demais ficam de fora do funil aqui.
+model TrafficSqlLead {
+  id         String   @id @default(cuid())
+  externalId String   @unique
+  pipelineId String
+  stageId    String
+  status     String
+  isAdvanced Boolean
+  createdAt  DateTime
+  fetchedAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 /// Histórico real de patrocínios (planilha do time) — cada linha é uma
 /// competência mensal de um contrato de patrocínio. eventId é opcional:
 /// só é preenchido quando dá para casar com segurança a um Event real

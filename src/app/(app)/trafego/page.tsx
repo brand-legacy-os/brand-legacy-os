@@ -8,6 +8,7 @@ import { resolvePeriod, type PeriodKey } from "@/lib/period";
 import { TrafficRefreshButton } from "@/components/traffic/traffic-refresh-button";
 import { TrafficStatGroup } from "@/components/traffic/traffic-stat-group";
 import { TrafficLeaderboard } from "@/components/traffic/traffic-leaderboard";
+import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/finance/trend-chart";
 import { formatCompactCurrency } from "@/lib/format";
 import {
@@ -30,7 +31,7 @@ export default async function TrafegoPage({
   const periodKey = (sp.periodo as PeriodKey) || "mes";
   const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
 
-  const [{ campaigns, mqlCount, lastFetched }, { topCampaigns, topAds }, monthlyTrend] = await Promise.all([
+  const [{ campaigns, mqlCount, sqlCount, lastFetched }, { topCampaigns, topAds }, monthlyTrend] = await Promise.all([
     loadTrafficPeriodData(period.start, period.end),
     loadTrafficLeaderboards(period.start, period.end),
     loadTrafficMonthlyTrend(),
@@ -43,6 +44,7 @@ export default async function TrafegoPage({
     totalSummary.spend
   );
   const aquisicaoSummary = summarizeTraffic(aquisicaoRows, aquisicaoMql);
+  const costPerSql = sqlCount > 0 ? totalSummary.spend / sqlCount : null;
 
   return (
     <>
@@ -74,6 +76,19 @@ export default async function TrafegoPage({
         description="Direto do Facebook Ads (Windsor.ai) + leads MQL validados no CRM."
         summary={totalSummary}
       />
+
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h3 className="text-[12.5px] font-medium text-ink-soft">Funil comercial</h3>
+          <p className="text-[11.5px] text-ink-faint">
+            SQL = oportunidades que o Comercial avançou além do primeiro estágio do funil no CRM.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <StatTile label="SQL (oportunidades qualificadas)" value={sqlCount.toLocaleString("pt-BR")} />
+          <StatTile label="Custo por SQL" value={costPerSql !== null ? formatCompactCurrency(costPerSql) : "—"} />
+        </div>
+      </section>
 
       <TrafficStatGroup
         title="Aquisição"

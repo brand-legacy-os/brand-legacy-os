@@ -30,7 +30,7 @@ export function TrafficRefreshButton({ lastUpdatedLabel }: { lastUpdatedLabel: s
       {state.error && <span className="text-[11.5px] text-critical">{state.error}</span>}
       {state.success && !pending && (
         <span className="text-[11.5px] text-positive">
-          {state.campaigns} campanhas · {state.ads} anúncios · {state.mqlLeads} MQL atualizados.
+          {state.campaigns} campanhas · {state.ads} anúncios · {state.mqlLeads} MQL · {state.sqlLeads} SQL atualizados.
         </span>
       )}
     </form>

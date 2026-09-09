@@ -13,6 +13,7 @@ export type TrafficRefreshState = {
   campaigns?: number;
   ads?: number;
   mqlLeads?: number;
+  sqlLeads?: number;
 };
 
 function revalidateTraffic() {
@@ -31,7 +32,13 @@ export async function refreshTrafficAction(
   if (result.error) return { error: result.error };
 
   revalidateTraffic();
-  return { success: true, campaigns: result.campaigns, ads: result.ads, mqlLeads: result.mqlLeads };
+  return {
+    success: true,
+    campaigns: result.campaigns,
+    ads: result.ads,
+    mqlLeads: result.mqlLeads,
+    sqlLeads: result.sqlLeads,
+  };
 }
 
 export async function setCampaignCategoryAction(formData: FormData) {
