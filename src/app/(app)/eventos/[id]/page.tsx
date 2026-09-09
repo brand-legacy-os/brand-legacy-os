@@ -15,7 +15,7 @@ import {
 import { EventStatusSelect } from "@/components/events/event-status-select";
 import { AddBudgetLineForm } from "@/components/events/add-budget-line-form";
 import { AddAttendeeForm } from "@/components/events/add-attendee-form";
-import { AttendeeRow } from "@/components/events/attendee-row";
+import { AttendeeSearchList } from "@/components/events/attendee-search-list";
 import { EventNoteForm } from "@/components/events/event-note-form";
 import { EditEventForm } from "@/components/events/edit-event-form";
 import { BudgetLineCard } from "@/components/events/budget-line-card";
@@ -399,11 +399,7 @@ export default async function EventDetailPage({
           />
         )}
         {event.attendees.length > 0 ? (
-          <div className="flex flex-col">
-            {event.attendees.map((a) => (
-              <AttendeeRow key={a.id} attendee={a} canManage={canManage} users={allUsers} />
-            ))}
-          </div>
+          <AttendeeSearchList attendees={event.attendees} canManage={canManage} users={allUsers} />
         ) : (
           <p className="text-[12.5px] text-ink-faint">
             A lista nominal de confirmados começa vazia — os números acima vêm do
