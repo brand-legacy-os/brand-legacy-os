@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { windsorGet, windsorNumber, windsorText } from "@/lib/windsor";
 import { classifyCampaign, TRAFFIC_FACEBOOK_ACCOUNT_ID, TRAFFIC_GOHIGHLEVEL_ACCOUNT_ID } from "@/lib/traffic";
+import { batchUpsert } from "@/lib/db-batch";
 import type { TrafficCategory } from "@prisma/client";
 
 type PipelineStage = { id: string; position: number };
@@ -84,13 +85,13 @@ export async function refreshTrafficMetrics(): Promise<{
     })
     .filter((r): r is typeof r & { date: Date } => Boolean(r.campaignId && r.date));
 
-  for (const row of campaignData) {
-    await prisma.trafficCampaignMetric.upsert({
+  await batchUpsert(campaignData, (row) =>
+    prisma.trafficCampaignMetric.upsert({
       where: { campaignId_date: { campaignId: row.campaignId, date: row.date } },
       create: row,
       update: row,
-    });
-  }
+    })
+  );
 
   const adData = adRows
     .map((row) => {
@@ -109,13 +110,13 @@ export async function refreshTrafficMetrics(): Promise<{
     })
     .filter((r): r is typeof r & { date: Date } => Boolean(r.adId && r.date));
 
-  for (const row of adData) {
-    await prisma.trafficAdMetric.upsert({
+  await batchUpsert(adData, (row) =>
+    prisma.trafficAdMetric.upsert({
       where: { adId_date: { adId: row.adId, date: row.date } },
       create: row,
       update: row,
-    });
-  }
+    })
+  );
 
   // MQL = todo contato que chega no CRM (o formulário do Facebook já
   // qualifica quem entra) — não filtra por tag.
@@ -133,13 +134,13 @@ export async function refreshTrafficMetrics(): Promise<{
     })
     .filter((r) => r.externalId);
 
-  for (const row of mqlData) {
-    await prisma.trafficMqlLead.upsert({
+  await batchUpsert(mqlData, (row) =>
+    prisma.trafficMqlLead.upsert({
       where: { externalId: row.externalId },
       create: row,
       update: row,
-    });
-  }
+    })
+  );
 
   // SQL = oportunidade que saiu do primeiro estágio (position 0) do seu
   // pipeline — "só avançam pras próximas etapas os qualificados".
@@ -177,13 +178,13 @@ export async function refreshTrafficMetrics(): Promise<{
     })
     .filter((r) => r.externalId);
 
-  for (const row of sqlData) {
-    await prisma.trafficSqlLead.upsert({
+  await batchUpsert(sqlData, (row) =>
+    prisma.trafficSqlLead.upsert({
       where: { externalId: row.externalId },
       create: row,
       update: row,
-    });
-  }
+    })
+  );
 
   return {
     campaigns: campaignData.length,

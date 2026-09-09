@@ -17,14 +17,23 @@ export const LEAD_CHANNEL_META: Record<LeadChannel, { label: string }> = {
 };
 
 /**
- * Canal de origem derivado do pipeline do GoHighLevel — não há campo de
- * atribuição confiável no CRM (ver comentário no schema). Mapeamento
- * confirmado com os pipelines reais da conta.
+ * Canal de origem — prioriza a TAG do contato no GoHighLevel sobre o
+ * pipeline (confirmado com dado real: um lead com a tag "socialmedia" pode
+ * estar sentado em qualquer pipeline — Imersão, Club, etc. — depois de
+ * qualificado, então classificar só pelo pipeline perdia a maior parte
+ * desses leads). "socialmedia" = Social Selling, sempre, não importa o
+ * pipeline atual. Tag "desqualificado*" (ex.: desqualificado_faturamento_cg)
+ * = SDR, mesma lógica — um lead desqualificado e depois requalificado pode
+ * já ter saído do pipeline de Recuperação/Reativação SDR. Pipeline continua
+ * sendo o critério de desempate pros demais canais.
  */
-export function classifyChannel(pipelineName: string): LeadChannel {
+export function classifyChannel(pipelineName: string, contactTags?: string): LeadChannel {
+  const tags = (contactTags ?? "").toLowerCase();
+  if (tags.includes("socialmedia")) return "social_selling";
   const n = pipelineName.toLowerCase();
-  if (n.includes("social seller")) return "social_selling";
   if (n.includes("sdr")) return "sdr";
+  if (tags.includes("desqualificado")) return "sdr";
+  if (n.includes("social seller")) return "social_selling";
   if (n.includes("sessão estratégica") || n.includes("sessao estrategica")) return "trafego";
   if (n.includes("imersão") || n.includes("imersao") || n.includes("scale") || n.includes("club")) return "eventos";
   return "outros";

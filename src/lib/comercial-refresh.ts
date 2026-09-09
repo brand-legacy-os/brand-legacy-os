@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { windsorGet, windsorText, windsorNumber } from "@/lib/windsor";
 import { TRAFFIC_GOHIGHLEVEL_ACCOUNT_ID } from "@/lib/traffic";
 import { classifyChannel, parseProduct } from "@/lib/comercial";
+import { batchUpsert } from "@/lib/db-batch";
 import type { GhlOpportunityStatus } from "@prisma/client";
 
 type PipelineStage = { id: string; name?: string; position: number };
@@ -71,7 +72,7 @@ export async function refreshComercialMetrics(): Promise<{
     [opportunityRows, pipelineRows, userRows] = await Promise.all([
       windsorGet("gohighlevel", {
         fields:
-          "opportunity_id,opportunity_name,opportunity_monetary_value,opportunity_status,opportunity_pipeline_id,opportunity_pipeline_stage_id,opportunity_assigned_to,opportunity_created_at,opportunity_last_status_change_at",
+          "opportunity_id,opportunity_name,opportunity_monetary_value,opportunity_status,opportunity_pipeline_id,opportunity_pipeline_stage_id,opportunity_assigned_to,opportunity_created_at,opportunity_last_status_change_at,opportunity_contact_tags",
         select_accounts: TRAFFIC_GOHIGHLEVEL_ACCOUNT_ID,
         date_from: yearStart,
         date_to: today,
@@ -128,6 +129,7 @@ export async function refreshComercialMetrics(): Promise<{
       const statusChangeRaw = windsorText(row, "opportunity_last_status_change_at");
       const status = (windsorText(row, "opportunity_status") || "open") as GhlOpportunityStatus;
       const assignedToId = windsorText(row, "opportunity_assigned_to");
+      const contactTags = windsorText(row, "opportunity_contact_tags");
       return {
         externalId,
         name,
@@ -137,7 +139,7 @@ export async function refreshComercialMetrics(): Promise<{
         pipelineName,
         stageId,
         stageName: stageNameById.get(stageId) ?? null,
-        channel: classifyChannel(pipelineName),
+        channel: classifyChannel(pipelineName, contactTags),
         product: parseProduct(name, pipelineName),
         assignedToEmail: assignedToId ? emailByUserId.get(assignedToId) ?? null : null,
         createdAt: createdAtRaw ? new Date(createdAtRaw) : null,
@@ -146,13 +148,13 @@ export async function refreshComercialMetrics(): Promise<{
     })
     .filter((r): r is typeof r & { createdAt: Date } => Boolean(r.externalId && r.createdAt));
 
-  for (const row of opportunityData) {
-    await prisma.ghlOpportunity.upsert({
+  await batchUpsert(opportunityData, (row) =>
+    prisma.ghlOpportunity.upsert({
       where: { externalId: row.externalId },
       create: row,
       update: row,
-    });
-  }
+    })
+  );
 
   // Calendly — só roda se o token estiver configurado (senão, pula com aviso
   // em vez de quebrar o resto do refresh).
@@ -174,7 +176,18 @@ export async function refreshComercialMetrics(): Promise<{
   const noShowCutoff = new Date();
   noShowCutoff.setDate(noShowCutoff.getDate() - NO_SHOW_LOOKBACK_DAYS);
 
-  let meetingCount = 0;
+  // Fase 1: monta os dados de cada reunião (as chamadas de no-show/utm por
+  // convidado continuam sequenciais — é a API do Calendly, não o banco — mas
+  // a gravação no banco vira um lote só, em vez de um commit por reunião.
+  const meetingData: {
+    externalId: string;
+    eventTypeName: string;
+    assigneeEmail: string | null;
+    startTime: Date;
+    status: string;
+    noShow: boolean;
+    utmSource: string | null;
+  }[] = [];
   for (const ev of events) {
     const externalId = windsorText(ev, "uri");
     const startTimeRaw = windsorText(ev, "start_time");
@@ -197,13 +210,17 @@ export async function refreshComercialMetrics(): Promise<{
       }
     }
 
-    await prisma.calendlyMeeting.upsert({
-      where: { externalId },
-      create: { externalId, eventTypeName: name, assigneeEmail, startTime, status, noShow, utmSource },
-      update: { eventTypeName: name, assigneeEmail, startTime, status, noShow, utmSource },
-    });
-    meetingCount++;
+    meetingData.push({ externalId, eventTypeName: name, assigneeEmail, startTime, status, noShow, utmSource });
   }
+
+  await batchUpsert(meetingData, (row) =>
+    prisma.calendlyMeeting.upsert({
+      where: { externalId: row.externalId },
+      create: row,
+      update: row,
+    })
+  );
+  const meetingCount = meetingData.length;
 
   return { opportunities: opportunityData.length, meetings: meetingCount };
 }
