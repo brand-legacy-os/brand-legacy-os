@@ -42,7 +42,13 @@ export default async function EventDetailPage({
     include: {
       responsible: true,
       budgetLines: { include: { payments: true }, orderBy: { createdAt: "asc" } },
-      sponsors: { include: { installments: true }, orderBy: { createdAt: "asc" } },
+      sponsors: {
+        include: {
+          installments: true,
+          tasks: { select: { id: true, title: true, status: true }, orderBy: { deadline: "asc" } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
       attendees: {
         orderBy: { name: "asc" },
         include: {

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { formatCompactCurrency } from "@/lib/format";
 import { SPONSOR_TIER_META, SPONSOR_PAYMENT_METHOD_META } from "@/lib/sponsors";
+import { TASK_STATUS_META } from "@/lib/format";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
+import type { TaskStatus } from "@prisma/client";
 
 type SponsorRow = {
   id: string;
@@ -19,6 +21,7 @@ type SponsorRow = {
   videoUrl: string | null;
   videoFileUrl: string | null;
   activation: string | null;
+  tasks: { id: string; title: string; status: TaskStatus }[];
 };
 
 /** Só leitura — patrocinadores só são criados/editados em Patrocínios. */
@@ -91,6 +94,23 @@ export function EventSponsorsSection({ eventId, sponsors }: { eventId: string; s
               )}
             </div>
             {s.activation && <p className="text-[11px] text-ink-soft">{s.activation}</p>}
+            {s.tasks.length > 0 && (
+              <div className="flex flex-col gap-1 border-t border-border pt-1.5">
+                <span className="text-[10.5px] font-medium uppercase tracking-[0.04em] text-ink-faint">
+                  Tarefas ({s.tasks.filter((t) => t.status !== "concluida" && t.status !== "cancelada").length} abertas)
+                </span>
+                {s.tasks.map((t) => (
+                  <Link
+                    key={t.id}
+                    href={`/workflow/${t.id}`}
+                    className="flex items-center justify-between gap-2 text-[11.5px] text-ink-soft hover:text-brand-deep hover:underline"
+                  >
+                    <span className="truncate">{t.title}</span>
+                    <span className="shrink-0">{TASK_STATUS_META[t.status].dot}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {sponsors.length === 0 && (
