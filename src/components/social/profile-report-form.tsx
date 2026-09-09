@@ -110,6 +110,21 @@ export function ProfileReportForm({
         defaultValue={defaults?.notes ?? ""}
         className="rounded-(--radius-s) border border-border bg-surface p-2 text-[12.5px] outline-none"
       />
+      {!isEdit && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <input
+            name="attachmentLabel"
+            placeholder="Nome do anexo (opcional)"
+            className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none"
+          />
+          <input
+            name="file"
+            type="file"
+            accept="image/*,application/pdf"
+            className="h-8 rounded-(--radius-s) border border-border bg-surface px-2.5 text-[12.5px] outline-none file:mr-2 file:rounded-(--radius-s) file:border-0 file:bg-surface-muted file:px-2 file:py-1 file:text-[11.5px]"
+          />
+        </div>
+      )}
       <div className="flex items-center gap-2.5">
         <button type="submit" disabled={pending} className="h-8 rounded-(--radius-s) bg-brand-deep px-3 text-[12px] font-medium text-gold-soft disabled:opacity-60">
           {pending ? "Salvando…" : isEdit ? "Salvar alterações" : "Criar relatório"}

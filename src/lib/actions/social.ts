@@ -593,9 +593,27 @@ export async function addProfileReportAction(
   const { error, data } = readProfileReportFields(formData);
   if (error || !data) return { error: error ?? "Preencha os campos obrigatórios." };
 
-  await prisma.socialProfileReport.create({
+  // Anexo é opcional na criação — quem já tem o arquivo em mãos não precisa
+  // criar o relatório e depois abrir de novo só pra anexar.
+  const file = formData.get("file");
+  let attachmentUrl: string | null = null;
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imageOrPdf, "Envie uma imagem ou PDF válido.");
+    if (v.error) return { error: v.error };
+    attachmentUrl = await saveUpload(file, "social/relatorios");
+  }
+  const attachmentLabel =
+    String(formData.get("attachmentLabel") ?? "").trim() || (file instanceof File ? file.name : "");
+
+  const report = await prisma.socialProfileReport.create({
     data: { profileId, ...data, createdById: user.id },
   });
+
+  if (attachmentUrl) {
+    await prisma.socialProfileReportAttachment.create({
+      data: { reportId: report.id, label: attachmentLabel || "Anexo", url: attachmentUrl },
+    });
+  }
 
   revalidateSocial();
   return { success: true };
