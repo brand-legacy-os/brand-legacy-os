@@ -121,14 +121,109 @@ export async function loadComercialMonthlyTrend() {
     const revenue = inMonth.reduce((s, r) => s + r.monetaryValue, 0);
     return {
       label: periodKeyLabel(mk).slice(0, 3),
+      monthKey: mk,
       revenue,
+      count: inMonth.length,
       avgTicket: inMonth.length > 0 ? revenue / inMonth.length : 0,
       byProduct: COMERCIAL_PRODUCTS.map((p) => ({
         product: p,
         revenue: inMonth.filter((r) => r.product === p).reduce((s, r) => s + r.monetaryValue, 0),
+        count: inMonth.filter((r) => r.product === p).length,
       })),
     };
   });
+}
+
+/** Patrocínios fechados, agrupados por mês (mesma regra de "fechado" de
+ * loadSponsorshipsClosedInPeriod) — usado como 5ª coluna nas tabelas de
+ * vendas/faturamento mês a mês por produto, já que patrocínio não é uma
+ * GhlOpportunity, é um Sponsor. */
+export async function loadSponsorshipsMonthlyTrend() {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const rows = await prisma.sponsor.findMany({
+    where: { status: { notIn: ["em_negociacao", "cancelado"] }, updatedAt: { gte: yearStart, lte: now } },
+    select: { totalValue: true, updatedAt: true },
+  });
+
+  const months: string[] = [];
+  const cursor = new Date(yearStart);
+  while (cursor <= now) {
+    months.push(monthKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return months.map((mk) => {
+    const inMonth = rows.filter((r) => monthKey(r.updatedAt) === mk);
+    return { monthKey: mk, count: inMonth.length, revenue: inMonth.reduce((s, r) => s + r.totalValue, 0) };
+  });
+}
+
+/** Faturamento ganho de um canal específico, mês a mês (ano corrente) —
+ * usado pelo Social pra refletir o faturamento de social orgânico
+ * (channel="social_selling"), mesma fonte de verdade do resto do Comercial. */
+export async function loadChannelMonthlyRevenue(channel: LeadChannel) {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const won = await prisma.ghlOpportunity.findMany({
+    where: { channel, status: "won" },
+    select: { monetaryValue: true, createdAt: true, wonAt: true },
+  });
+  const months: string[] = [];
+  const cursor = new Date(yearStart);
+  while (cursor <= now) {
+    months.push(monthKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return months.map((mk) => {
+    const inMonth = won.filter((r) => {
+      const d = closeDate(r);
+      return d >= yearStart && d <= now && monthKey(d) === mk;
+    });
+    return { label: periodKeyLabel(mk).slice(0, 3), revenue: inMonth.reduce((s, r) => s + r.monetaryValue, 0) };
+  });
+}
+
+/** Pipeline em negociação (status="open") — total geral e por closer
+ * (assignedToEmail). Sem recorte de período: pipeline é "o que está aberto
+ * agora", não "o que foi criado neste mês". */
+export async function loadPipelineSummary() {
+  const [open, allUsers] = await Promise.all([
+    prisma.ghlOpportunity.findMany({
+      where: { status: "open" },
+      select: { monetaryValue: true, assignedToEmail: true },
+    }),
+    prisma.user.findMany({ select: { email: true, name: true } }),
+  ]);
+  const emailToName = new Map(allUsers.map((u) => [u.email, u.name]));
+  const total = open.reduce((s, o) => s + o.monetaryValue, 0);
+  const emails = [...new Set(open.map((o) => o.assignedToEmail).filter((e): e is string => !!e))];
+  const byCloser = emails
+    .map((email) => ({
+      email,
+      name: emailToName.get(email) ?? email,
+      count: open.filter((o) => o.assignedToEmail === email).length,
+      total: open.filter((o) => o.assignedToEmail === email).reduce((s, o) => s + o.monetaryValue, 0),
+    }))
+    .sort((a, b) => b.total - a.total);
+  return { total, count: open.length, byCloser };
+}
+
+/** Lista de clientes (oportunidades ganhas) por produto, mais recentes
+ * primeiro — "quem comprou o quê". Sem recorte de período: é a lista viva de
+ * compradores, não um corte temporal. */
+export async function loadCustomersByProduct() {
+  const won = await prisma.ghlOpportunity.findMany({
+    where: { status: "won", product: { not: null } },
+    select: { name: true, product: true, monetaryValue: true, wonAt: true, createdAt: true },
+    orderBy: [{ wonAt: "desc" }, { createdAt: "desc" }],
+  });
+  return COMERCIAL_PRODUCTS.map((product) => ({
+    product,
+    customers: won
+      .filter((r) => r.product === product)
+      .map((r) => ({ name: r.name, value: r.monetaryValue, date: r.wonAt ?? r.createdAt })),
+  }));
 }
 
 export type MeetingRow = { assigneeEmail: string | null; status: string; noShow: boolean; startTime: Date };

@@ -52,6 +52,23 @@ export function meetingTarget(product: string): number | null {
   return MEETING_TRACK_BY_PRODUCT[product]?.length ?? null;
 }
 
+/** Taxa de entrega geral da mentoria — encontros realmente registrados
+ * (CustomerMeeting) ÷ meta da trilha do produto, somado em toda a carteira
+ * elegível (produtos com trilha definida — Club/Tração). "Tem 10 falta 3,
+ * então 70% entregue" é a mesma lógica aplicada por cliente e depois somada. */
+export function computeMentoriaDeliveryRate(
+  customers: Pick<Customer, "id" | "product">[],
+  meetingCountByCustomerId: Map<string, number>
+) {
+  const eligible = customers
+    .map((c) => ({ id: c.id, target: meetingTarget(c.product) }))
+    .filter((c): c is { id: string; target: number } => c.target !== null);
+  if (eligible.length === 0) return { delivered: 0, target: 0, pct: null };
+  const delivered = eligible.reduce((s, c) => s + Math.min(meetingCountByCustomerId.get(c.id) ?? 0, c.target), 0);
+  const target = eligible.reduce((s, c) => s + c.target, 0);
+  return { delivered, target, pct: target > 0 ? (delivered / target) * 100 : null };
+}
+
 export const CHURN_ANNUAL_TARGET_PCT = 5;
 
 // ---------------------------------------------------------------------------

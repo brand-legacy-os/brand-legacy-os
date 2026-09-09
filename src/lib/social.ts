@@ -5,6 +5,8 @@ import type {
   ContentFormat,
   ContentPostStatus,
 } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { monthKey, periodKeyLabel } from "@/lib/finance";
 
 /// Categorias reais do controle interno deles (Notion) — usadas como
 /// sugestão no campo "produto/categoria" das tarefas de Social.
@@ -120,4 +122,57 @@ export function computeReachEngagement(
     reach,
     engagementPct: reach > 0 ? (interactions / reach) * 100 : null,
   };
+}
+
+/** Taxa de engajamento mês a mês por perfil, desde o início do ano corrente
+ * — usa os posts reais do Reportei (postedAt), não estimativa. */
+export async function loadEngagementByMonth() {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const [profiles, posts] = await Promise.all([
+    prisma.socialProfile.findMany({ select: { id: true, name: true }, orderBy: { order: "asc" } }),
+    prisma.socialReporteiPost.findMany({
+      where: { postedAt: { gte: yearStart, lte: now } },
+      select: {
+        profileId: true,
+        postedAt: true,
+        alcance: true,
+        curtidas: true,
+        comentarios: true,
+        salvamentos: true,
+        compartilhamentos: true,
+      },
+    }),
+  ]);
+
+  const months: string[] = [];
+  const cursor = new Date(yearStart);
+  while (cursor <= now) {
+    months.push(monthKey(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  return profiles.map((profile) => ({
+    profile: profile.name,
+    months: months.map((mk) => {
+      const inMonth = posts.filter((p) => p.profileId === profile.id && p.postedAt && monthKey(p.postedAt) === mk);
+      const { engagementPct, postCount } = computeReachEngagement(inMonth);
+      return { label: periodKeyLabel(mk).slice(0, 3), engagementPct, postCount };
+    }),
+  }));
+}
+
+/** Progressão de seguidores mês a mês por perfil — SocialFollowerSnapshot,
+ * preenchido manualmente (o Reportei não expõe um total limpo). */
+export async function loadFollowerProgression() {
+  const [profiles, snapshots] = await Promise.all([
+    prisma.socialProfile.findMany({ select: { id: true, name: true }, orderBy: { order: "asc" } }),
+    prisma.socialFollowerSnapshot.findMany({ orderBy: { monthKey: "asc" } }),
+  ]);
+  return profiles.map((profile) => ({
+    profile: profile.name,
+    snapshots: snapshots
+      .filter((s) => s.profileId === profile.id)
+      .map((s) => ({ label: periodKeyLabel(s.monthKey).slice(0, 3), monthKey: s.monthKey, count: s.count })),
+  }));
 }

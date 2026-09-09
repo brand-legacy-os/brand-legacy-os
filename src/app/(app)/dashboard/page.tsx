@@ -6,7 +6,16 @@ import { computeKpiSnapshot, averageAtingimento } from "@/lib/kpi";
 import { formatCompactCurrency, formatDateFull } from "@/lib/format";
 import { buildAttentionPoints } from "@/lib/attention";
 import { computeEventStats, sponsorTarget } from "@/lib/events";
-import { computeEnps, summarizeRenewals } from "@/lib/cs";
+import {
+  computeEnps,
+  summarizeRenewals,
+  computeArpu,
+  computeAverageTenureMonths,
+  computeLtv,
+  computeMonthlyChurn,
+  computeAnnualChurn,
+  computeMentoriaDeliveryRate,
+} from "@/lib/cs";
 import { FilterBar } from "@/components/dashboard/filter-bar";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { AreaBar } from "@/components/dashboard/area-bar";
@@ -14,6 +23,27 @@ import { StatusPill, projectStatusTone } from "@/components/ui/status-pill";
 import { PROJECT_STATUS_META } from "@/lib/format";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
 import Link from "next/link";
+import { periodKeyLabel, monthKey } from "@/lib/finance";
+import { loadTrafficPeriodData, loadTrafficChannelRates, campaignsByCategory, TRAFFIC_CATEGORY_META } from "@/lib/traffic";
+import {
+  loadOpportunitiesWonInPeriod,
+  loadOpportunitiesInPeriod,
+  loadMeetingsInPeriod,
+  loadComercialMonthlyTrend,
+  loadSponsorshipsMonthlyTrend,
+  loadSponsorshipsClosedInPeriod,
+  loadPipelineSummary,
+  loadCustomersByProduct,
+  loadChannelBreakdown,
+  loadChannelMonthlyRevenue,
+  sumWonRevenue,
+} from "@/lib/comercial";
+import { loadEngagementByMonth, loadFollowerProgression } from "@/lib/social";
+import { TrafegoDetailSection } from "@/components/dashboard/trafego-detail-section";
+import { ComercialDetailSection } from "@/components/dashboard/comercial-detail-section";
+import { EventosDetailSection } from "@/components/dashboard/eventos-detail-section";
+import { SocialDetailSection } from "@/components/dashboard/social-detail-section";
+import { CsDetailSection } from "@/components/dashboard/cs-detail-section";
 
 export default async function DashboardPage({
   searchParams,
@@ -268,6 +298,179 @@ export default async function DashboardPage({
       renewalsRealized: renewalSummary.realized,
     };
   }
+
+  // ---------------------------------------------------------------------
+  // Tráfego — leads/investimento/SQL/ROI por canal, direto do Windsor.ai.
+  // ---------------------------------------------------------------------
+  const canViewComercial = visible === "all" || visible.includes("comercial");
+  const trafegoData = canViewComercial
+    ? await (async () => {
+        const [{ campaigns }, channelRates] = await Promise.all([
+          loadTrafficPeriodData(period.start, period.end),
+          loadTrafficChannelRates(period.start, period.end),
+        ]);
+        const leadsTotais = campaigns.reduce((s, c) => s + c.leads, 0);
+        const investidoGeral = campaigns.reduce((s, c) => s + c.spend, 0);
+        const investidoPorFunil = (["aquisicao", "eventos", "distribuicao"] as const).map((category) => ({
+          category,
+          label: TRAFFIC_CATEGORY_META[category].short,
+          spend: campaignsByCategory(campaigns, category).reduce((s, c) => s + c.spend, 0),
+        }));
+        return { leadsTotais, investidoGeral, investidoPorFunil, channelRates };
+      })()
+    : null;
+
+  // ---------------------------------------------------------------------
+  // Comercial — vendas/faturamento/pipeline/closers/canais, direto do
+  // GoHighLevel + Calendly + Sponsor.
+  // ---------------------------------------------------------------------
+  const comercialDashboardData = canViewComercial
+    ? await (async () => {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const [
+          wonThisMonth,
+          sponsorshipsThisMonth,
+          allInPeriod,
+          meetingsInPeriod,
+          monthlyTrend,
+          sponsorshipsMonthly,
+          pipeline,
+          customersByProduct,
+          socialSelling,
+          sdr,
+          allUsers,
+        ] = await Promise.all([
+          loadOpportunitiesWonInPeriod(monthStart, now),
+          loadSponsorshipsClosedInPeriod(monthStart, now),
+          loadOpportunitiesInPeriod(period.start, period.end),
+          loadMeetingsInPeriod(period.start, period.end),
+          loadComercialMonthlyTrend(),
+          loadSponsorshipsMonthlyTrend(),
+          loadPipelineSummary(),
+          loadCustomersByProduct(),
+          loadChannelBreakdown("social_selling", period.start, period.end),
+          loadChannelBreakdown("sdr", period.start, period.end),
+          prisma.user.findMany({ select: { email: true, name: true } }),
+        ]);
+
+        const vendasDoMes = wonThisMonth.length + sponsorshipsThisMonth.count;
+        const faturamentoDoMes = sumWonRevenue(wonThisMonth) + sponsorshipsThisMonth.revenue;
+
+        const emailToName = new Map(allUsers.map((u) => [u.email, u.name]));
+        const closerEmails = new Set<string>();
+        for (const o of allInPeriod) if (o.assignedToEmail) closerEmails.add(o.assignedToEmail);
+        for (const m of meetingsInPeriod) if (m.assigneeEmail) closerEmails.add(m.assigneeEmail);
+        const closers = [...closerEmails].map((email) => ({
+          email,
+          name: emailToName.get(email) ?? email,
+          opportunities: allInPeriod.filter((o) => o.assignedToEmail === email),
+          meetings: meetingsInPeriod.filter((m) => m.assigneeEmail === email),
+        }));
+
+        return {
+          vendasDoMes,
+          faturamentoDoMes,
+          monthlyTrend,
+          sponsorshipsMonthly,
+          pipeline,
+          customersByProduct,
+          closers,
+          socialSelling,
+          sdr,
+        };
+      })()
+    : null;
+
+  // ---------------------------------------------------------------------
+  // Eventos — budget planejado x realizado, patrocínio x gasto, NPS e
+  // participação por evento (reaproveita allEvents já carregado acima).
+  // ---------------------------------------------------------------------
+  const eventosRows = allEvents.map((e) => {
+    const stats = computeEventStats(e);
+    return {
+      id: e.id,
+      name: e.name,
+      budgetPlanned: e.budgetPlanned,
+      budgetActual: stats.budgetActual,
+      sponsorPlanned: stats.sponsorRevenuePlanned,
+      sponsorRealized: stats.sponsorRevenueRealized,
+      npsAverage: stats.npsAverage,
+      registeredCount: stats.registeredCount,
+      presentCount: stats.presentCount,
+    };
+  });
+
+  // ---------------------------------------------------------------------
+  // Social — engajamento e seguidores mês a mês (Reportei), faturamento
+  // orgânico = faturamento de Social Selling (mesma fonte do Comercial).
+  // ---------------------------------------------------------------------
+  const canViewSocial = visible === "all" || visible.includes("social");
+  const socialDashboardData = canViewSocial
+    ? await (async () => {
+        const [engagement, followers, organicRevenueByMonth] = await Promise.all([
+          loadEngagementByMonth(),
+          loadFollowerProgression(),
+          loadChannelMonthlyRevenue("social_selling"),
+        ]);
+        return { engagement, followers, organicRevenueByMonth };
+      })()
+    : null;
+
+  // ---------------------------------------------------------------------
+  // CS — LTV, churn mês a mês/anual, renovação disponível x realizado,
+  // carteira ativa e taxa de entrega da mentoria.
+  // ---------------------------------------------------------------------
+  const csDashboardData = canSeeCs
+    ? await (async () => {
+        const [allCustomers, allRenewals, meetingCounts] = await Promise.all([
+          prisma.customer.findMany(),
+          prisma.customerRenewal.findMany(),
+          prisma.customerMeeting.groupBy({ by: ["customerId"], _count: { _all: true } }),
+        ]);
+
+        const arpu = computeArpu(allCustomers);
+        const tenure = computeAverageTenureMonths(allCustomers, now);
+        const ltv = computeLtv(arpu, tenure);
+
+        const year = now.getFullYear();
+        const monthNames3 = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const churnMonthly = Array.from({ length: 12 }, (_, m) => {
+          const monthStart = new Date(year, m, 1);
+          const monthEnd = new Date(year, m + 1, 0, 23, 59, 59);
+          if (monthStart > now) return { label: monthNames3[m], pct: null, churned: 0, eligible: 0 };
+          const result = computeMonthlyChurn(allCustomers, monthStart, monthEnd);
+          return { label: monthNames3[m], ...result };
+        });
+        const churnAnnual = computeAnnualChurn(allCustomers, year);
+
+        const renewalRatePct = summarizeRenewals(allRenewals).pct;
+        const renewalMonthly = Array.from({ length: 12 }, (_, m) => {
+          const mk = monthKey(new Date(year, m, 1));
+          const inMonth = allRenewals.filter((r) => monthKey(r.dueDate) === mk);
+          const realized = inMonth.filter((r) => r.status === "renovado");
+          return {
+            label: periodKeyLabel(mk).slice(0, 3),
+            monthKey: mk,
+            plannedCount: inMonth.length,
+            plannedValue: inMonth.reduce((s, r) => s + r.plannedValue, 0),
+            realizedCount: realized.length,
+            realizedValue: realized.reduce((s, r) => s + (r.realizedValue ?? r.plannedValue), 0),
+          };
+        });
+
+        const meetingCountByCustomerId = new Map(meetingCounts.map((m) => [m.customerId, m._count._all]));
+        const mentoriaDelivery = computeMentoriaDeliveryRate(allCustomers, meetingCountByCustomerId);
+
+        return {
+          ltv,
+          churnMonthly,
+          churnAnnualPct: churnAnnual.pct,
+          renewalRatePct,
+          renewalMonthly,
+          mentoriaDelivery,
+        };
+      })()
+    : null;
 
   return (
     <>
@@ -538,6 +741,63 @@ export default async function DashboardPage({
             </div>
           </div>
         </section>
+      )}
+
+      <div className="flex flex-col gap-1 border-t border-border pt-6">
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">Visão detalhada</p>
+        <p className="text-[12.5px] text-ink-faint">
+          Tabelas com os números reais, sem estimativa gráfica — todo valor abaixo é o dado exato.
+        </p>
+      </div>
+
+      {trafegoData && (
+        <TrafegoDetailSection
+          periodLabel={period.label}
+          leadsTotais={trafegoData.leadsTotais}
+          investidoGeral={trafegoData.investidoGeral}
+          investidoPorFunil={trafegoData.investidoPorFunil}
+          channelRates={trafegoData.channelRates}
+        />
+      )}
+
+      {comercialDashboardData && (
+        <ComercialDetailSection
+          periodLabel={period.label}
+          vendasDoMes={comercialDashboardData.vendasDoMes}
+          faturamentoDoMes={comercialDashboardData.faturamentoDoMes}
+          monthlyTrend={comercialDashboardData.monthlyTrend}
+          sponsorshipsMonthly={comercialDashboardData.sponsorshipsMonthly}
+          pipeline={comercialDashboardData.pipeline}
+          customersByProduct={comercialDashboardData.customersByProduct}
+          closers={comercialDashboardData.closers}
+          socialSelling={comercialDashboardData.socialSelling}
+          sdr={comercialDashboardData.sdr}
+        />
+      )}
+
+      {eventosRows.length > 0 && (
+        <EventosDetailSection rows={eventosRows} budgetPlannedTotal={eventsBudgetPlanned} budgetActualTotal={eventsBudgetActual} />
+      )}
+
+      {socialDashboardData && (
+        <SocialDetailSection
+          engagement={socialDashboardData.engagement}
+          followers={socialDashboardData.followers}
+          organicRevenueByMonth={socialDashboardData.organicRevenueByMonth}
+        />
+      )}
+
+      {csDashboardData && (
+        <CsDetailSection
+          ltv={csDashboardData.ltv}
+          churnMonthly={csDashboardData.churnMonthly}
+          churnAnnualPct={csDashboardData.churnAnnualPct}
+          renewalRatePct={csDashboardData.renewalRatePct}
+          renewalMonthly={csDashboardData.renewalMonthly}
+          activeTotal={csSummary?.active ?? 0}
+          activeByCarteira={csSummary?.byCarteira ?? []}
+          mentoriaDelivery={csDashboardData.mentoriaDelivery}
+        />
       )}
 
       <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">

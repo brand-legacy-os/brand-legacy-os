@@ -1,6 +1,57 @@
 import { prisma } from "@/lib/db";
 import { monthKey, periodKeyLabel } from "@/lib/finance";
-import type { TrafficCategory } from "@prisma/client";
+import type { TrafficCategory, LeadChannel } from "@prisma/client";
+
+const ALL_CHANNELS: LeadChannel[] = ["trafego", "social_selling", "sdr", "eventos", "outros"];
+
+/**
+ * Leads/SQL/faturamento/ROI por canal de origem (GoHighLevel), cruzando
+ * GhlOpportunity (canal + faturamento) com TrafficSqlLead (isAdvanced, join
+ * por externalId = mesmo opportunity_id do GHL) — os dois modelos vêm do
+ * mesmo pull do Windsor, então casam 1:1 por id externo.
+ *
+ * Só o canal "trafego" tem investimento em mídia atribuível (Facebook Ads) —
+ * Social Selling/SDR/Eventos são esforço orgânico/manual, sem verba de
+ * anúncio associável a essas oportunidades específicas. Por isso custo por
+ * SQL e ROI só existem para "trafego"; os demais ficam null (não é omissão,
+ * é ausência real de investimento em mídia rastreável por canal).
+ */
+export async function loadTrafficChannelRates(start: Date, end: Date) {
+  const [opportunities, sqlLeads, spendAgg] = await Promise.all([
+    prisma.ghlOpportunity.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      select: { externalId: true, channel: true, monetaryValue: true, status: true },
+    }),
+    prisma.trafficSqlLead.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      select: { externalId: true, isAdvanced: true },
+    }),
+    prisma.trafficCampaignMetric.aggregate({
+      where: { date: { gte: start, lte: end } },
+      _sum: { spend: true },
+    }),
+  ]);
+
+  const sqlByExternalId = new Map(sqlLeads.map((s) => [s.externalId, s.isAdvanced]));
+  const trafficSpend = spendAgg._sum.spend ?? 0;
+
+  return ALL_CHANNELS.map((channel) => {
+    const rows = opportunities.filter((o) => o.channel === channel);
+    const sqlCount = rows.filter((o) => sqlByExternalId.get(o.externalId) === true).length;
+    const revenue = rows.filter((o) => o.status === "won").reduce((s, o) => s + o.monetaryValue, 0);
+    const spend = channel === "trafego" ? trafficSpend : null;
+    return {
+      channel,
+      leadCount: rows.length,
+      sqlCount,
+      sqlRate: rows.length > 0 ? (sqlCount / rows.length) * 100 : null,
+      spend,
+      costPerSql: spend !== null && sqlCount > 0 ? spend / sqlCount : null,
+      revenue,
+      roi: spend !== null && spend > 0 ? ((revenue - spend) / spend) * 100 : null,
+    };
+  });
+}
 
 /// Única conta do Facebook Ads com investimento real hoje (as outras 4
 /// contas conectadas no Windsor — Dom Barros, Carolina Viudes, Brand Legacy
