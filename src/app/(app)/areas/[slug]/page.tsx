@@ -356,7 +356,8 @@ export default async function AreaPage({
             <p className="text-[11.5px] text-ink-faint">
               Canal mapeado pela tag do contato no GoHighLevel (socialmedia, desqualificado_*) com o
               pipeline como critério de desempate — Indicação e Referidos não têm sinal próprio no CRM hoje.
-              Reuniões via Calendly.
+              Reuniões via Calendly. &quot;Tráfego&quot; aqui é o pipeline &quot;Sessão estratégica&quot;
+              (consultoria gratuita) — o funil citado na meta de mix de receita do Comercial.
             </p>
           </div>
           <ClosersTable closers={comercialData.closers} />
