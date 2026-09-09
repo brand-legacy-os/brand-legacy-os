@@ -7,6 +7,7 @@ const TABS = [
   { href: "/social/introducao", label: "Introdução" },
   { href: "/social", label: "Indicadores gerais" },
   { href: "/social/dashboard", label: "Dashboard Reportei" },
+  { href: "/social/conteudo", label: "Conteúdo" },
   { href: "/social/calendario", label: "Calendário" },
   { href: "/social/tarefas", label: "Tarefas" },
   { href: "/social/podcast", label: "Podcast" },

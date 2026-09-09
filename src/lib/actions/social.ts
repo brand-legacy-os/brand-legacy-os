@@ -27,6 +27,7 @@ async function requireSocialManager() {
 function revalidateSocial() {
   revalidatePath("/social");
   revalidatePath("/social/introducao");
+  revalidatePath("/social/conteudo");
   revalidatePath("/social/calendario");
   revalidatePath("/social/tarefas");
   revalidatePath("/social/crm");
@@ -123,6 +124,38 @@ export async function upsertFollowerSnapshotAction(
 }
 
 // ---------------------------------------------------------------------------
+// Conteúdo — tabela de referência semanal (perfil x dia)
+// ---------------------------------------------------------------------------
+
+export async function updateContentWeekPlanCellAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    await requireSocialManager();
+  } catch {
+    return { error: "Sem permissão." };
+  }
+
+  const profileId = String(formData.get("profileId") ?? "");
+  const weekday = Number(formData.get("weekday") ?? "");
+  const content = String(formData.get("content") ?? "").trim();
+
+  if (!profileId || !weekday || weekday < 1 || weekday > 7) {
+    return { error: "Perfil ou dia da semana inválido." };
+  }
+
+  await prisma.contentWeekPlanCell.upsert({
+    where: { profileId_weekday: { profileId, weekday } },
+    create: { profileId, weekday, content },
+    update: { content },
+  });
+
+  revalidateSocial();
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
 // Podcast
 // ---------------------------------------------------------------------------
 
@@ -159,10 +192,10 @@ function readPodcastFields(formData: FormData) {
   const dispatch = readResponsibleField(formData, "dispatchResponsibleId");
   const dispatchStatus = (formData.get("dispatchStatus") as "planejado" | "enviado" | null) || null;
 
-  const episodeNumber = Number(episodeNumberRaw);
+  const episodeNumber = episodeNumberRaw ? Number(episodeNumberRaw) : null;
   const error =
-    !guestName || !episodeNumberRaw || Number.isNaN(episodeNumber) || !source
-      ? "Preencha número do episódio, convidado e fonte."
+    !guestName || (episodeNumberRaw && Number.isNaN(episodeNumber)) || !source
+      ? "Preencha convidado e fonte (número do episódio é opcional pra leads ainda no funil)."
       : null;
 
   return {

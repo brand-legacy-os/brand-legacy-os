@@ -16,6 +16,7 @@ export const SOCIAL_TASK_CATEGORIES = [
 ] as const;
 
 export const PODCAST_STATUS_META: Record<PodcastStatus, { label: string }> = {
+  em_conversa: { label: "Em conversa" },
   entrevista_marcada: { label: "Entrevista marcada" },
   entrevista_reagendando: { label: "Entrevista sendo reagendada" },
   esperando_material: { label: "Esperando material" },
@@ -72,6 +73,8 @@ export const CONTENT_POST_STATUS_META: Record<ContentPostStatus, { label: string
 export const SOCIAL_REFERENCE_LINKS = {
   materialVisual: "https://drive.google.com/drive/folders/1A8N1YIlUaSq8Y8diIVWF2LnGxRXwIfjl?usp=sharing",
   metricasSpreadsheet: "https://docs.google.com/spreadsheets/d/1E1dkReLqtMm6e_40SsyjzoNsmTdu2xj_avjC6qHy88Y/edit?gid=645714597#gid=645714597",
+  agendaAnual: "https://docs.google.com/spreadsheets/d/1synMgfT43M9T93tWx_9HLfmyVido_tTK4PWhFvmAYO8/edit?gid=0#gid=0",
+  estilosEdicao: "https://app.notion.com/p/3c09d21c36c680b78406d5332346c11c?v=3c09d21c36c680239ad3000c9c50121d",
   jornalLegado: "https://brandlegacy-journal.vercel.app/",
   ferramentas: [
     { name: "Epidemic Sound", url: "https://www.epidemicsound.com/pt/music/featured/" },
@@ -79,6 +82,18 @@ export const SOCIAL_REFERENCE_LINKS = {
     { name: "HypeAuditor", url: "https://www.hypeauditor.com/" },
   ],
 };
+
+/// Dias da semana da tabela de referência de Conteúdo — 1=segunda..7=domingo
+/// (ISO), pra bater com a ordem natural "Segunda..Domingo" pedida.
+export const CONTENT_WEEKDAYS = [
+  { value: 1, label: "Segunda" },
+  { value: 2, label: "Terça" },
+  { value: 3, label: "Quarta" },
+  { value: 4, label: "Quinta" },
+  { value: 5, label: "Sexta" },
+  { value: 6, label: "Sábado" },
+  { value: 7, label: "Domingo" },
+] as const;
 
 /** Soma curtidas+comentários+salvamentos+compartilhamentos de um conjunto de
  * posts (SocialReporteiPost) e calcula engajamento por alcance —
@@ -105,95 +120,3 @@ export function computeReachEngagement(
     engagementPct: reach > 0 ? (interactions / reach) * 100 : null,
   };
 }
-
-/// Metodologia semanal de conteúdo, preservada literalmente como o time
-/// colou no Notion — não foi decomposta em uma tabela dia-a-dia porque a
-/// colagem original tinha ambiguidade real entre colunas (ex.: domingo
-/// aparecia como "sem post" numa leitura e "com post" em outra, dependendo
-/// de onde a quebra de coluna caía). Melhor mostrar o texto real do que
-/// arriscar atribuir conteúdo ao dia errado.
-export const WEEKLY_METHODOLOGY_RAW = `SEGUNDA | TERÇA | QUARTA | QUINTA | SEXTA | SÁBADO | DOMINGO
-
-• REELS: depoimento
-• STORIES: levantada de mão → [desdobrar a dor / problema do depoimento]
-
-• REELS [collab]: Podcast
-• STORIES [podcast]: sequência narrativa
-
-• REELS [manhã - collab]: plano perfeito OU shark
-• YouTube: PP ou Shark
-• STORIES [reels collab]: sequência com link para YouTube
-
-• CARROSSEL: jornal
-    ◦ STORIES: levantada de mão
-    ◦ NEWs / COMUNIDADE: desdobrar infos do jornal
-• REELS [collab]: collab com sócios (um por semana)
-
-• CARROSSEL [manhã]: depoimento
-• REELS [início tarde]: bate bola sócios
-
-• CARROSSEL: DUMP (aprendizados da semana)
-
-—
-
-Semana seguinte (variação):
-
-• CARROSSEL: jornal - "O que aconteceu na semana passada e você não viu"
-• REELS: Operação de mentorado | Vira case, prova social e conteúdo para os dois perfis [estratégia Dih]
-    ◦ STORIES: levantada de mão
-
-• REELS [collab]: Podcast
-• STORIES [podcast]: sequência narrativa
-
-• REELS [manhã - collab]: plano perfeito OU shark
-• STORIES [reels collab]: sequência com link para YouTube
-• REELS [tarde]: corte da Carol no PP ou Shark
-• STORIES [reels tarde]: narrativa para autoridade
-
-• CARROSSEL: polêmica / divisão de opinião (política, finanças…)
-• STORIES: levantada de mão
-• REELS RP [collab]: Podcast externo ou collab
-
-• REELS: microlearning do curso EAD
-    ◦ enquanto não temos, vamos postar cortes da imersão
-    ◦ YOUTUBE: postar os microlearnings com link e CTA para nosso curso
-
-• CARROSSEL: DUMP (aprendizados da semana)
-
-• REELS: individual dele no podcast [Derick do podcast tem que nos enviar semanalmente]
-
-—
-
-Outra variação registrada:
-
-• POST FEED [manhã]: Frase compartilhável
-• REELS [tarde]: conteúdo mais profundo - Marketing de Influência
-• STORIES [tarde]: levantada de mão
-
-• REELS [collab]: Podcast
-• STORIES [podcast]: sequência narrativa
-• REELS [collab]: bate bola
-
-• REELS [manhã - collab]: plano perfeito OU shark
-• STORIES [reels collab]: sequência com link para YouTube
-• REELS [tarde]: corte da Carol no PP ou Shark
-• STORIES [reels tarde]: narrativa para autoridade
-
-• REELS: conteúdo sobre aprendizados no empreendedorismo [Carol vai produzir]
-• STORIES: levantada de mão
-• REELS RP [collab]: Podcast externo ou collab
-
-• REELS [collab]: bate bola
-• REELS: Operação de mentorado | Vira case, prova social e conteúdo para os dois perfis [estratégia Dih]
-    ◦ STORIES: levantada de mão
-
-• REELS: arrume-se comigo OU YAP fala sincera com empreendedoras [Carol vai produzir]
-
-• CARROSSEL: DUMP da semana [Carol vai produzir]
-
-—
-
-CONTEÚDO SAZONAL / VARIÁVEL — Jantar ou microevento (ajustar no calendário conforme demanda):
-• REELS: resumo de como foi o jantar (teaser)
-• CARROSSEL: principais insights sobre o evento
-• STORIES: sequência narrativa com CTA intencional`;

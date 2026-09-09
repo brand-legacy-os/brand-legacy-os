@@ -17,7 +17,7 @@ function toDateInput(d: Date | string | null | undefined) {
 
 type EpisodeDefaults = {
   id: string;
-  episodeNumber: number;
+  episodeNumber: number | null;
   guestName: string;
   guestBrand: string | null;
   guestBrandInstagram: string | null;
@@ -136,9 +136,8 @@ export function CreatePodcastEpisodeForm({
           name="episodeNumber"
           type="number"
           min={1}
-          required
-          defaultValue={defaults?.episodeNumber}
-          placeholder="Nº episódio"
+          defaultValue={defaults?.episodeNumber ?? ""}
+          placeholder="Nº episódio (opcional p/ leads)"
           className="h-9 rounded-(--radius-s) border border-border bg-canvas px-2.5 text-[13px] outline-none"
         />
         <input

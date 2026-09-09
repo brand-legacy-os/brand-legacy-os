@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/format";
 
 type Episode = {
   id: string;
-  episodeNumber: number;
+  episodeNumber: number | null;
   guestName: string;
   guestBrand: string | null;
   guestBrandInstagram: string | null;
@@ -61,7 +61,7 @@ export function PodcastEpisodeRow({
 
   return (
     <tr className="border-b border-border last:border-b-0">
-      <td className="tnum px-4 py-3 text-ink">#{episode.episodeNumber}</td>
+      <td className="tnum px-4 py-3 text-ink">{episode.episodeNumber ? `#${episode.episodeNumber}` : "—"}</td>
       <td className="px-4 py-3 text-ink">{episode.guestName}</td>
       <td className="px-4 py-3 text-ink-soft">{episode.guestBrand ?? "—"}</td>
       <td className="tnum px-4 py-3 text-ink-soft">

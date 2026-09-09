@@ -148,6 +148,8 @@ enum FinanceCategoryKind {
 }
 
 enum PodcastStatus {
+  /// Convidado ainda em negociação — antes de virar entrevista_marcada.
+  em_conversa
   entrevista_marcada
   entrevista_reagendando
   esperando_material
@@ -1245,6 +1247,24 @@ model SocialProfile {
   reports              SocialProfileReport[]
   reporteiPosts        SocialReporteiPost[]
   followerSnapshots    SocialFollowerSnapshot[]
+  weekPlanCells        ContentWeekPlanCell[]
+}
+
+/// Célula de referência da tabela semanal de conteúdo (subárea "Conteúdo") —
+/// um planejamento-modelo por perfil x dia da semana (1=segunda..7=domingo),
+/// não datado (o Calendário é quem tem posts com data real). Texto livre com
+/// marcação leve: linhas iniciadas por 2+ espaços viram sub-item, **negrito**
+/// e *itálico* são respeitados na renderização.
+model ContentWeekPlanCell {
+  id        String   @id @default(cuid())
+  profileId String
+  weekday   Int
+  content   String
+  updatedAt DateTime @updatedAt
+
+  profile SocialProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, weekday])
 }
 
 /// Relatório periódico anexado a um perfil (upload de arquivo ou link).
@@ -1361,7 +1381,9 @@ model SocialFollowerSnapshot {
 
 model PodcastEpisode {
   id                     String        @id @default(cuid())
-  episodeNumber          Int
+  /// Nulo pra convidados ainda no funil (leads em conversa/reagendando)
+  /// que não têm um número de episódio atribuído ainda.
+  episodeNumber          Int?
   guestName              String
   guestBrand             String?
   recordingDate          DateTime?

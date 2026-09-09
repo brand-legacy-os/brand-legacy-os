@@ -124,6 +124,45 @@ export default async function SocialIntroducaoPage() {
           </div>
           <div className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
             <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
+              <span className="flex h-7 w-7 items-center justify-center rounded-(--radius-s) bg-surface-muted">📅</span>
+              Agenda anual
+            </span>
+            <Link
+              href={SOCIAL_REFERENCE_LINKS.agendaAnual}
+              target="_blank"
+              className="w-fit text-[12px] font-medium text-brand hover:underline"
+            >
+              Abrir planilha →
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
+            <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
+              <span className="flex h-7 w-7 items-center justify-center rounded-(--radius-s) bg-surface-muted">📈</span>
+              Métricas dos perfis
+            </span>
+            <Link
+              href={SOCIAL_REFERENCE_LINKS.metricasSpreadsheet}
+              target="_blank"
+              className="w-fit text-[12px] font-medium text-brand hover:underline"
+            >
+              Abrir planilha →
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
+            <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
+              <span className="flex h-7 w-7 items-center justify-center rounded-(--radius-s) bg-surface-muted">✂️</span>
+              Estilos de edição
+            </span>
+            <Link
+              href={SOCIAL_REFERENCE_LINKS.estilosEdicao}
+              target="_blank"
+              className="w-fit text-[12px] font-medium text-brand hover:underline"
+            >
+              Abrir no Notion →
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2 rounded-(--radius-l) border border-border bg-surface p-4">
+            <span className="flex items-center gap-2 text-[12.5px] font-medium text-ink">
               <span className="flex h-7 w-7 items-center justify-center rounded-(--radius-s) bg-surface-muted">🛠️</span>
               Ferramentas
             </span>
