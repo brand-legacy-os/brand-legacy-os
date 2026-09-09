@@ -183,6 +183,58 @@ export function leadsByProduct(rows: OpportunityRow[]) {
   return COMERCIAL_PRODUCTS.map((p) => ({ product: p, count: rows.filter((r) => r.product === p).length }));
 }
 
+/**
+ * Leads/vendas/faturamento de um canal específico (Social Selling ou SDR),
+ * direto do GoHighLevel via Windsor — mesma fonte de verdade do resto do
+ * Comercial. Não cobre Contatos Totais/Follow/Taxa de Resposta/Agendamentos
+ * nem No Show específicos do canal: o CRM não tem um campo de canal em
+ * CalendlyMeeting, só em GhlOpportunity (via nome do pipeline), então não dá
+ * pra saber quais reuniões do Calendly vieram de Social Selling ou SDR
+ * especificamente — só entrada de lead e venda fechada.
+ */
+export async function loadChannelBreakdown(channel: LeadChannel, start: Date, end: Date) {
+  const [inPeriod, wonInPeriod, allUsers] = await Promise.all([
+    prisma.ghlOpportunity.findMany({
+      where: { channel, OR: [{ createdAt: { gte: start, lte: end } }, { wonAt: { gte: start, lte: end } }] },
+    }),
+    (async () => {
+      const rows = await prisma.ghlOpportunity.findMany({ where: { channel, status: "won" } });
+      return rows.filter((r) => {
+        const d = closeDate(r);
+        return d >= start && d <= end;
+      });
+    })(),
+    prisma.user.findMany({ select: { email: true, name: true } }),
+  ]);
+
+  const emailToName = new Map(allUsers.map((u) => [u.email, u.name]));
+  const vendorEmails = [...new Set(inPeriod.map((r) => r.assignedToEmail).filter((e): e is string => !!e))];
+  const byVendor = vendorEmails.map((email) => {
+    const rows = inPeriod.filter((r) => r.assignedToEmail === email);
+    const won = rows.filter((r) => r.status === "won");
+    return {
+      email,
+      name: emailToName.get(email) ?? email,
+      leads: rows.length,
+      won: won.length,
+      revenue: won.reduce((s, r) => s + r.monetaryValue, 0),
+    };
+  });
+
+  return {
+    leadCount: inPeriod.length,
+    wonCount: wonInPeriod.length,
+    revenue: wonInPeriod.reduce((s, r) => s + r.monetaryValue, 0),
+    conversionRate: inPeriod.length > 0 ? (wonInPeriod.length / inPeriod.length) * 100 : null,
+    byProduct: COMERCIAL_PRODUCTS.map((p) => ({
+      product: p,
+      leads: inPeriod.filter((r) => r.product === p).length,
+      revenue: wonInPeriod.filter((r) => r.product === p).reduce((s, r) => s + r.monetaryValue, 0),
+    })),
+    byVendor: byVendor.sort((a, b) => b.revenue - a.revenue),
+  };
+}
+
 /** Patrocínios fechados no período — sempre a mesma fonte de verdade da
  * área de Patrocínios (model Sponsor), nunca um valor recalculado à parte,
  * pra não divergir do que aparece lá. "Fechado" = status além de em

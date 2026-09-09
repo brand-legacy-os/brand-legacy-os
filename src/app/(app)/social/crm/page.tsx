@@ -15,6 +15,8 @@ import { TrendChart } from "@/components/finance/trend-chart";
 import { formatDate, formatCompactCurrency } from "@/lib/format";
 import { notFound } from "next/navigation";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
+import { loadChannelBreakdown } from "@/lib/comercial";
+import { ChannelBreakdownSection } from "@/components/comercial/channel-breakdown-section";
 
 function lastNMonthKeys(n: number, endKey: string) {
   const [y, m] = endKey.split("-").map(Number);
@@ -34,12 +36,13 @@ export default async function SocialCrmPage({
   const periodKey = (sp.periodo as PeriodKey) || "mes";
   const period = resolvePeriod(periodKey, sp.from as string, sp.to as string);
 
-  const [leads, allUsers] = await Promise.all([
+  const [leads, allUsers, channelBreakdown] = await Promise.all([
     prisma.socialSellingLead.findMany({
       include: { salesperson: true },
       orderBy: { meetingDate: "desc" },
     }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
+    loadChannelBreakdown("social_selling", period.start, period.end),
   ]);
 
   // --- Card do período filtrado ---
@@ -133,6 +136,28 @@ export default async function SocialCrmPage({
       </div>
 
       <SocialTabs />
+
+      <ChannelBreakdownSection
+        title="Social Selling — dados reais do CRM"
+        periodLabel={period.label}
+        breakdown={channelBreakdown}
+        unavailableMetrics={[
+          "Contatos Totais",
+          "Follow-ups",
+          "Taxa de Resposta",
+          "Agendamentos",
+          "No Show",
+          "quebra por perfil (Brand Legacy/Dom/Carol)",
+        ]}
+      />
+
+      <div className="flex flex-col gap-1 border-t border-border pt-6">
+        <h2 className="text-[12.5px] font-medium text-ink-soft">Pipeline manual</h2>
+        <p className="text-[12px] text-ink-faint">
+          Cadastro manual de leads e vendas de Social Selling — complementa os dados do CRM acima com
+          contexto que o GoHighLevel não captura (reunião, contato, status do funil).
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label={`Receita gerada (${period.label.toLowerCase()})`} value={formatCompactCurrency(revenuePeriod)} />

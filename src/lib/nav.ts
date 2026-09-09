@@ -70,7 +70,7 @@ export function buildNav(
           // Tráfego não é uma Area própria (ainda) — vive junto do Comercial,
           // já que é a camada de aquisição que alimenta o funil comercial.
           if (a.slug === "comercial") {
-            return [item, { label: "Tráfego", href: "/trafego" }];
+            return [item, { label: "Tráfego", href: "/trafego" }, { label: "SDR", href: "/sdr" }];
           }
           // Patrocínios não é uma Area própria — vive junto de Eventos, já
           // que cada patrocínio é sempre em função de um evento.
