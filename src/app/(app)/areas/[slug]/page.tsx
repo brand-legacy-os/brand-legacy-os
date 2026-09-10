@@ -239,12 +239,20 @@ export default async function AreaPage({
             </Link>
           )}
           {area.slug === "comercial" && (
-            <Link
-              href="/trafego"
-              className="mt-1 w-fit text-[12.5px] font-medium text-brand hover:underline"
-            >
-              Ver Tráfego e funis comerciais (aquisição, social selling, SDR, closers) →
-            </Link>
+            <>
+              <Link
+                href="/comercial/crm"
+                className="mt-1 w-fit text-[12.5px] font-medium text-brand hover:underline"
+              >
+                Ver CRM comercial (funis e leads) →
+              </Link>
+              <Link
+                href="/trafego"
+                className="w-fit text-[12.5px] font-medium text-brand hover:underline"
+              >
+                Ver Tráfego e funis comerciais (aquisição, social selling, SDR, closers) →
+              </Link>
+            </>
           )}
         </div>
         <FilterBar

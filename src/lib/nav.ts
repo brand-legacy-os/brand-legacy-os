@@ -73,7 +73,7 @@ export function buildNav(
           // (link "Ver em SDR →" no quadro resumo), não como destino
           // separado na barra lateral.
           if (a.slug === "comercial") {
-            return [item, { label: "Tráfego", href: "/trafego" }];
+            return [item, { label: "CRM", href: "/comercial/crm" }, { label: "Tráfego", href: "/trafego" }];
           }
           // Patrocínios não é uma Area própria — vive junto de Eventos, já
           // que cada patrocínio é sempre em função de um evento.

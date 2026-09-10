@@ -160,3 +160,29 @@ export function canManageCustomer(user: SessionUser, customer: { csId: string })
 export function canViewCsDepartment(user: SessionUser) {
   return canViewArea(user, "cs");
 }
+
+/**
+ * CRM (Comercial) — ainda não existe um sistema formal de "role" (Closer/
+ * SDR/Social Selling) separado de Membership; esses 3 papéis vivem só como
+ * conceito ad hoc hoje (usado em comercial.ts via e-mail). Mesmo padrão já
+ * usado pra SALARY_FULL_ACCESS_EMAILS/PODCAST_ONLY_EMAILS — listas simples,
+ * fáceis de editar quando mais gente assumir esses papéis.
+ */
+const CRM_SDR_EMAILS = ["thiago@brandlegacy.com.br"];
+const CRM_SOCIAL_SELLING_EMAILS = ["karina.meotti@brandlegacy.com.br"];
+
+export type CrmRole = "lider" | "closer" | "sdr" | "social_selling";
+
+/**
+ * Papel do usuário dentro do CRM comercial — decide qual recorte de leads
+ * ele vê (ver whereForCrmRole em lib/crm.ts). Líder Comercial (ou admin) vê
+ * tudo; SDR e Social Selling têm recorte próprio por e-mail; qualquer outro
+ * membro de Comercial (inclusive Closer) cai no fallback "closer", que só
+ * vê o que está atribuído a ele — é o recorte mais seguro por padrão.
+ */
+export function getCrmRole(user: SessionUser): CrmRole {
+  if (isAdmin(user) || isLeaderOf(user, "comercial")) return "lider";
+  if (CRM_SDR_EMAILS.includes(user.email)) return "sdr";
+  if (CRM_SOCIAL_SELLING_EMAILS.includes(user.email)) return "social_selling";
+  return "closer";
+}

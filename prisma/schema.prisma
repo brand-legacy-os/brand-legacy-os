@@ -275,6 +275,8 @@ model User {
   podcastMaterialFor   PodcastEpisode[]      @relation("PodcastMaterialResponsible")
   podcastPostFor       PodcastEpisode[]      @relation("PodcastPostResponsible")
   podcastDispatchFor   PodcastEpisode[]      @relation("PodcastDispatchResponsible")
+  leadsAssigned        Lead[]                @relation("LeadAssignee")
+  leadInteractions     LeadInteraction[]     @relation("LeadInteractionAuthor")
 }
 
 model Area {
@@ -1858,4 +1860,84 @@ model Sponsorship {
   event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([eventId])
+}
+
+// -----------------------------------------------------------------------
+// CRM (Comercial) — Fase 1: esqueleto/visualização. Model novo e
+// independente do GhlOpportunity (que é só espelho read-only do sync diário
+// do Windsor/GoHighLevel) — aqui o time cria e move leads de verdade.
+// Sincronização automática com o GoHighLevel fica para uma fase futura.
+// -----------------------------------------------------------------------
+
+enum LeadFunnel {
+  eventos
+  consultoria_gratuita
+  plataformas
+}
+
+enum LeadOrigin {
+  trafego
+  indicacao
+  organico
+  email_marketing
+  prospeccao_ativa
+  recuperacao
+}
+
+model Lead {
+  id        String     @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  instagram String?
+  value     Float?
+  origin    LeadOrigin
+  funnel    LeadFunnel
+  /// Chave da etapa dentro de FUNNEL_STAGES[funnel] (src/lib/crm.ts) — texto
+  /// livre por design, mesmo padrão de PRODUCTS/TaskAttachment.kind, pra não
+  /// exigir migration ao ajustar etapas.
+  stageKey String
+  /// Cross-funil, independente de origem — sinaliza lead desqualificado em
+  /// qualquer funil (visão do SDR inclui todo lead marcado assim).
+  disqualified Boolean  @default(false)
+  assignedToId String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignedTo   User?             @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  interactions LeadInteraction[]
+  attachments  LeadAttachment[]
+
+  @@index([funnel])
+  @@index([origin])
+  @@index([assignedToId])
+  @@index([disqualified])
+}
+
+model LeadInteraction {
+  id        String   @id @default(cuid())
+  leadId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  lead   Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  author User @relation("LeadInteractionAuthor", fields: [authorId], references: [id])
+
+  @@index([leadId])
+}
+
+model LeadAttachment {
+  id        String   @id @default(cuid())
+  leadId    String
+  label     String
+  url       String
+  kind      String   @default("referencia")
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
 }
