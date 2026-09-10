@@ -126,12 +126,20 @@ export function canManageSalaryRecords(user: SessionUser) {
   return isAdmin(user);
 }
 
-/** Decide se a aba "Cargos e Salários" aparece pra este usuário — admin,
- * William, ou qualquer líder de pelo menos uma área. */
+/** Restrição temporária a pedido do Marcus (10/09/2026): "Cargos e
+ * Salários" fica oculta pra todo mundo, inclusive outros admins/sócios e
+ * líderes de área — só ele enxerga, "à princípio". Reverter pra regra
+ * normal (comentada abaixo) quando ele pedir pra reabrir. */
+const SALARY_AREA_SOLE_ACCESS_EMAIL = "operacoes@brandlegacy.com.br";
+
+/** Decide se a aba "Cargos e Salários" aparece pra este usuário. */
 export function canAccessSalaryArea(user: SessionUser) {
-  if (isAdmin(user)) return true;
-  if (SALARY_FULL_ACCESS_EMAILS.includes(user.email)) return true;
-  return user.memberships.some((m) => m.role === "lider");
+  return user.email === SALARY_AREA_SOLE_ACCESS_EMAIL;
+  // Regra normal (admin, William, ou qualquer líder de pelo menos uma
+  // área) — restaurar quando a restrição temporária acima for removida:
+  // if (isAdmin(user)) return true;
+  // if (SALARY_FULL_ACCESS_EMAILS.includes(user.email)) return true;
+  // return user.memberships.some((m) => m.role === "lider");
 }
 
 /**
