@@ -24,9 +24,10 @@ export function LeadBoard({
   canManage: boolean;
 }) {
   const stages = FUNNEL_STAGES[funnel];
+  const validKeys = new Set(stages.map((s) => s.key));
   const byStage = new Map<string, LeadRow[]>();
   for (const lead of leads) {
-    const key = byStage.has(lead.stageKey) ? lead.stageKey : stages[0].key;
+    const key = validKeys.has(lead.stageKey) ? lead.stageKey : stages[0].key;
     byStage.set(key, [...(byStage.get(key) ?? []), lead]);
   }
 
