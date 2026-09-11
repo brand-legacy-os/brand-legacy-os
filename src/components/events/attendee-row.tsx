@@ -31,6 +31,7 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
 type Sale = {
   id: string;
   program: string;
+  programOther: string | null;
   value: number;
   paymentPlan: string;
   installmentCount: number | null;
@@ -39,7 +40,7 @@ type Sale = {
   notes: string | null;
   saleDate: string | Date;
   seller: { id: string; name: string } | null;
-  installments: { number: number; dueDate: string | Date }[];
+  installments: { number: number; dueDate: string | Date; amount: number | null }[];
 };
 
 /** Campos compartilhados entre o form de adicionar e o de editar venda. */
@@ -52,6 +53,7 @@ function SaleFormFields({
 }) {
   const [paymentPlan, setPaymentPlan] = useState(defaults?.paymentPlan ?? "avista");
   const [paymentMethod, setPaymentMethod] = useState(defaults?.paymentMethod ?? "");
+  const [program, setProgram] = useState(defaults?.program ?? "");
   const [installmentCount, setInstallmentCount] = useState(defaults?.installmentCount ?? 1);
   const dateValue = defaults?.saleDate
     ? new Date(defaults.saleDate).toISOString().slice(0, 10)
@@ -60,7 +62,13 @@ function SaleFormFields({
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <select name="program" required defaultValue={defaults?.program ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+        <select
+          name="program"
+          required
+          value={program}
+          onChange={(e) => setProgram(e.target.value)}
+          className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+        >
           <option value="" disabled>
             Programa…
           </option>
@@ -69,7 +77,17 @@ function SaleFormFields({
               {p}
             </option>
           ))}
+          <option value="Outros">Outros</option>
         </select>
+        {program === "Outros" && (
+          <input
+            name="programOther"
+            required
+            placeholder="Qual programa"
+            defaultValue={defaults?.programOther ?? ""}
+            className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+          />
+        )}
         <input name="value" type="number" step="0.01" min="0" required placeholder="Valor" defaultValue={defaults?.value} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
         <input name="saleDate" type="date" required defaultValue={dateValue} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
         <select
@@ -128,7 +146,7 @@ function SaleFormFields({
 
       {paymentPlan === "parcelado" && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] text-ink-faint">Data de pagamento acordada por parcela</span>
+          <span className="text-[11px] text-ink-faint">Data e valor acordados por parcela</span>
           {Array.from({ length: installmentCount }).map((_, i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="w-16 shrink-0 text-[11px] text-ink-faint">Parcela {i + 1}</span>
@@ -141,6 +159,15 @@ function SaleFormFields({
                     : undefined
                 }
                 className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+              />
+              <input
+                name={`installmentAmount_${i}`}
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Valor"
+                defaultValue={defaults?.installments?.[i]?.amount ?? undefined}
+                className="h-8 w-24 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
               />
             </div>
           ))}
@@ -400,7 +427,7 @@ export function AttendeeRow({
               <div key={s.id} className="flex items-center justify-between gap-2 text-[11.5px]">
                 <div className="flex flex-col gap-0.5">
                   <span>
-                    {s.program} · {formatCurrency(s.value)} ·{" "}
+                    {s.program === "Outros" ? s.programOther || "Outros" : s.program} · {formatCurrency(s.value)} ·{" "}
                     {s.paymentPlan === "parcelado" ? `${s.installmentCount}x` : "à vista"} ·{" "}
                     {s.paymentMethod === "outro"
                       ? s.paymentMethodOther || "Outro"
@@ -410,7 +437,14 @@ export function AttendeeRow({
                   </span>
                   {s.installments.length > 0 && (
                     <span className="text-ink-faint">
-                      Parcelas: {s.installments.map((i) => formatDate(new Date(i.dueDate))).join(", ")}
+                      Parcelas:{" "}
+                      {s.installments
+                        .map((i) =>
+                          i.amount !== null
+                            ? `${formatDate(new Date(i.dueDate))} (${formatCurrency(i.amount)})`
+                            : formatDate(new Date(i.dueDate))
+                        )
+                        .join(", ")}
                     </span>
                   )}
                   {s.notes && <span className="text-ink-faint">{s.notes}</span>}

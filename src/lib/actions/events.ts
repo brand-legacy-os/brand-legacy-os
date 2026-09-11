@@ -704,19 +704,27 @@ export async function toggleAttendeeWhatsappAction(formData: FormData) {
 // Vendas por confirmado
 // ---------------------------------------------------------------------------
 
-/** Lê as datas de pagamento acordadas por parcela — mesmo padrão de
- * parseInstallments em sponsors.ts (installmentDueDate_N por índice). */
+/** Lê data + valor acordados por parcela — mesmo padrão de parseInstallments
+ * em sponsors.ts (installmentDueDate_N/installmentAmount_N por índice). */
 function parseSaleInstallmentDates(formData: FormData, count: number) {
-  const dates: { number: number; dueDate: Date }[] = [];
+  const installments: { number: number; dueDate: Date; amount: number | null }[] = [];
   for (let i = 0; i < count; i++) {
     const raw = String(formData.get(`installmentDueDate_${i}`) ?? "");
-    if (raw) dates.push({ number: i + 1, dueDate: new Date(`${raw}T12:00:00`) });
+    const amountRaw = String(formData.get(`installmentAmount_${i}`) ?? "");
+    if (raw) {
+      installments.push({
+        number: i + 1,
+        dueDate: new Date(`${raw}T12:00:00`),
+        amount: amountRaw ? Number(amountRaw) : null,
+      });
+    }
   }
-  return dates;
+  return installments;
 }
 
 function readSaleFields(formData: FormData) {
   const program = String(formData.get("program") ?? "").trim();
+  const programOther = program === "Outros" ? String(formData.get("programOther") ?? "").trim() || null : null;
   const value = Number(formData.get("value") ?? 0);
   const paymentPlan = formData.get("paymentPlan") as "avista" | "parcelado" | null;
   const installmentCountRaw = String(formData.get("installmentCount") ?? "");
@@ -743,6 +751,7 @@ function readSaleFields(formData: FormData) {
     error: errors,
     data: {
       program,
+      programOther,
       value,
       paymentPlan,
       installmentCount,
@@ -779,6 +788,7 @@ export async function addAttendeeSaleAction(
     data: {
       attendeeId,
       program: data.program,
+      programOther: data.programOther,
       value: data.value,
       paymentPlan: data.paymentPlan,
       installmentCount: data.installmentCount,
@@ -819,6 +829,7 @@ export async function updateAttendeeSaleAction(
     where: { id: saleId },
     data: {
       program: data.program,
+      programOther: data.programOther,
       value: data.value,
       paymentPlan: data.paymentPlan,
       installmentCount: data.installmentCount,

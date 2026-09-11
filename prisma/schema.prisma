@@ -888,6 +888,8 @@ model EventAttendeeSale {
   attendeeId         String
   /// Programa vendido (texto livre — ver PRODUCTS em src/lib/products.ts).
   program            String
+  /// Preenchido só quando program = "Outros".
+  programOther       String?
   value              Float
   paymentPlan        SponsorPaymentPlan
   installmentCount   Int?
@@ -912,6 +914,8 @@ model EventAttendeeSaleInstallment {
   saleId  String
   number  Int
   dueDate DateTime
+  /// Nullable pra não quebrar parcelas já lançadas antes desse campo existir.
+  amount  Float?
 
   sale EventAttendeeSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
