@@ -167,21 +167,40 @@ export function computeEventStats(
   const present = event.attendees.filter((a) =>
     a.checkins && a.checkins.length > 0 ? a.checkins.some((c) => c.present) : a.checkedIn
   );
+  const presentIds = new Set(present.map((a) => a.id));
   const nps = event.attendees.filter((a) => a.npsScore !== null);
 
+  // Um evento pode ter só uma fração dos confirmados reais cadastrados
+  // individualmente (ex.: 135 inscritos reais, mas só 65 com perfil
+  // completo no sistema) — nesses casos o número histórico (planilha/
+  // plataforma de inscrição) é o mais completo, então prevalece sempre que
+  // for maior do que a contagem ao vivo.
+  const preferHistorical = (live: number, historical: number | null) =>
+    historical !== null && historical > live ? historical : live;
+
   return {
-    registeredCount: event.attendees.filter((a) => a.confirmed).length,
-    presentCount: present.length,
-    payingCount: event.attendees.filter((a) => a.category === "pagante").length,
-    mentoradosCount: event.attendees.filter(
-      (a) => a.category === "membro_club" || a.category === "membro_tracao"
-    ).length,
-    guestCount: event.attendees.filter((a) =>
-      a.category.startsWith("convidado")
-    ).length,
-    noShowCount: event.attendees.filter((a) => a.confirmed && !a.checkedIn)
-      .length,
-    sponsorCount: event.sponsors.length,
+    registeredCount: preferHistorical(
+      event.attendees.filter((a) => a.confirmed).length,
+      event.registeredCount
+    ),
+    presentCount: preferHistorical(present.length, event.presentCount),
+    payingCount: preferHistorical(
+      event.attendees.filter((a) => a.category === "pagante").length,
+      event.payingCount
+    ),
+    mentoradosCount: preferHistorical(
+      event.attendees.filter((a) => a.category === "membro_club" || a.category === "membro_tracao").length,
+      event.mentoradosCount
+    ),
+    guestCount: preferHistorical(
+      event.attendees.filter((a) => a.category.startsWith("convidado")).length,
+      event.guestCount
+    ),
+    noShowCount: preferHistorical(
+      event.attendees.filter((a) => a.confirmed && !presentIds.has(a.id)).length,
+      event.noShowCount
+    ),
+    sponsorCount: preferHistorical(event.sponsors.length, event.sponsorCount),
     // Se ninguém marcou NPS por confirmado ainda, cai para o valor
     // registrado manualmente no evento (ver EventNpsForm) — assim o eNPS
     // não some da tela só porque alguém adicionou um confirmado.

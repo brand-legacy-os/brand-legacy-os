@@ -464,6 +464,8 @@ async function main() {
       end: new Date("2026-09-12T18:00:00"),
       budgetPlanned: 80000,
       budgetActual: null,
+      registeredCount: 135,
+      presentCount: 91,
     },
     {
       name: "Summit — Outubro 2026",
