@@ -35,12 +35,21 @@ export async function POST(request: Request) {
 
   let referralsImported = 0;
   try {
-    const body = (await request.json()) as { eventId?: string; referrals?: ReferralInput[] };
-    if (body?.eventId && Array.isArray(body.referrals)) {
+    const body = (await request.json()) as {
+      eventId?: string;
+      eventName?: string;
+      referrals?: ReferralInput[];
+    };
+    let eventId = body?.eventId ?? null;
+    if (!eventId && body?.eventName) {
+      const event = await prisma.event.findFirst({ where: { name: body.eventName } });
+      eventId = event?.id ?? null;
+    }
+    if (eventId && Array.isArray(body.referrals)) {
       for (const r of body.referrals) {
         await prisma.eventReferral.create({
           data: {
-            eventId: body.eventId,
+            eventId,
             referrerName: r.referrerName ?? null,
             referrerEmpresa: r.referrerEmpresa ?? null,
             referrerWhatsapp: r.referrerWhatsapp ?? null,
