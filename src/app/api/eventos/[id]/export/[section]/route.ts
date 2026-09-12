@@ -20,6 +20,7 @@ const SHEET_NAMES: Record<string, string> = {
   "ordem-do-dia": "Ordem do dia",
   "ranking-marcas": "Ranking de marcas",
   "produtos-comercializados": "Produtos Comercializados",
+  indicacoes: "Indicações",
 };
 
 export async function GET(
@@ -50,6 +51,7 @@ export async function GET(
       },
       days: { orderBy: { date: "asc" }, include: { agenda: { orderBy: { order: "asc" } } } },
       commercialProducts: { orderBy: { createdAt: "asc" } },
+      referrals: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!event) return NextResponse.json({ error: "Evento não encontrado." }, { status: 404 });
@@ -234,6 +236,17 @@ export async function GET(
         "Forma de pagamento": p.paymentMethod === "outro" ? p.paymentMethodOther ?? "Outro" : p.paymentMethod,
         Escopo: p.scope ?? "",
         Deck: p.deckUrl ?? "",
+      }));
+      break;
+    case "indicacoes":
+      rows = event.referrals.map((r) => ({
+        "Indicado por": r.referrerName ?? "",
+        "Empresa (indicador)": r.referrerEmpresa ?? "",
+        "WhatsApp (indicador)": r.referrerWhatsapp ?? "",
+        Indicado: r.referredName,
+        "Empresa/Marca": r.referredEmpresa ?? "",
+        Instagram: r.referredInstagram ?? "",
+        "WhatsApp (indicado)": r.referredWhatsapp ?? "",
       }));
       break;
     default:

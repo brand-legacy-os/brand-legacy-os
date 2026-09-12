@@ -642,6 +642,7 @@ model Event {
   mediaDeliverables EventMediaDeliverable[]
   commercialProducts EventCommercialProduct[]
   debriefReports  EventDebriefReport[]
+  referrals       EventReferral[]
   linkedProjects  Project[]
 }
 
@@ -2064,6 +2065,28 @@ model EventDebriefReport {
   summary      String?
   fileUrl      String?
   createdAt    DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+/// Lista de indicações coletadas no evento (ex.: cartões preenchidos no
+/// balcão) — quem indicou uma marca pra ser prospectada, não
+/// necessariamente um confirmado do próprio evento. Separado do campo de
+/// indicação em EventAttendee (que registra quem indicou UM CONFIRMADO já
+/// existente); esse aqui é só uma lista de referência, sem edição pela UI.
+model EventReferral {
+  id                String   @id @default(cuid())
+  eventId           String
+  referrerName      String?
+  referrerEmpresa   String?
+  referrerWhatsapp  String?
+  referredName      String
+  referredEmpresa   String?
+  referredInstagram String?
+  referredWhatsapp  String?
+  createdAt         DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 

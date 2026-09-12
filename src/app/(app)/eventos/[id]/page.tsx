@@ -31,6 +31,7 @@ import { BrandRankingSection } from "@/components/events/brand-ranking-section";
 import { DynamicsSection } from "@/components/events/dynamics-section";
 import { CommercialProductsSection } from "@/components/events/commercial-products-section";
 import { DebriefReportsSection } from "@/components/events/debrief-reports-section";
+import { ReferralsSection } from "@/components/events/referrals-section";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -78,6 +79,7 @@ export default async function EventDetailPage({
       },
       commercialProducts: { orderBy: { createdAt: "asc" } },
       debriefReports: { orderBy: { createdAt: "asc" } },
+      referrals: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!event) notFound();
@@ -449,6 +451,11 @@ export default async function EventDetailPage({
           />
         )}
       </CollapsibleSection>
+
+      <ReferralsSection
+        referrals={event.referrals}
+        exportHref={`/api/eventos/${event.id}/export/indicacoes`}
+      />
 
       {allSales.length > 0 && (
         <CollapsibleSection
