@@ -129,7 +129,7 @@ export function CommercialProductsSection({
       <div className="flex flex-col">
         {products.map((p) =>
           editingId === p.id ? (
-            <form key={p.id} action={editFormAction} encType="multipart/form-data" className="flex flex-col gap-2 border-t border-border py-3 first:border-t-0">
+            <form key={p.id} action={editFormAction} className="flex flex-col gap-2 border-t border-border py-3 first:border-t-0">
               <input type="hidden" name="productId" value={p.id} />
               <ProductFormFields defaults={p} />
               <div className="flex items-center gap-2.5">
@@ -188,7 +188,7 @@ export function CommercialProductsSection({
       {canManage && (
         <>
           {open ? (
-            <form ref={ref} action={formAction} encType="multipart/form-data" className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+            <form ref={ref} action={formAction} className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
               <input type="hidden" name="eventId" value={eventId} />
               <ProductFormFields />
               <div className="flex items-center gap-2.5">

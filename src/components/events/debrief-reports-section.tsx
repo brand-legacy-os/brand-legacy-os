@@ -68,7 +68,7 @@ export function DebriefReportsSection({
       {canManage && (
         <>
           {open ? (
-            <form ref={ref} action={formAction} encType="multipart/form-data" className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+            <form ref={ref} action={formAction} className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
               <input type="hidden" name="eventId" value={eventId} />
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <input name="name" required placeholder="Nome" className={inputClass} />

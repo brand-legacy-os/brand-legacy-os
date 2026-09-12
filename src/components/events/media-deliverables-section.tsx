@@ -274,7 +274,7 @@ export function MediaDeliverablesSection({
       {canManage && (
         <>
           {open ? (
-            <form ref={ref} action={formAction} encType="multipart/form-data" className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+            <form ref={ref} action={formAction} className="flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
               <input type="hidden" name="eventId" value={eventId} />
               <DeliverableFormFields users={users} />
               <div className="flex items-center gap-2.5">

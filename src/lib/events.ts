@@ -127,7 +127,7 @@ export type EventStats = {
  */
 export function computeEventStats(
   event: Event & {
-    attendees: EventAttendee[];
+    attendees: (EventAttendee & { checkins?: { present: boolean }[] })[];
     sponsors: (Sponsor & { installments: SponsorInstallment[] })[];
     budgetLines: { actualValue: number | null }[];
   }
@@ -161,7 +161,12 @@ export function computeEventStats(
     };
   }
 
-  const present = event.attendees.filter((a) => a.checkedIn);
+  // Taxa de participação = presente em pelo menos 1 dia (EventAttendeeCheckin)
+  // — quando esse dado não foi incluído na query (telas que listam vários
+  // eventos de uma vez), cai pro flag geral `checkedIn` de antes.
+  const present = event.attendees.filter((a) =>
+    a.checkins && a.checkins.length > 0 ? a.checkins.some((c) => c.present) : a.checkedIn
+  );
   const nps = event.attendees.filter((a) => a.npsScore !== null);
 
   return {
