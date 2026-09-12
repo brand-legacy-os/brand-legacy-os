@@ -5,12 +5,16 @@ import {
   toggleAttendeeCheckedInAction,
   toggleAttendeeWhatsappAction,
   toggleAttendeeDinnerAction,
+  toggleAttendeeDayCheckinAction,
   setAttendeeNpsAction,
   updateAttendeeAction,
   deleteAttendeeAction,
   addAttendeeSaleAction,
   updateAttendeeSaleAction,
   deleteAttendeeSaleAction,
+  addAttendeeNegotiationAction,
+  updateAttendeeNegotiationAction,
+  deleteAttendeeNegotiationAction,
   type ActionState,
 } from "@/lib/actions/events";
 import { ATTENDEE_CATEGORY_META } from "@/lib/events";
@@ -185,10 +189,66 @@ function SaleFormFields({
   );
 }
 
+type Negotiation = {
+  id: string;
+  negotiationDate: string | Date;
+  value: number | null;
+  paymentConditions: string | null;
+  leadInfo: string | null;
+  notes: string | null;
+  seller: { id: string; name: string } | null;
+};
+
+/** Campos compartilhados entre o form de adicionar e o de editar negociação. */
+function NegotiationFormFields({ defaults, users }: { defaults?: Negotiation; users: { id: string; name: string }[] }) {
+  const dateValue = defaults?.negotiationDate
+    ? new Date(defaults.negotiationDate).toISOString().slice(0, 10)
+    : undefined;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <select name="sellerId" defaultValue={defaults?.seller?.id ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none">
+          <option value="">Vendedor (opcional)</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </select>
+        <input name="negotiationDate" type="date" required defaultValue={dateValue} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+        <input name="value" type="number" step="0.01" min="0" placeholder="Valor em negociação" defaultValue={defaults?.value ?? ""} className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none" />
+      </div>
+      <input
+        name="paymentConditions"
+        placeholder="Condições de pagamento (se houver)"
+        defaultValue={defaults?.paymentConditions ?? ""}
+        className="h-8 rounded-(--radius-s) border border-border bg-surface px-2 text-[12px] outline-none"
+      />
+      <textarea
+        name="leadInfo"
+        rows={2}
+        placeholder="Informações importantes do lead"
+        defaultValue={defaults?.leadInfo ?? ""}
+        className="rounded-(--radius-s) border border-border bg-surface p-2 text-[12px] outline-none"
+      />
+      <textarea
+        name="notes"
+        rows={2}
+        placeholder="Observações gerais"
+        defaultValue={defaults?.notes ?? ""}
+        className="rounded-(--radius-s) border border-border bg-surface p-2 text-[12px] outline-none"
+      />
+    </div>
+  );
+}
+
 export function AttendeeRow({
   attendee,
   canManage,
   users,
+  eventDays,
+  allAttendees = [],
 }: {
   attendee: {
     id: string;
@@ -202,6 +262,7 @@ export function AttendeeRow({
     instagram: string | null;
     instagramPersonal: string | null;
     revenueRange: string | null;
+    segmento: string | null;
     focalPerson: string | null;
     dynamicChoice: string | null;
     dynamicOther: string | null;
@@ -211,18 +272,35 @@ export function AttendeeRow({
     npsScore: number | null;
     customer: { product: string; status: keyof typeof CUSTOMER_STATUS_META; notes: string | null } | null;
     sales: Sale[];
+    negotiations: Negotiation[];
+    checkins: { id: string; date: string | Date; present: boolean }[];
+    referrerAttendeeId?: string | null;
+    referrerName?: string | null;
+    referrerEmpresa?: string | null;
+    referrerWhatsapp?: string | null;
+    referrerAttendee?: { id: string; name: string; empresa: string | null } | null;
   };
   canManage: boolean;
   users: { id: string; name: string }[];
+  eventDays: { id: string; date: string | Date }[];
+  allAttendees?: { id: string; name: string; empresa: string | null }[];
 }) {
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [showSales, setShowSales] = useState(false);
   const [addingSale, setAddingSale] = useState(false);
   const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
+  const [showNegotiations, setShowNegotiations] = useState(false);
+  const [addingNegotiation, setAddingNegotiation] = useState(false);
+  const [editingNegotiationId, setEditingNegotiationId] = useState<string | null>(null);
   const [state, formAction, savePending] = useActionState(updateAttendeeAction, initialState);
   const [saleState, saleFormAction, salePending] = useActionState(addAttendeeSaleAction, initialState);
   const [editSaleState, editSaleFormAction, editSalePending] = useActionState(updateAttendeeSaleAction, initialState);
+  const [negotiationState, negotiationFormAction, negotiationPending] = useActionState(addAttendeeNegotiationAction, initialState);
+  const [editNegotiationState, editNegotiationFormAction, editNegotiationPending] = useActionState(
+    updateAttendeeNegotiationAction,
+    initialState
+  );
 
   useEffect(() => {
     if (state.success) setEditing(false);
@@ -235,6 +313,14 @@ export function AttendeeRow({
   useEffect(() => {
     if (editSaleState.success) setEditingSaleId(null);
   }, [editSaleState.success]);
+
+  useEffect(() => {
+    if (negotiationState.success) setAddingNegotiation(false);
+  }, [negotiationState.success]);
+
+  useEffect(() => {
+    if (editNegotiationState.success) setEditingNegotiationId(null);
+  }, [editNegotiationState.success]);
 
   return (
     <div className="border-t border-border py-2 first:border-t-0">
@@ -250,6 +336,11 @@ export function AttendeeRow({
             {ATTENDEE_CATEGORY_META[attendee.category].label}
             {attendee.ticketType ? ` · Ingresso ${attendee.ticketType}` : ""}
             {attendee.focalPerson ? ` · Focal: ${attendee.focalPerson}` : ""}
+            {attendee.referrerAttendee
+              ? ` · Indicado por: ${attendee.referrerAttendee.name}`
+              : attendee.referrerName
+                ? ` · Indicado por: ${attendee.referrerName}`
+                : ""}
           </span>
         </div>
         <select
@@ -308,6 +399,35 @@ export function AttendeeRow({
           />
           No grupo
         </label>
+        {eventDays.map((day, i) => {
+          const dateStr = new Date(day.date).toISOString().slice(0, 10);
+          const checkin = attendee.checkins.find(
+            (c) => new Date(c.date).toISOString().slice(0, 10) === dateStr
+          );
+          return (
+            <label
+              key={day.id}
+              className={`text-[11.5px] ${canManage ? "cursor-pointer" : ""} ${pending ? "opacity-60" : ""}`}
+            >
+              <input
+                type="checkbox"
+                defaultChecked={checkin?.present ?? false}
+                disabled={!canManage || pending}
+                onChange={(e) => {
+                  const fd = new FormData();
+                  fd.set("attendeeId", attendee.id);
+                  fd.set("date", dateStr);
+                  fd.set("present", String(e.target.checked));
+                  startTransition(() => {
+                    toggleAttendeeDayCheckinAction(fd);
+                  });
+                }}
+                className="mr-1.5 accent-brand-deep"
+              />
+              Dia {i + 1}
+            </label>
+          );
+        })}
         <label
           className={`text-[11.5px] ${canManage ? "cursor-pointer" : ""} ${pending ? "opacity-60" : ""}`}
         >
@@ -331,6 +451,12 @@ export function AttendeeRow({
           className="text-[11.5px] font-medium text-brand hover:underline"
         >
           vendas{attendee.sales.length > 0 ? ` (${attendee.sales.length})` : ""}
+        </button>
+        <button
+          onClick={() => setShowNegotiations((v) => !v)}
+          className="text-[11.5px] font-medium text-brand hover:underline"
+        >
+          negociações{attendee.negotiations.length > 0 ? ` (${attendee.negotiations.length})` : ""}
         </button>
         {canManage && (
           <div className="flex items-center gap-2.5">
@@ -381,10 +507,17 @@ export function AttendeeRow({
               instagram: attendee.instagram,
               instagramPersonal: attendee.instagramPersonal,
               revenueRange: attendee.revenueRange,
+              segmento: attendee.segmento,
               focalPerson: attendee.focalPerson,
               dynamicChoice: attendee.dynamicChoice,
               dynamicOther: attendee.dynamicOther,
+              referrerAttendeeId: attendee.referrerAttendeeId,
+              referrerName: attendee.referrerName,
+              referrerEmpresa: attendee.referrerEmpresa,
+              referrerWhatsapp: attendee.referrerWhatsapp,
             }}
+            referralOptions={allAttendees}
+            excludeAttendeeId={attendee.id}
           />
           <div className="flex items-center gap-2.5">
             <button
@@ -496,6 +629,99 @@ export function AttendeeRow({
                   cancelar
                 </button>
                 {saleState.error && <span className="text-[11px] text-critical">{saleState.error}</span>}
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {showNegotiations && (
+        <div className="mt-2 flex flex-col gap-2 rounded-(--radius-s) bg-surface-muted p-3">
+          {attendee.negotiations.length === 0 && (
+            <p className="text-[11.5px] text-ink-faint">Nenhuma negociação registrada.</p>
+          )}
+          {attendee.negotiations.map((n) =>
+            editingNegotiationId === n.id ? (
+              <form
+                key={n.id}
+                action={editNegotiationFormAction}
+                className="flex flex-col gap-2 border-t border-border pt-2 first:border-t-0 first:pt-0"
+              >
+                <input type="hidden" name="negotiationId" value={n.id} />
+                <NegotiationFormFields defaults={n} users={users} />
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="submit"
+                    disabled={editNegotiationPending}
+                    className="h-8 rounded-(--radius-s) bg-brand-deep px-3.5 text-[12px] font-medium text-gold-soft disabled:opacity-60"
+                  >
+                    {editNegotiationPending ? "Salvando…" : "Salvar negociação"}
+                  </button>
+                  <button type="button" onClick={() => setEditingNegotiationId(null)} className="text-[11.5px] text-ink-faint hover:underline">
+                    cancelar
+                  </button>
+                  {editNegotiationState.error && <span className="text-[11px] text-critical">{editNegotiationState.error}</span>}
+                </div>
+              </form>
+            ) : (
+              <div key={n.id} className="flex items-center justify-between gap-2 text-[11.5px]">
+                <div className="flex flex-col gap-0.5">
+                  <span>
+                    {formatDate(new Date(n.negotiationDate))}
+                    {n.value !== null ? ` · ${formatCurrency(n.value)}` : ""}
+                    {n.seller ? ` · ${n.seller.name}` : ""}
+                    {n.paymentConditions ? ` · ${n.paymentConditions}` : ""}
+                  </span>
+                  {n.leadInfo && <span className="text-ink-faint">{n.leadInfo}</span>}
+                  {n.notes && <span className="text-ink-faint">{n.notes}</span>}
+                </div>
+                {canManage && (
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={() => setEditingNegotiationId(n.id)} className="text-brand hover:underline">
+                      editar
+                    </button>
+                    <form
+                      action={deleteAttendeeNegotiationAction}
+                      onSubmit={(e) => {
+                        if (!confirm("Excluir essa negociação?")) e.preventDefault();
+                      }}
+                    >
+                      <input type="hidden" name="negotiationId" value={n.id} />
+                      <button type="submit" className="text-ink-faint hover:text-critical">
+                        excluir
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {canManage && !addingNegotiation && (
+            <button
+              onClick={() => setAddingNegotiation(true)}
+              className="w-fit text-[11.5px] font-medium text-brand hover:underline"
+            >
+              + adicionar negociação
+            </button>
+          )}
+
+          {canManage && addingNegotiation && (
+            <form action={negotiationFormAction} className="flex flex-col gap-2 border-t border-border pt-2">
+              <input type="hidden" name="attendeeId" value={attendee.id} />
+              <NegotiationFormFields users={users} />
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="submit"
+                  disabled={negotiationPending}
+                  className="h-8 rounded-(--radius-s) bg-brand-deep px-3.5 text-[12px] font-medium text-gold-soft disabled:opacity-60"
+                >
+                  {negotiationPending ? "Salvando…" : "Salvar negociação"}
+                </button>
+                <button type="button" onClick={() => setAddingNegotiation(false)} className="text-[11.5px] text-ink-faint hover:underline">
+                  cancelar
+                </button>
+                {negotiationState.error && <span className="text-[11px] text-critical">{negotiationState.error}</span>}
               </div>
             </form>
           )}

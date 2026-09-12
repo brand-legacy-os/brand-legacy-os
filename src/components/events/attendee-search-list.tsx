@@ -17,14 +17,17 @@ export function AttendeeSearchList({
   attendees,
   canManage,
   users,
+  eventDays,
 }: {
   attendees: Attendee[];
   canManage: boolean;
   users: ComponentProps<typeof AttendeeRow>["users"];
+  eventDays: ComponentProps<typeof AttendeeRow>["eventDays"];
 }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [focalPerson, setFocalPerson] = useState("");
+  const [empresa, setEmpresa] = useState("");
 
   // só mostra no filtro os tipos que de fato existem entre os confirmados
   // desse evento, em vez das 9 categorias fixas do enum.
@@ -40,15 +43,21 @@ export function AttendeeSearchList({
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [attendees]);
 
+  const empresasPresent = useMemo(() => {
+    const set = new Set(attendees.map((a) => a.empresa).filter((e): e is string => Boolean(e)));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [attendees]);
+
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     return attendees.filter((a) => {
       if (category && a.category !== category) return false;
       if (focalPerson && a.focalPerson !== focalPerson) return false;
+      if (empresa && a.empresa !== empresa) return false;
       if (!q) return true;
       return normalize(a.name).includes(q) || normalize(a.empresa).includes(q);
     });
-  }, [attendees, query, category, focalPerson]);
+  }, [attendees, query, category, focalPerson, empresa]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -86,10 +95,31 @@ export function AttendeeSearchList({
             ))}
           </select>
         )}
+        {empresasPresent.length > 0 && (
+          <select
+            value={empresa}
+            onChange={(e) => setEmpresa(e.target.value)}
+            className="h-9 rounded-(--radius-s) border border-border bg-canvas px-3 text-[13px] outline-none focus:border-brand-deep-2"
+          >
+            <option value="">Todas as marcas</option>
+            {empresasPresent.map((e) => (
+              <option key={e} value={e}>
+                {e}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
       <div className="flex flex-col">
         {filtered.map((a) => (
-          <AttendeeRow key={a.id} attendee={a} canManage={canManage} users={users} />
+          <AttendeeRow
+            key={a.id}
+            attendee={a}
+            canManage={canManage}
+            users={users}
+            eventDays={eventDays}
+            allAttendees={attendees}
+          />
         ))}
         {filtered.length === 0 && (
           <p className="py-3 text-[12.5px] text-ink-faint">Nenhum confirmado encontrado.</p>

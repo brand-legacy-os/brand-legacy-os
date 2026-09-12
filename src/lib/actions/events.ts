@@ -14,6 +14,7 @@ import type {
   EventBudgetCategory,
   EventDynamicChoice,
   CommsStatus,
+  CommercialProductPaymentMethod,
 } from "@prisma/client";
 
 export type ActionState = { error?: string; success?: boolean; message?: string };
@@ -116,8 +117,6 @@ export async function updateEventAction(
   const enpsDay1Url = String(formData.get("enpsDay1Url") ?? "").trim() || null;
   const enpsDay2Url = String(formData.get("enpsDay2Url") ?? "").trim() || null;
   const enpsDay3Url = String(formData.get("enpsDay3Url") ?? "").trim() || null;
-  const mediaScopePlanned = String(formData.get("mediaScopePlanned") ?? "").trim() || null;
-  const mediaScopeActual = String(formData.get("mediaScopeActual") ?? "").trim() || null;
 
   if (!eventId || !name || !type || !startRaw || !endRaw) {
     return { error: "Preencha nome, tipo, início e término." };
@@ -139,8 +138,6 @@ export async function updateEventAction(
       enpsDay1Url,
       enpsDay2Url,
       enpsDay3Url,
-      mediaScopePlanned,
-      mediaScopeActual,
     },
   });
 
@@ -546,6 +543,27 @@ export async function deleteBudgetLinePaymentAction(formData: FormData) {
 // Confirmados
 // ---------------------------------------------------------------------------
 
+/** Quem indicou a marca: ou um confirmado existente (referrerAttendeeId), ou
+ * alguém de fora selecionado como "outros" com nome/empresa/whatsapp
+ * digitados na hora. Mutuamente exclusivos. */
+function readReferrerFields(formData: FormData) {
+  const raw = String(formData.get("referrerAttendeeId") ?? "");
+  if (raw === "outros") {
+    return {
+      referrerAttendeeId: null,
+      referrerName: String(formData.get("referrerName") ?? "").trim() || null,
+      referrerEmpresa: String(formData.get("referrerEmpresa") ?? "").trim() || null,
+      referrerWhatsapp: String(formData.get("referrerWhatsapp") ?? "").trim() || null,
+    };
+  }
+  return {
+    referrerAttendeeId: raw || null,
+    referrerName: null,
+    referrerEmpresa: null,
+    referrerWhatsapp: null,
+  };
+}
+
 export async function addAttendeeAction(
   _prev: ActionState,
   formData: FormData
@@ -564,10 +582,12 @@ export async function addAttendeeAction(
   const instagram = String(formData.get("instagram") ?? "").trim() || null;
   const instagramPersonal = String(formData.get("instagramPersonal") ?? "").trim() || null;
   const revenueRange = String(formData.get("revenueRange") ?? "").trim() || null;
+  const segmento = String(formData.get("segmento") ?? "").trim() || null;
   const focalPerson = String(formData.get("focalPerson") ?? "").trim() || null;
   const dynamicChoice = (String(formData.get("dynamicChoice") ?? "") || null) as EventDynamicChoice | null;
   const dynamicOther = String(formData.get("dynamicOther") ?? "").trim() || null;
   const customerId = String(formData.get("customerId") ?? "") || null;
+  const referrer = readReferrerFields(formData);
 
   if (!name || !category) return { error: "Informe nome e categoria." };
 
@@ -584,10 +604,12 @@ export async function addAttendeeAction(
       instagram,
       instagramPersonal,
       revenueRange,
+      segmento,
       focalPerson,
       dynamicChoice,
       dynamicOther,
       customerId,
+      ...referrer,
     },
   });
 
@@ -617,9 +639,11 @@ export async function updateAttendeeAction(
   const instagram = String(formData.get("instagram") ?? "").trim() || null;
   const instagramPersonal = String(formData.get("instagramPersonal") ?? "").trim() || null;
   const revenueRange = String(formData.get("revenueRange") ?? "").trim() || null;
+  const segmento = String(formData.get("segmento") ?? "").trim() || null;
   const focalPerson = String(formData.get("focalPerson") ?? "").trim() || null;
   const dynamicChoice = (String(formData.get("dynamicChoice") ?? "") || null) as EventDynamicChoice | null;
   const dynamicOther = String(formData.get("dynamicOther") ?? "").trim() || null;
+  const referrer = readReferrerFields(formData);
 
   if (!name || !category) return { error: "Informe nome e categoria." };
 
@@ -636,9 +660,11 @@ export async function updateAttendeeAction(
       instagram,
       instagramPersonal,
       revenueRange,
+      segmento,
       focalPerson,
       dynamicChoice,
       dynamicOther,
+      ...referrer,
     },
   });
 
@@ -672,6 +698,120 @@ export async function toggleAttendeeCheckedInAction(formData: FormData) {
     data: { checkedIn: !attendee.checkedIn },
   });
   revalidateEvent(attendee.eventId);
+}
+
+/** Upsert de presença por dia — checkbox "Dia N" no confirmado. */
+export async function toggleAttendeeDayCheckinAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const dateRaw = String(formData.get("date") ?? "");
+  const present = formData.get("present") === "true";
+  if (!attendeeId || !dateRaw) return;
+
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return;
+
+  const date = new Date(`${dateRaw}T12:00:00`);
+  await prisma.eventAttendeeCheckin.upsert({
+    where: { attendeeId_date: { attendeeId, date } },
+    update: { present },
+    create: { attendeeId, date, present },
+  });
+  revalidateEvent(attendee.eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Registro de negociação (por confirmado)
+// ---------------------------------------------------------------------------
+
+export async function addAttendeeNegotiationAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const attendeeId = String(formData.get("attendeeId") ?? "");
+  const negotiationDateRaw = String(formData.get("negotiationDate") ?? "");
+  if (!negotiationDateRaw) return { error: "Informe a data da negociação." };
+
+  const sellerId = String(formData.get("sellerId") ?? "") || null;
+  const valueRaw = String(formData.get("value") ?? "");
+  const paymentConditions = String(formData.get("paymentConditions") ?? "").trim() || null;
+  const leadInfo = String(formData.get("leadInfo") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  const attendee = await prisma.eventAttendee.findUnique({ where: { id: attendeeId } });
+  if (!attendee) return { error: "Confirmado não encontrado." };
+
+  await prisma.eventAttendeeNegotiation.create({
+    data: {
+      attendeeId,
+      sellerId,
+      negotiationDate: new Date(`${negotiationDateRaw}T12:00:00`),
+      value: valueRaw ? Number(valueRaw) : null,
+      paymentConditions,
+      leadInfo,
+      notes,
+    },
+  });
+
+  revalidateEvent(attendee.eventId);
+  return { success: true };
+}
+
+export async function updateAttendeeNegotiationAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const negotiationId = String(formData.get("negotiationId") ?? "");
+  const existing = await prisma.eventAttendeeNegotiation.findUnique({
+    where: { id: negotiationId },
+    include: { attendee: true },
+  });
+  if (!existing) return { error: "Negociação não encontrada." };
+
+  const negotiationDateRaw = String(formData.get("negotiationDate") ?? "");
+  if (!negotiationDateRaw) return { error: "Informe a data da negociação." };
+
+  const sellerId = String(formData.get("sellerId") ?? "") || null;
+  const valueRaw = String(formData.get("value") ?? "");
+  const paymentConditions = String(formData.get("paymentConditions") ?? "").trim() || null;
+  const leadInfo = String(formData.get("leadInfo") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  await prisma.eventAttendeeNegotiation.update({
+    where: { id: negotiationId },
+    data: {
+      sellerId,
+      negotiationDate: new Date(`${negotiationDateRaw}T12:00:00`),
+      value: valueRaw ? Number(valueRaw) : null,
+      paymentConditions,
+      leadInfo,
+      notes,
+    },
+  });
+
+  revalidateEvent(existing.attendee.eventId);
+  return { success: true };
+}
+
+export async function deleteAttendeeNegotiationAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const negotiationId = String(formData.get("negotiationId") ?? "");
+  if (!negotiationId) return;
+  const existing = await prisma.eventAttendeeNegotiation.findUnique({
+    where: { id: negotiationId },
+    include: { attendee: true },
+  });
+  if (!existing) return;
+  await prisma.eventAttendeeNegotiation.delete({ where: { id: negotiationId } });
+  revalidateEvent(existing.attendee.eventId);
 }
 
 export async function setAttendeeNpsAction(formData: FormData) {
@@ -977,7 +1117,53 @@ export async function deleteDinnerGuestAction(formData: FormData) {
 // Checklist de foto/vídeo (planejado x realizado)
 // ---------------------------------------------------------------------------
 
-export async function addMediaTaskAction(
+/** Lê as datas de realização (pode ser mais de um dia) — mesmo padrão
+ * installmentDueDate_N por índice, mas sem parcela associada. */
+function parseRealizationDates(formData: FormData) {
+  const dates: Date[] = [];
+  let i = 0;
+  while (formData.has(`realizationDate_${i}`)) {
+    const raw = String(formData.get(`realizationDate_${i}`) ?? "");
+    if (raw) dates.push(new Date(`${raw}T12:00:00`));
+    i++;
+  }
+  return dates;
+}
+
+function readMediaDeliverableFields(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "Descreva o que precisa ser entregue." };
+
+  const objective = String(formData.get("objective") ?? "").trim() || null;
+  const trackingOwnerId = String(formData.get("trackingOwnerId") ?? "") || null;
+  const executionOwnerRaw = String(formData.get("executionOwnerId") ?? "");
+  const executionOwnerId = executionOwnerRaw && executionOwnerRaw !== "outros" ? executionOwnerRaw : null;
+  const executionOwnerOther =
+    executionOwnerRaw === "outros" ? String(formData.get("executionOwnerOther") ?? "").trim() || null : null;
+  const plannedDateRaw = String(formData.get("plannedDate") ?? "");
+  const isQuantityDelivery = formData.get("isQuantityDelivery") === "on";
+  const plannedQuantityRaw = String(formData.get("plannedQuantity") ?? "");
+  const deliveredQuantityRaw = String(formData.get("deliveredQuantity") ?? "");
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  return {
+    data: {
+      title,
+      objective,
+      trackingOwnerId,
+      executionOwnerId,
+      executionOwnerOther,
+      plannedDate: plannedDateRaw ? new Date(`${plannedDateRaw}T12:00:00`) : null,
+      isQuantityDelivery,
+      plannedQuantity: isQuantityDelivery && plannedQuantityRaw ? Number(plannedQuantityRaw) : null,
+      deliveredQuantity: isQuantityDelivery && deliveredQuantityRaw ? Number(deliveredQuantityRaw) : null,
+      notes,
+    },
+    realizationDates: parseRealizationDates(formData),
+  };
+}
+
+export async function addMediaDeliverableAction(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
@@ -985,33 +1171,81 @@ export async function addMediaTaskAction(
   if (!canManageEvents(user)) return { error: "Sem permissão." };
 
   const eventId = String(formData.get("eventId") ?? "");
-  const description = String(formData.get("description") ?? "").trim();
-  if (!description) return { error: "Descreva a entrega planejada." };
+  const { error, data, realizationDates } = readMediaDeliverableFields(formData);
+  if (error || !data) return { error };
 
-  await prisma.eventMediaTask.create({ data: { eventId, description } });
+  let fileLabel: string | null = null;
+  let fileUrl: string | null = null;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie uma imagem, PDF ou PPT válido.");
+    if (v.error) return { error: v.error };
+    fileUrl = await saveUpload(file, "eventos/midia");
+    fileLabel = String(formData.get("fileLabel") ?? "").trim() || file.name;
+  }
+
+  await prisma.eventMediaDeliverable.create({
+    data: {
+      eventId,
+      ...data,
+      fileLabel,
+      fileUrl,
+      realizations: { create: realizationDates.map((date) => ({ date })) },
+    },
+  });
 
   revalidateEvent(eventId);
   return { success: true };
 }
 
-export async function toggleMediaTaskAction(formData: FormData) {
+export async function updateMediaDeliverableAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   const user = await requireUser();
-  if (!canManageEvents(user)) return;
-  const taskId = String(formData.get("taskId") ?? "");
-  const task = await prisma.eventMediaTask.findUnique({ where: { id: taskId } });
-  if (!task) return;
-  await prisma.eventMediaTask.update({ where: { id: taskId }, data: { done: !task.done } });
-  revalidateEvent(task.eventId);
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  const existing = await prisma.eventMediaDeliverable.findUnique({ where: { id: deliverableId } });
+  if (!existing) return { error: "Item não encontrado." };
+
+  const { error, data, realizationDates } = readMediaDeliverableFields(formData);
+  if (error || !data) return { error };
+
+  let fileLabel = existing.fileLabel;
+  let fileUrl = existing.fileUrl;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie uma imagem, PDF ou PPT válido.");
+    if (v.error) return { error: v.error };
+    fileUrl = await saveUpload(file, "eventos/midia");
+    fileLabel = String(formData.get("fileLabel") ?? "").trim() || file.name;
+  }
+
+  await prisma.eventMediaDeliverableRealization.deleteMany({ where: { deliverableId } });
+  await prisma.eventMediaDeliverable.update({
+    where: { id: deliverableId },
+    data: {
+      ...data,
+      fileLabel,
+      fileUrl,
+      realizations: { create: realizationDates.map((date) => ({ date })) },
+    },
+  });
+
+  revalidateEvent(existing.eventId);
+  return { success: true };
 }
 
-export async function deleteMediaTaskAction(formData: FormData) {
+export async function deleteMediaDeliverableAction(formData: FormData) {
   const user = await requireUser();
   if (!canManageEvents(user)) return;
-  const taskId = String(formData.get("taskId") ?? "");
-  const eventId = String(formData.get("eventId") ?? "");
-  if (!taskId) return;
-  await prisma.eventMediaTask.delete({ where: { id: taskId } });
-  revalidateEvent(eventId);
+  const deliverableId = String(formData.get("deliverableId") ?? "");
+  if (!deliverableId) return;
+  const deliverable = await prisma.eventMediaDeliverable.findUnique({ where: { id: deliverableId } });
+  if (!deliverable) return;
+  await prisma.eventMediaDeliverable.delete({ where: { id: deliverableId } });
+  revalidateEvent(deliverable.eventId);
 }
 
 // ---------------------------------------------------------------------------
@@ -1121,4 +1355,213 @@ export async function deleteCommsItemAction(formData: FormData) {
   if (!itemId) return;
   await prisma.eventCommsItem.delete({ where: { id: itemId } });
   revalidateEvent(eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Ordem do dia
+// ---------------------------------------------------------------------------
+
+export async function addAgendaItemAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const eventDayId = String(formData.get("eventDayId") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "Descreva o que vai acontecer." };
+
+  const who = String(formData.get("who") ?? "").trim() || null;
+  const startTime = String(formData.get("startTime") ?? "").trim() || null;
+  const endTime = String(formData.get("endTime") ?? "").trim() || null;
+  const objective = String(formData.get("objective") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  await prisma.eventAgendaItem.create({
+    data: { eventDayId, title, who, startTime, endTime, objective, notes },
+  });
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function updateAgendaItemAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const itemId = String(formData.get("itemId") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return { error: "Descreva o que vai acontecer." };
+
+  const who = String(formData.get("who") ?? "").trim() || null;
+  const startTime = String(formData.get("startTime") ?? "").trim() || null;
+  const endTime = String(formData.get("endTime") ?? "").trim() || null;
+  const objective = String(formData.get("objective") ?? "").trim() || null;
+  const notes = String(formData.get("notes") ?? "").trim() || null;
+
+  await prisma.eventAgendaItem.update({
+    where: { id: itemId },
+    data: { title, who, startTime, endTime, objective, notes },
+  });
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function deleteAgendaItemAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const itemId = String(formData.get("itemId") ?? "");
+  const eventId = String(formData.get("eventId") ?? "");
+  if (!itemId) return;
+  await prisma.eventAgendaItem.delete({ where: { id: itemId } });
+  revalidateEvent(eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Produtos Comercializados
+// ---------------------------------------------------------------------------
+
+function readCommercialProductFields(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Informe o nome do produto." };
+  const valueRaw = String(formData.get("value") ?? "");
+  if (!valueRaw) return { error: "Informe o valor do produto." };
+
+  const paymentMethod = String(formData.get("paymentMethod") ?? "") as CommercialProductPaymentMethod;
+  const paymentMethodOther =
+    paymentMethod === "outro" ? String(formData.get("paymentMethodOther") ?? "").trim() || null : null;
+
+  return {
+    data: {
+      name,
+      value: Number(valueRaw),
+      minPaymentCondition: String(formData.get("minPaymentCondition") ?? "").trim() || null,
+      maxPaymentCondition: String(formData.get("maxPaymentCondition") ?? "").trim() || null,
+      paymentMethod,
+      paymentMethodOther,
+      scope: String(formData.get("scope") ?? "").trim() || null,
+    },
+  };
+}
+
+export async function addCommercialProductAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const eventId = String(formData.get("eventId") ?? "");
+  const { error, data } = readCommercialProductFields(formData);
+  if (error || !data) return { error };
+
+  let deckUrl: string | null = null;
+  const deck = formData.get("deck");
+  if (deck instanceof File && deck.size > 0) {
+    const v = validateUpload(deck, UPLOAD_TYPES.presentation, "Envie um PDF ou PPT válido para o deck.");
+    if (v.error) return { error: v.error };
+    deckUrl = await saveUpload(deck, "eventos/produtos");
+  }
+
+  await prisma.eventCommercialProduct.create({ data: { eventId, ...data, deckUrl } });
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function updateCommercialProductAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const productId = String(formData.get("productId") ?? "");
+  const existing = await prisma.eventCommercialProduct.findUnique({ where: { id: productId } });
+  if (!existing) return { error: "Produto não encontrado." };
+
+  const { error, data } = readCommercialProductFields(formData);
+  if (error || !data) return { error };
+
+  let deckUrl = existing.deckUrl;
+  const deck = formData.get("deck");
+  if (deck instanceof File && deck.size > 0) {
+    const v = validateUpload(deck, UPLOAD_TYPES.presentation, "Envie um PDF ou PPT válido para o deck.");
+    if (v.error) return { error: v.error };
+    deckUrl = await saveUpload(deck, "eventos/produtos");
+  }
+
+  await prisma.eventCommercialProduct.update({ where: { id: productId }, data: { ...data, deckUrl } });
+
+  revalidateEvent(existing.eventId);
+  return { success: true };
+}
+
+export async function deleteCommercialProductAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const productId = String(formData.get("productId") ?? "");
+  if (!productId) return;
+  const existing = await prisma.eventCommercialProduct.findUnique({ where: { id: productId } });
+  if (!existing) return;
+  await prisma.eventCommercialProduct.delete({ where: { id: productId } });
+  revalidateEvent(existing.eventId);
+}
+
+// ---------------------------------------------------------------------------
+// Relatório para debriefing
+// ---------------------------------------------------------------------------
+
+export async function addDebriefReportAction(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return { error: "Sem permissão." };
+
+  const eventId = String(formData.get("eventId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Informe o nome do relatório." };
+
+  const deliveryDateRaw = String(formData.get("deliveryDate") ?? "");
+  const summary = String(formData.get("summary") ?? "").trim() || null;
+
+  let fileUrl: string | null = null;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    const v = validateUpload(file, UPLOAD_TYPES.imagePdfOrPresentation, "Envie um arquivo válido (imagem, PDF ou PPT).");
+    if (v.error) return { error: v.error };
+    fileUrl = await saveUpload(file, "eventos/debriefing");
+  }
+
+  await prisma.eventDebriefReport.create({
+    data: {
+      eventId,
+      name,
+      deliveryDate: deliveryDateRaw ? new Date(`${deliveryDateRaw}T12:00:00`) : null,
+      summary,
+      fileUrl,
+    },
+  });
+
+  revalidateEvent(eventId);
+  return { success: true };
+}
+
+export async function deleteDebriefReportAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canManageEvents(user)) return;
+  const reportId = String(formData.get("reportId") ?? "");
+  if (!reportId) return;
+  const existing = await prisma.eventDebriefReport.findUnique({ where: { id: reportId } });
+  if (!existing) return;
+  await prisma.eventDebriefReport.delete({ where: { id: reportId } });
+  revalidateEvent(existing.eventId);
 }

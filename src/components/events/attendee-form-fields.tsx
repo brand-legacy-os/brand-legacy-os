@@ -18,13 +18,32 @@ export type AttendeeDefaults = {
   instagram?: string | null;
   instagramPersonal?: string | null;
   revenueRange?: string | null;
+  segmento?: string | null;
   focalPerson?: string | null;
   dynamicChoice?: string | null;
   dynamicOther?: string | null;
+  referrerAttendeeId?: string | null;
+  referrerName?: string | null;
+  referrerEmpresa?: string | null;
+  referrerWhatsapp?: string | null;
 };
 
-export function AttendeeFormFields({ defaults }: { defaults?: AttendeeDefaults }) {
+export function AttendeeFormFields({
+  defaults,
+  referralOptions = [],
+  excludeAttendeeId,
+}: {
+  defaults?: AttendeeDefaults;
+  /** Outros confirmados do mesmo evento, pra selecionar quem indicou. */
+  referralOptions?: { id: string; name: string; empresa: string | null }[];
+  /** Ao editar, não permitir que o confirmado indique a si mesmo. */
+  excludeAttendeeId?: string;
+}) {
   const [dynamicChoice, setDynamicChoice] = useState(defaults?.dynamicChoice ?? "");
+  const [referrer, setReferrer] = useState(
+    defaults?.referrerAttendeeId ? defaults.referrerAttendeeId : defaults?.referrerName ? "outros" : ""
+  );
+  const referralChoices = referralOptions.filter((a) => a.id !== excludeAttendeeId);
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -51,6 +70,7 @@ export function AttendeeFormFields({ defaults }: { defaults?: AttendeeDefaults }
       <input name="instagram" defaultValue={defaults?.instagram ?? ""} placeholder="Instagram da marca" className={inputClass} />
       <input name="instagramPersonal" defaultValue={defaults?.instagramPersonal ?? ""} placeholder="Instagram pessoa física" className={inputClass} />
       <input name="revenueRange" defaultValue={defaults?.revenueRange ?? ""} placeholder="Faturamento da marca" className={inputClass} />
+      <input name="segmento" defaultValue={defaults?.segmento ?? ""} placeholder="Segmento da marca" className={inputClass} />
       <select
         name="dynamicChoice"
         value={dynamicChoice}
@@ -78,6 +98,49 @@ export function AttendeeFormFields({ defaults }: { defaults?: AttendeeDefaults }
           Não significa que esse lead só pode ser fechado por essa pessoa —
           significa que esse confirmado deve necessariamente falar com ela.
         </p>
+      </div>
+
+      <div className="flex flex-col gap-1.5 sm:col-span-3">
+        <span className="text-[11px] font-medium text-ink-soft">Quem indicou essa marca</span>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <select
+            name="referrerAttendeeId"
+            value={referrer}
+            onChange={(e) => setReferrer(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Sem indicação</option>
+            {referralChoices.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+                {a.empresa ? ` · ${a.empresa}` : ""}
+              </option>
+            ))}
+            <option value="outros">Outros (fora da lista)</option>
+          </select>
+          {referrer === "outros" && (
+            <>
+              <input
+                name="referrerName"
+                defaultValue={defaults?.referrerName ?? ""}
+                placeholder="Nome de quem indicou"
+                className={inputClass}
+              />
+              <input
+                name="referrerEmpresa"
+                defaultValue={defaults?.referrerEmpresa ?? ""}
+                placeholder="Empresa de quem indicou"
+                className={inputClass}
+              />
+              <input
+                name="referrerWhatsapp"
+                defaultValue={defaults?.referrerWhatsapp ?? ""}
+                placeholder="WhatsApp de quem indicou"
+                className={`${inputClass} sm:col-span-1`}
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

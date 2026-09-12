@@ -1,5 +1,6 @@
 import type { Event, EventAttendee, Sponsor, SponsorInstallment } from "@prisma/client";
 import { sponsorPaidValue, sponsorshipGoalFor } from "@/lib/sponsors";
+import { prisma } from "@/lib/db";
 
 export const EVENT_TYPES = ["Imersão", "Summit", "Experience", "Jantar"] as const;
 
@@ -43,6 +44,39 @@ export const ATTENDEE_CATEGORY_META: Record<
   equipe_evento: { label: "Equipe do evento" },
   patrocinador: { label: "Patrocinador" },
 };
+
+function dateOnly(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/** Upsert idempotente de um EventDay por dia corrido entre startDate e
+ * endDate (inclusive) — chamado no carregamento da página do evento, pode
+ * rodar quantas vezes for preciso sem duplicar linhas. */
+export async function ensureEventDays(eventId: string, startDate: Date, endDate: Date) {
+  const days: Date[] = [];
+  const cursor = dateOnly(startDate);
+  const last = dateOnly(endDate);
+  while (cursor <= last) {
+    days.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  await Promise.all(
+    days.map((date) =>
+      prisma.eventDay.upsert({
+        where: { eventId_date: { eventId, date } },
+        update: {},
+        create: { eventId, date },
+      })
+    )
+  );
+
+  return prisma.eventDay.findMany({
+    where: { eventId },
+    orderBy: { date: "asc" },
+    include: { agenda: { orderBy: { order: "asc" } } },
+  });
+}
 
 export const BUDGET_LINE_STATUS_OPTIONS = [
   "A pagar",

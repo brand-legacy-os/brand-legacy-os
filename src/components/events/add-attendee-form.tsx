@@ -6,7 +6,13 @@ import { AttendeeFormFields } from "./attendee-form-fields";
 
 const initialState: ActionState = {};
 
-export function AddAttendeeForm({ eventId }: { eventId: string }) {
+export function AddAttendeeForm({
+  eventId,
+  attendees = [],
+}: {
+  eventId: string;
+  attendees?: { id: string; name: string; empresa: string | null }[];
+}) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     addAttendeeAction,
@@ -36,7 +42,7 @@ export function AddAttendeeForm({ eventId }: { eventId: string }) {
       className="flex flex-col gap-2.5 rounded-(--radius-s) bg-surface-muted p-3"
     >
       <input type="hidden" name="eventId" value={eventId} />
-      <AttendeeFormFields />
+      <AttendeeFormFields referralOptions={attendees} />
       <div className="flex items-center gap-3">
         <button
           type="submit"

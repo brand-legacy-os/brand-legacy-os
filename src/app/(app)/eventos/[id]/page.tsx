@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isAdmin, isLeaderOf } from "@/lib/permissions";
 import { hasFinanceRole, isFinanceUnlocked } from "@/lib/finance-auth";
-import { EVENT_STATUS_META, computeEventStats, ATTENDEE_CATEGORY_META } from "@/lib/events";
+import { EVENT_STATUS_META, computeEventStats, ATTENDEE_CATEGORY_META, ensureEventDays } from "@/lib/events";
 import { EVENT_BUDGET_CATEGORY_META, sponsorshipGoalFor } from "@/lib/sponsors";
 import {
   formatCompactCurrency,
@@ -24,7 +24,13 @@ import { NpsExcelForm } from "@/components/events/nps-excel-form";
 import { EventSponsorsSection } from "@/components/events/event-sponsors-section";
 import { DinnerGuestsSection } from "@/components/events/dinner-guests-section";
 import { CommsSection } from "@/components/events/comms-section";
-import { MediaTasksSection } from "@/components/events/media-tasks-section";
+import { MediaDeliverablesSection } from "@/components/events/media-deliverables-section";
+import { AgendaSection } from "@/components/events/agenda-section";
+import { NegotiationsSection } from "@/components/events/negotiations-section";
+import { BrandRankingSection } from "@/components/events/brand-ranking-section";
+import { DynamicsSection } from "@/components/events/dynamics-section";
+import { CommercialProductsSection } from "@/components/events/commercial-products-section";
+import { DebriefReportsSection } from "@/components/events/debrief-reports-section";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { CultureBanner } from "@/components/dashboard/culture-banner";
@@ -57,16 +63,26 @@ export default async function EventDetailPage({
             include: { seller: true, installments: { orderBy: { number: "asc" } } },
             orderBy: { saleDate: "desc" },
           },
+          negotiations: { include: { seller: true }, orderBy: { negotiationDate: "desc" } },
+          checkins: true,
+          referrerAttendee: { select: { id: true, name: true, empresa: true } },
         },
       },
       notes: { include: { author: true }, orderBy: { createdAt: "desc" } },
       cashMovements: { orderBy: { date: "asc" } },
       dinnerGuests: { orderBy: { createdAt: "asc" } },
       commsItems: { orderBy: { date: "asc" } },
-      mediaTasks: { orderBy: { createdAt: "asc" } },
+      mediaDeliverables: {
+        orderBy: { order: "asc" },
+        include: { trackingOwner: true, executionOwner: true, realizations: { orderBy: { date: "asc" } } },
+      },
+      commercialProducts: { orderBy: { createdAt: "asc" } },
+      debriefReports: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!event) notFound();
+
+  const eventDays = await ensureEventDays(event.id, event.startDate, event.endDate);
 
   const canManage = isAdmin(user) || isLeaderOf(user, "eventos");
   const allUsers = await prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
@@ -203,8 +219,6 @@ export default async function EventDetailPage({
           enpsDay1Url={event.enpsDay1Url ?? ""}
           enpsDay2Url={event.enpsDay2Url ?? ""}
           enpsDay3Url={event.enpsDay3Url ?? ""}
-          mediaScopePlanned={event.mediaScopePlanned ?? ""}
-          mediaScopeActual={event.mediaScopeActual ?? ""}
         />
       )}
 
@@ -399,14 +413,19 @@ export default async function EventDetailPage({
           />
         )}
         {event.attendees.length > 0 ? (
-          <AttendeeSearchList attendees={event.attendees} canManage={canManage} users={allUsers} />
+          <AttendeeSearchList attendees={event.attendees} canManage={canManage} users={allUsers} eventDays={eventDays} />
         ) : (
           <p className="text-[12.5px] text-ink-faint">
             A lista nominal de confirmados começa vazia — os números acima vêm do
             histórico da planilha. Novos eventos usam esta lista diretamente.
           </p>
         )}
-        {canManage && <AddAttendeeForm eventId={event.id} />}
+        {canManage && (
+          <AddAttendeeForm
+            eventId={event.id}
+            attendees={event.attendees.map((a) => ({ id: a.id, name: a.name, empresa: a.empresa }))}
+          />
+        )}
       </CollapsibleSection>
 
       {allSales.length > 0 && (
@@ -447,11 +466,41 @@ export default async function EventDetailPage({
         </CollapsibleSection>
       )}
 
-      <MediaTasksSection
+      <MediaDeliverablesSection
         eventId={event.id}
-        tasks={event.mediaTasks}
+        deliverables={event.mediaDeliverables}
+        users={allUsers}
         canManage={canManage}
         exportHref={`/api/eventos/${event.id}/export/foto-video`}
+      />
+
+      <AgendaSection
+        eventId={event.id}
+        days={eventDays}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/ordem-do-dia`}
+      />
+
+      <NegotiationsSection
+        eventId={event.id}
+        attendees={event.attendees}
+        users={allUsers}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/negociacoes`}
+      />
+
+      <BrandRankingSection attendees={event.attendees} exportHref={`/api/eventos/${event.id}/export/ranking-marcas`} />
+
+      <DynamicsSection
+        attendees={event.attendees}
+        exportHref={`/api/eventos/${event.id}/export/dinamicas`}
+      />
+
+      <CommercialProductsSection
+        eventId={event.id}
+        products={event.commercialProducts}
+        canManage={canManage}
+        exportHref={`/api/eventos/${event.id}/export/produtos-comercializados`}
       />
 
       <DinnerGuestsSection
@@ -479,30 +528,6 @@ export default async function EventDetailPage({
                   </a>
                 )
             )}
-          </div>
-        </section>
-      )}
-
-      {(event.mediaScopePlanned || event.mediaScopeActual) && (
-        <section className="flex flex-col gap-3 rounded-(--radius-l) border border-border bg-surface p-5">
-          <h2 className="text-[13px] font-medium text-ink-soft">Entrega de fotos e vídeo</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
-                Planejado
-              </span>
-              <p className="whitespace-pre-line text-[13px] text-ink-soft">
-                {event.mediaScopePlanned || "Nada combinado ainda."}
-              </p>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] font-medium uppercase tracking-[0.04em] text-ink-faint">
-                Realizado
-              </span>
-              <p className="whitespace-pre-line text-[13px] text-ink-soft">
-                {event.mediaScopeActual || "Ainda não entregue."}
-              </p>
-            </div>
           </div>
         </section>
       )}
@@ -535,6 +560,8 @@ export default async function EventDetailPage({
         </div>
         <EventNoteForm eventId={event.id} />
       </section>
+
+      <DebriefReportsSection eventId={event.id} reports={event.debriefReports} canManage={canManage} />
     </div>
   );
 }
